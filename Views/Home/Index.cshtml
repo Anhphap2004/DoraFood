@@ -1,0 +1,227 @@
+﻿@{
+    var foodGallery = new[]
+    {
+        new {
+            Image = "menu-01.jpg",
+            Label = "CẢM HỨNG ẨM THỰC",
+            Title = "Đánh thức vị giác"
+        },
+        new {
+            Image = "menu-02.jpg",
+            Label = "HƯƠNG VỊ YÊU THÍCH",
+            Title = "Ngon từ ánh nhìn"
+        },
+        new {
+            Image = "menu-03.jpg",
+            Label = "PHÚT GIÂY THƯ GIÃN",
+            Title = "Chậm lại, thưởng thức"
+        },
+        new {
+            Image = "menu-04.jpg",
+            Label = "SẮC VỊ HÒA QUYỆN",
+            Title = "Một bàn đầy cảm hứng"
+        },
+        new {
+            Image = "menu-05.jpg",
+            Label = "NIỀM VUI SẺ CHIA",
+            Title = "Hẹn nhau bữa ngon"
+        },
+        new {
+            Image = "menu-06.jpg",
+            Label = "KHOẢNH KHẮC SUM VẦY",
+            Title = "Trọn vị bên nhau"
+        }
+    };
+}
+
+<!-- Food Strip Start -->
+<section class="fd-food-strip" aria-labelledby="foodStripTitle">
+
+    <div class="container">
+        <div class="fd-food-heading">
+            <span class="fd-food-eyebrow">
+                <span></span>
+                DORAFOOD · THE ART OF TASTE
+                <span></span>
+            </span>
+
+            <h1 id="foodStripTitle">
+                Đẹp từ ánh nhìn.<br>
+                <em>Đậm sâu hương vị.</em>
+            </h1>
+
+            <p>
+                Một bữa ăn ngon, một cuộc hẹn đáng nhớ.
+            </p>
+        </div>
+    </div>
+
+    <div class="fd-food-window"
+         tabindex="0"
+         aria-label="Bộ sưu tập ảnh ẩm thực. Chọn vùng này để tạm dừng chuyển động.">
+
+        <div class="fd-food-track">
+            @for (var copy = 0; copy < 2; copy++)
+            {
+                <div class="fd-food-group"
+                     aria-hidden="@(copy == 1 ? "true" : "false")">
+
+                    @foreach (var food in foodGallery)
+                    {
+                        <figure class="fd-food-card">
+
+                            <div class="fd-food-photo">
+                                <img src="@Url.Content("~/assest/img/" + food.Image)"
+                                     alt="@(copy == 0 ? food.Title : "")"
+                                     draggable="false">
+                            </div>
+
+                            <figcaption>
+                                <div>
+                                    <span class="fd-food-category">
+                                        @food.Label
+                                    </span>
+
+                                    <span class="fd-food-name">
+                                        @food.Title
+                                    </span>
+                                </div>
+
+                                <span class="fd-food-detail"
+                                      aria-hidden="true">✦</span>
+                            </figcaption>
+
+                        </figure>
+                    }
+                </div>
+            }
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="fd-food-bottom">
+            <span class="fd-food-note">
+                <span class="fd-food-dot" aria-hidden="true"></span>
+                Mỗi hương vị, một câu chuyện
+            </span>
+
+            <button type="button"
+                    class="fd-food-toggle"
+                    aria-pressed="false">
+                Tạm dừng
+            </button>
+        </div>
+    </div>
+
+</section>
+<!-- Food Strip End -->
+<!-- About Start -->
+<section class="fd-about" aria-labelledby="fdAboutTitle">
+    <div class="container">
+        <div class="row g-5 align-items-center">
+
+            <!-- Bộ ảnh giới thiệu -->
+            <div class="col-lg-6">
+                <div class="fd-about-visual">
+
+                    <span class="fd-about-outline"
+                          aria-hidden="true"></span>
+
+                    <figure class="fd-about-main">
+                        <img src="~/assest/img/about.jpg"
+                             alt="Không gian trải nghiệm ẩm thực DoraFood"
+                             loading="lazy">
+
+                        <figcaption>
+                            <span>DORAFOOD</span>
+                            Nơi những cuộc hẹn thêm trọn vẹn.
+                        </figcaption>
+                    </figure>
+
+                    <div class="fd-about-inset">
+                        <img src="~/assest/img/menu-04.jpg"
+                             alt="Một góc sắc màu ẩm thực DoraFood"
+                             loading="lazy">
+                    </div>
+
+                    <div class="fd-about-seal">
+                        <i class="fas fa-utensils"
+                           aria-hidden="true"></i>
+                        <span>Chạm vị ngon</span>
+                        <strong>Gắn kết yêu thương</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Nội dung giới thiệu -->
+            <div class="col-lg-6">
+                <div class="fd-about-content">
+                    <span class="fd-about-eyebrow">
+                        CÂU CHUYỆN DORAFOOD
+                    </span>
+
+                    <h2 id="fdAboutTitle">
+                        Không chỉ là bữa ăn.<br>
+                        <span>Là thời gian bên nhau.</span>
+                    </h2>
+
+                    <p class="fd-about-lead">
+                        Có những câu chuyện chỉ cần một bàn ăn ngon
+                        để bắt đầu.
+                    </p>
+
+                    <p class="fd-about-description">
+                        Một buổi hẹn cùng bạn bè, bữa cơm bên gia đình
+                        hay dịp gặp mặt đặc biệt — DoraFood mong muốn
+                        trở thành một phần trong những khoảnh khắc ấy,
+                        qua hương vị món ăn và niềm vui được quây quần.
+                    </p>
+
+                    <div class="fd-about-values">
+                        <div class="fd-about-value">
+                            <span class="fd-about-icon">
+                                <i class="fas fa-concierge-bell"
+                                   aria-hidden="true"></i>
+                            </span>
+
+                            <div>
+                                <h3>Chăm chút từng món</h3>
+                                <p>
+                                    Từ hương vị đến cách bày biện,
+                                    mỗi chi tiết đều góp phần tạo cảm hứng.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="fd-about-value">
+                            <span class="fd-about-icon">
+                                <i class="far fa-heart"
+                                   aria-hidden="true"></i>
+                            </span>
+
+                            <div>
+                                <h3>Trân trọng từng cuộc hẹn</h3>
+                                <p>
+                                    Để bữa ăn là khoảng thời gian
+                                    thoải mái dành cho những người thân quý.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="fd-about-signoff">
+                        <span class="fd-about-signoff-line"
+                              aria-hidden="true"></span>
+                        <span>
+                            Một bàn ăn ngon.
+                            <strong>Nhiều điều để nhớ.</strong>
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
+<!-- About End -->
+@await Html.PartialAsync("_HomeSections")

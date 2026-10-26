@@ -1,0 +1,1270 @@
+
+/*** Spinner Start ***/
+#spinner {
+    opacity: 0;
+    visibility: hidden;
+    transition: opacity .8s ease-out, visibility 0s linear .5s;
+    z-index: 99999;
+ }
+
+ #spinner.show {
+     transition: opacity .8s ease-out, visibility 0s linear .0s;
+     visibility: visible;
+     opacity: 1;
+ }
+/*** Spinner End ***/
+
+
+.back-to-top {
+    position: fixed;
+    right: 30px;
+    bottom: 30px;
+    z-index: 99;
+}
+
+h1, h2, h3, .h1, .h2, .h3 {
+    font-weight: 400 !important;
+    font-family: 'Playball', cursive !important;
+}
+
+h4, h5, h6, .h4, .h5, .h6 {
+    font-weight: 600 !important;
+    font-family: 'Open Sans', sans-serif !important;
+}
+
+.my-6 {
+    margin-top: 6rem;
+    margin-bottom: 6rem;
+}
+
+.py-6 {
+    padding-top: 6rem;
+    padding-bottom: 6rem;
+}
+
+.wow,
+.animated {
+    animation-duration: 2s !important;
+}
+
+
+/*** Button Start ***/
+.btn.btn-primary {
+    border: 0;
+}
+
+.btn.btn-primary:hover {
+    background: var(--bs-dark) !important;
+    color: var(--bs-primary) !important;
+}
+
+.btn {
+    font-weight: 600;
+    transition: .5s;
+}
+
+.btn-square {
+    width: 32px;
+    height: 32px;
+}
+
+.btn-sm-square {
+    width: 38px;
+    height: 38px;
+}
+
+.btn-md-square {
+    width: 44px;
+    height: 44px;
+}
+
+.btn-lg-square {
+    width: 56px;
+    height: 56px;
+}
+
+.btn-square,
+.btn-sm-square,
+.btn-md-square,
+.btn-lg-square {
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: normal;
+}
+/*** Button End ***/
+
+/*** Navbar Start ***/
+
+/* Thanh điều hướng */
+.fapdora-header {
+    background: #fff;
+    border-bottom: 1px solid #f0ebe4;
+    box-shadow: 0 6px 24px rgba(35, 30, 24, 0.04);
+}
+
+    /* Logo thương hiệu */
+    .fapdora-header .fapdora-brand {
+        margin-right: 24px;
+        text-decoration: none;
+    }
+
+    .fapdora-header .fapdora-brand-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 46px;
+        height: 46px;
+        border-radius: 15px;
+        background: #fbf4e9;
+        color: #9b6a27;
+        font-size: 21px;
+    }
+
+    .fapdora-header .fapdora-brand-name {
+        color: #242424;
+        font-family: "Open Sans", sans-serif;
+        font-size: 29px;
+        font-weight: 700;
+        letter-spacing: -1.2px;
+        line-height: 1.2;
+    }
+
+    .fapdora-header .fapdora-brand-caption {
+        margin-top: 4px;
+        color: #79736c;
+        font-size: 9px;
+        font-weight: 600;
+        letter-spacing: 2px;
+        line-height: 1.5;
+    }
+
+    /* Liên kết menu */
+    .fapdora-header .navbar-nav .nav-link {
+        margin: 2px 0;
+        padding: 11px 15px;
+        border-radius: 10px;
+        color: #514b44;
+        font-size: 14px;
+        font-weight: 600;
+        transition: color 0.2s ease, background-color 0.2s ease;
+    }
+
+        .fapdora-header .navbar-nav .nav-link:hover,
+        .fapdora-header .navbar-nav .nav-link:focus-visible,
+        .fapdora-header .navbar-nav .nav-link.active,
+        .fapdora-header .navbar-nav .nav-link.show {
+            background: #fbf4e9;
+            color: #8b5e24;
+        }
+
+    /* Mũi tên menu dịch vụ */
+    .fapdora-header .dropdown-toggle::after {
+        margin-left: 7px;
+        vertical-align: middle;
+    }
+
+    /* Menu xổ xuống: mở bằng thao tác bấm của Bootstrap */
+    .fapdora-header .fapdora-dropdown {
+        min-width: 230px;
+        margin-top: 8px;
+        padding: 8px;
+        border: 1px solid #f0ebe4;
+        border-radius: 14px;
+        background: #fff;
+        box-shadow: 0 16px 40px rgba(35, 30, 24, 0.1);
+    }
+
+        .fapdora-header .fapdora-dropdown .dropdown-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 12px;
+            border-radius: 8px;
+            color: #514b44;
+            font-size: 14px;
+            transition: background-color 0.2s ease, color 0.2s ease;
+        }
+
+            .fapdora-header .fapdora-dropdown .dropdown-item i {
+                width: 20px;
+                color: #9b6a27;
+                text-align: center;
+            }
+
+            .fapdora-header .fapdora-dropdown .dropdown-item:hover,
+            .fapdora-header .fapdora-dropdown .dropdown-item:focus,
+            .fapdora-header .fapdora-dropdown .dropdown-item.active {
+                background: #fbf4e9;
+                color: #8b5e24;
+            }
+
+    /* Nút tìm kiếm */
+    .fapdora-header .fapdora-search {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        width: 43px;
+        height: 43px;
+        padding: 0;
+        border: 1px solid #eee7dd;
+        border-radius: 50%;
+        background: #fff;
+        color: #514b44;
+    }
+
+        .fapdora-header .fapdora-search:hover {
+            border-color: #d4a762;
+            background: #fbf4e9;
+            color: #8b5e24;
+        }
+
+    /* Nút đặt bàn */
+    .fapdora-header .fapdora-booking {
+        padding: 12px 21px;
+        font-size: 14px;
+        font-weight: 600;
+        white-space: nowrap;
+        box-shadow: 0 5px 15px rgba(155, 106, 39, 0.12);
+    }
+
+    /* Nút mở menu trên điện thoại */
+    .fapdora-header .fapdora-toggler {
+        padding: 10px 13px;
+        border: 1px solid #eee7dd;
+        border-radius: 10px;
+        color: #8b5e24;
+    }
+
+        .fapdora-header .fapdora-toggler:focus {
+            box-shadow: none;
+        }
+
+    /* Trạng thái khi điều hướng bằng bàn phím */
+    .fapdora-header a:focus-visible,
+    .fapdora-header button:focus-visible {
+        outline: 3px solid #9b6a27;
+        outline-offset: 3px;
+    }
+
+/* Giao diện khi menu thu gọn */
+@media (max-width: 991.98px) {
+    .fapdora-header .navbar-collapse {
+        margin-top: 14px;
+        border-top: 1px solid #f0ebe4;
+    }
+
+    .fapdora-header .fapdora-dropdown {
+        min-width: 0;
+        margin: 4px 0 8px;
+        background: #fffcf7;
+        box-shadow: none;
+    }
+
+    .fapdora-header .fapdora-actions {
+        padding-top: 12px;
+        border-top: 1px solid #f0ebe4;
+    }
+}
+
+/* Giữ hiệu ứng nhẹ khi người dùng hạn chế chuyển động */
+@media (prefers-reduced-motion: reduce) {
+    .fapdora-header *,
+    .fapdora-header *::before,
+    .fapdora-header *::after {
+        transition: none !important;
+    }
+}
+
+/* Hộp tìm kiếm */
+#searchModal .modal-content {
+    background-color: rgba(255, 255, 255, 0.95);
+}
+
+/*** Navbar End ***/
+
+/*** Events Start ***/
+.event .tab-class .nav-item a.active {
+    background: var(--bs-primary) !important;
+}
+
+.event .event-img .event-overlay {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    background: rgba(212, 167, 98, 0.7);
+    border-radius: 8px;
+    transition: 0.5s;
+    opacity: 0;
+    z-index: 1;
+}
+
+.event .event-img:hover .event-overlay {
+    opacity: 1;
+}
+/*** Events End ***/
+
+
+/*** service start ***/
+.service .service-item {
+    position: relative;
+    height: 100%;
+    border-radius: 8px;
+    box-shadow: 0 0 45px rgba(0, 0, 0, .08);
+}
+
+.service-content::after {
+    position: absolute;
+    content: "";
+    width: 100%;
+    height: 0;
+    top: 0;
+    left: 0;
+    bottom: auto;
+    background: var(--bs-primary);
+    border-radius: 8px;
+    transition: 1s;
+}
+
+.service-item:hover .service-content::after {
+    height: 100%;
+    opacity: 1;
+}
+
+.service-item .service-content-icon {
+    position: relative;
+    z-index: 2;
+}
+
+.service-item .service-content-icon i,
+.service-item .service-content-icon p {
+    transition: 1s;
+}
+
+.service-item:hover .service-content-icon i {
+    color: var(--bs-dark) !important;
+}
+
+.service-item:hover .service-content-icon p {
+    color: var(--bs-white);
+}
+
+.service-item:hover .service-content-icon a.btn-primary {
+    background: var(--bs-white);
+    color: var(--bs-dark);
+}
+
+.service-item .service-content-icon a.btn-primary {
+    transition: 1s !important;
+}
+/*** Services End ***/
+
+
+/*** Menu Start ***/
+.menu .nav-item a.active {
+    background: var(--bs-primary) !important;
+}
+
+.menu .menu-item .border-bottom {
+    border-bottom-style: dashed !important;
+}
+/*** Menu End ***/
+
+
+/*** Youtube Video start ***/
+.video {
+    position: relative;
+    height: 100%;
+    min-height: 400px;
+    background: linear-gradient(rgba(254, 218, 154, 0.1), rgba(254, 218, 154, 0.1)), url(../img/fact.jpg);
+    background-position: center center;
+    background-repeat: no-repeat;
+    background-size: cover;
+    border-radius: 8px;
+}
+
+.video .btn-play {
+    position: absolute;
+    z-index: 3;
+    top: 50%;
+    left: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    box-sizing: content-box;
+    display: block;
+    width: 32px;
+    height: 44px;
+    border-radius: 50%;
+    border: none;
+    outline: none;
+    padding: 18px 20px 18px 28px;
+}
+
+.video .btn-play:before {
+    content: "";
+    position: absolute;
+    z-index: 0;
+    left: 50%;
+    top: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    display: block;
+    width: 100px;
+    height: 100px;
+    background: var(--bs-primary);
+    border-radius: 50%;
+    animation: pulse-border 1500ms ease-out infinite;
+}
+
+.video .btn-play:after {
+    content: "";
+    position: absolute;
+    z-index: 1;
+    left: 50%;
+    top: 50%;
+    transform: translateX(-50%) translateY(-50%);
+    display: block;
+    width: 100px;
+    height: 100px;
+    background: var(--bs-white);
+    border-radius: 50%;
+    transition: all 200ms;
+}
+
+.video .btn-play img {
+    position: relative;
+    z-index: 3;
+    max-width: 100%;
+    width: auto;
+    height: auto;
+}
+
+.video .btn-play span {
+    display: block;
+    position: relative;
+    z-index: 3;
+    width: 0;
+    height: 0;
+    border-left: 32px solid var(--bs-dark);
+    border-top: 22px solid transparent;
+    border-bottom: 22px solid transparent;
+}
+
+@keyframes pulse-border {
+    0% {
+        transform: translateX(-50%) translateY(-50%) translateZ(0) scale(1);
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateX(-50%) translateY(-50%) translateZ(0) scale(1.5);
+        opacity: 0;
+    }
+}
+
+#videoModal {
+    z-index: 99999;
+}
+
+#videoModal .modal-dialog {
+    position: relative;
+    max-width: 800px;
+    margin: 60px auto 0 auto;
+}
+
+#videoModal .modal-body {
+    position: relative;
+    padding: 0px;
+}
+
+#videoModal .close {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    right: 0px;
+    top: -30px;
+    z-index: 999;
+    font-size: 30px;
+    font-weight: normal;
+    color: #FFFFFF;
+    background: #000000;
+    opacity: 1;
+}
+/*** Youtube Video End ***/
+
+
+/*** Blog Start ***/
+.blog-item {
+    position: relative;
+}
+
+.blog-item img {
+    transition: 0.5s;
+}
+
+.blog-item:hover img {
+    transform: scale(1.3)
+}
+
+.blog-item .blog-content {
+    position: relative;
+    transform: translateY(-50%);
+    box-shadow: 0 0 45px rgba(0, 0, 0, .08);
+}
+
+.blog-item .blog-content a.btn h5 {
+    transition: 0.5s;
+}
+
+.blog-item:hover .blog-content a.btn h5 {
+    color: var(--bs-primary) !important;
+}
+/*** Blog End ***/
+
+
+/*** Team Start ***/
+.team-item {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.team-item .team-icon {
+    position: absolute;
+    top: 0;
+    right: 0;
+}
+
+.team-item .team-icon .share-link {
+    opacity: 0;
+    transition: 0.9s;
+}
+
+.team-item:hover .share-link {
+    opacity: 1;
+}
+
+.team-item .team-content {
+    transition: 0.9s;
+}
+
+.team-item:hover .team-content {
+    background: var(--bs-primary) !important;
+    color: var(--bs-dark) !important;
+}
+
+.team-item .team-content h4,
+.team-item .team-content p {
+    transition: 0.5s;
+}
+
+.team-item:hover .team-content h4 {
+    color: var(--bs-dark) !important;
+}
+
+.team-item:hover .team-content p {
+    color: var(--bs-white);
+}
+/*** Team End ***/
+
+
+/*** testimonial Start ***/
+.testimonial-item {
+    border: 1px solid var(--bs-primary);
+    padding: 20px 20px;
+}
+
+.testimonial-carousel .owl-item img {
+    width: 100px;
+    height: 100px;
+}
+
+.testimonial-carousel.owl-rtl .testimonial-item {
+    direction: ltr !important;
+}
+/*** testimonial End ***/
+
+
+/*** Contact start ***/
+.contact-form {
+    box-shadow: 0 0 45px rgba(0, 0, 0, .08);
+}
+
+/*** Contact End ***/
+
+
+/*** Footer Start ***/
+.footer .footer-item a.text-body:hover {
+    color: var(--bs-primary) !important;
+}
+/*** Footer End ***/
+/*** FapDora Food Strip Start ***/
+
+.fd-food-strip {
+    --fd-red: #ad1830;
+    --fd-ink: #291b20;
+    --fd-muted: #85777b;
+    --fd-gap: 20px;
+    padding: 38px 0 20px;
+    overflow: hidden;
+    background: radial-gradient( ellipse at 50% 0%, rgba(173, 24, 48, 0.045), transparent 60% ), #fff;
+}
+
+/* Tiêu đề */
+.fd-food-heading {
+    max-width: 720px;
+    margin: 0 auto 24px;
+    text-align: center;
+}
+
+.fd-food-eyebrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 13px;
+    color: var(--fd-red);
+    font-size: 9px;
+    font-weight: 600;
+    letter-spacing: 2.5px;
+}
+
+    .fd-food-eyebrow > span {
+        width: 30px;
+        height: 1px;
+        background: var(--fd-red);
+        opacity: 0.4;
+    }
+
+/* Chỉ thay font tiêu đề của phần này */
+.fd-food-strip .fd-food-heading h1 {
+    margin: 0;
+    color: var(--fd-ink);
+    font-family: "Open Sans", sans-serif !important;
+    font-size: clamp(28px, 3vw, 42px);
+    font-weight: 700 !important;
+    line-height: 1.35;
+    letter-spacing: -1px;
+}
+.fd-food-heading h1 em {
+    color: var(--fd-red);
+    font-family: inherit;
+    font-style: normal;
+    font-weight: 700;
+}
+
+.fd-food-heading p {
+    margin: 13px 0 0;
+    color: var(--fd-muted);
+    font-size: 13px;
+    line-height: 1.7;
+}
+
+/* Vùng ảnh chạy ngang */
+.fd-food-window {
+    position: relative;
+    overflow: hidden;
+    padding: 12px 0 20px;
+}
+
+    /* Làm mềm hai mép của dải ảnh */
+    .fd-food-window::before,
+    .fd-food-window::after {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        z-index: 2;
+        width: 48px;
+        content: "";
+        pointer-events: none;
+    }
+
+    .fd-food-window::before {
+        left: 0;
+        background: linear-gradient(to right, #fff, transparent);
+    }
+
+    .fd-food-window::after {
+        right: 0;
+        background: linear-gradient(to left, #fff, transparent);
+    }
+
+.fd-food-track {
+    display: flex;
+    width: max-content;
+    animation: fd-food-scroll 48s linear infinite;
+}
+
+.fd-food-group {
+    display: flex;
+    flex-shrink: 0;
+    align-items: stretch;
+    gap: var(--fd-gap);
+    min-width: 100vw;
+    padding-right: var(--fd-gap);
+}
+
+/* Tất cả thẻ bằng nhau */
+.fd-food-card {
+    flex: 0 0 250px;
+    width: 250px;
+    margin: 0;
+    padding: 7px 7px 0;
+    overflow: hidden;
+    border: 1px solid #efe7e9;
+    border-radius: 17px;
+    background: #fff;
+    box-shadow: 0 5px 16px rgba(65, 20, 30, 0.045);
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
+}
+
+    .fd-food-card:hover {
+        transform: translateY(-4px);
+        border-color: #dca1ac;
+        box-shadow: 0 12px 26px rgba(130, 25, 45, 0.1);
+    }
+
+/* Ảnh sáng, không đặt chữ đè lên món ăn */
+.fd-food-photo {
+    height: 165px;
+    overflow: hidden;
+    border-radius: 11px;
+    background: #f6f1f2;
+}
+
+    .fd-food-photo img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: center;
+        transition: transform 0.5s ease;
+    }
+
+.fd-food-card:hover img {
+    transform: scale(1.05);
+}
+
+/* Chữ nằm trong phần nền trắng dưới ảnh */
+.fd-food-card figcaption {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    min-height: 70px;
+    padding: 13px 8px;
+}
+
+    .fd-food-card figcaption > div {
+        min-width: 0;
+    }
+
+.fd-food-category {
+    display: block;
+    margin-bottom: 5px;
+    color: var(--fd-red);
+    font-size: 8px;
+    font-weight: 600;
+    letter-spacing: 1.25px;
+    line-height: 1.5;
+}
+
+.fd-food-name {
+    display: block;
+    color: var(--fd-ink);
+    font-family: "Open Sans", sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.5;
+}
+
+.fd-food-detail {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 29px;
+    height: 29px;
+    border: 1px solid #f0dce1;
+    border-radius: 50%;
+    color: var(--fd-red);
+    font-size: 14px;
+}
+
+/* Tạm dừng khi xem ảnh hoặc nhấn nút */
+.fd-food-window:hover .fd-food-track,
+.fd-food-window:focus-within .fd-food-track,
+.fd-food-strip.is-paused .fd-food-track {
+    animation-play-state: paused;
+}
+
+/* Chân dải ảnh */
+.fd-food-bottom {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding-top: 13px;
+    border-top: 1px solid #f2e9ec;
+}
+
+.fd-food-note {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--fd-muted);
+    font-size: 11px;
+}
+
+.fd-food-dot {
+    flex-shrink: 0;
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: var(--fd-red);
+}
+
+.fd-food-toggle {
+    flex-shrink: 0;
+    padding: 7px 15px;
+    border: 1px solid #edd3d9;
+    border-radius: 30px;
+    background: #fff;
+    color: var(--fd-red);
+    font-family: "Open Sans", sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s ease, color 0.2s ease;
+}
+
+    .fd-food-toggle:hover,
+    .fd-food-toggle[aria-pressed="true"] {
+        border-color: var(--fd-red);
+        background: var(--fd-red);
+        color: #fff;
+    }
+
+    .fd-food-window:focus-visible,
+    .fd-food-toggle:focus-visible {
+        outline: 2px solid var(--fd-red);
+        outline-offset: -2px;
+    }
+
+@keyframes fd-food-scroll {
+    from {
+        transform: translateX(0);
+    }
+
+    to {
+        transform: translateX(-50%);
+    }
+}
+
+/* Điện thoại */
+@media (max-width: 767.98px) {
+    .fd-food-strip {
+        --fd-gap: 12px;
+        padding-top: 28px;
+    }
+
+    .fd-food-heading {
+        margin-bottom: 18px;
+    }
+
+    .fd-food-eyebrow {
+        gap: 8px;
+        font-size: 8px;
+        letter-spacing: 1.5px;
+    }
+
+    .fd-food-heading p {
+        font-size: 12px;
+    }
+
+    .fd-food-card {
+        flex-basis: 210px;
+        width: 210px;
+        border-radius: 15px;
+    }
+
+    .fd-food-photo {
+        height: 140px;
+    }
+
+    .fd-food-card figcaption {
+        min-height: 68px;
+        padding-right: 4px;
+        padding-left: 4px;
+    }
+
+    .fd-food-name {
+        font-size: 12px;
+    }
+
+    .fd-food-category {
+        font-size: 7px;
+        letter-spacing: 1px;
+    }
+
+    .fd-food-window::before,
+    .fd-food-window::after {
+        width: 20px;
+    }
+
+    .fd-food-note {
+        font-size: 10px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .fd-food-window {
+        overflow-x: auto;
+    }
+
+    .fd-food-track {
+        animation: none;
+    }
+
+    .fd-food-group[aria-hidden="true"],
+    .fd-food-toggle,
+    .fd-food-window::before,
+    .fd-food-window::after {
+        display: none;
+    }
+
+    .fd-food-card,
+    .fd-food-photo img {
+        transition: none;
+    }
+}
+
+/*** FapDora Food Strip End ***/
+/*** DoraFood About Start ***/
+
+.fd-about {
+    --about-red: #ad1830;
+    --about-ink: #291b20;
+    --about-muted: #786d72;
+    padding: 72px 0;
+    background: #fff;
+    font-family: "Open Sans", sans-serif;
+}
+
+/* Bố cục ảnh */
+.fd-about-visual {
+    position: relative;
+    max-width: 540px;
+    margin: 0 auto;
+    padding: 18px 52px 48px 14px;
+}
+
+.fd-about-outline {
+    position: absolute;
+    top: 0;
+    right: 32px;
+    bottom: 76px;
+    left: 34px;
+    border: 1px solid #ead0d6;
+    border-radius: 24px;
+    pointer-events: none;
+}
+
+.fd-about-main {
+    position: relative;
+    height: 390px;
+    margin: 0;
+    overflow: hidden;
+    border-radius: 20px;
+    background: #f5edef;
+}
+
+    .fd-about-main img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    /* Phần chữ ngắn trên ảnh */
+    .fd-about-main::after {
+        position: absolute;
+        inset: 0;
+        content: "";
+        background: linear-gradient( to top, rgba(32, 12, 19, 0.78), transparent 55% );
+        pointer-events: none;
+    }
+
+    .fd-about-main figcaption {
+        position: absolute;
+        right: 26px;
+        bottom: 30px;
+        left: 26px;
+        z-index: 1;
+        max-width: 240px;
+        color: #fff;
+        font-size: 16px;
+        font-weight: 600;
+        line-height: 1.65;
+    }
+
+        .fd-about-main figcaption span {
+            display: block;
+            margin-bottom: 8px;
+            color: #f4c9d1;
+            font-size: 9px;
+            font-weight: 600;
+            letter-spacing: 3px;
+        }
+
+/* Ảnh nhỏ xếp lớp */
+.fd-about-inset {
+    position: absolute;
+    right: 0;
+    bottom: 8px;
+    width: 190px;
+    height: 155px;
+    overflow: hidden;
+    border: 7px solid #fff;
+    border-radius: 20px;
+    background: #f5edef;
+    box-shadow: 0 14px 32px rgba(70, 20, 35, 0.12);
+}
+
+    .fd-about-inset img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+/* Nhãn đỏ nhỏ */
+.fd-about-seal {
+    position: absolute;
+    top: 44px;
+    right: 9px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    width: 138px;
+    height: 138px;
+    padding: 14px;
+    border: 5px solid #fff;
+    border-radius: 50%;
+    background: var(--about-red);
+    color: #fff;
+    text-align: center;
+    box-shadow: 0 10px 26px rgba(173, 24, 48, 0.17);
+}
+
+    .fd-about-seal i {
+        margin-bottom: 3px;
+        font-size: 23px;
+    }
+
+    .fd-about-seal span {
+        font-size: 10px;
+        opacity: 0.85;
+    }
+
+    .fd-about-seal strong {
+        font-size: 11px;
+        font-weight: 600;
+        line-height: 1.5;
+    }
+
+/* Nội dung */
+.fd-about-content {
+    max-width: 530px;
+    margin-left: auto;
+}
+
+.fd-about-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 16px;
+    color: var(--about-red);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+}
+
+    .fd-about-eyebrow::before {
+        width: 26px;
+        height: 2px;
+        background: var(--about-red);
+        content: "";
+    }
+
+/* Ghi đè font Playball cũ chỉ trong About */
+.fd-about .fd-about-content h2 {
+    margin: 0 0 20px;
+    color: var(--about-ink);
+    font-family: "Open Sans", sans-serif !important;
+    font-size: clamp(26px, 2.6vw, 37px);
+    font-weight: 700 !important;
+    line-height: 1.4;
+    letter-spacing: -1.1px;
+}
+
+.fd-about-content h2 span {
+    color: var(--about-red);
+}
+
+.fd-about-lead {
+    margin-bottom: 12px;
+    color: var(--about-ink);
+    font-size: 16px;
+    font-weight: 600;
+    line-height: 1.8;
+}
+
+.fd-about-description {
+    margin-bottom: 24px;
+    color: var(--about-muted);
+    font-size: 14px;
+    line-height: 1.95;
+}
+
+/* Hai điểm nhấn nội dung */
+.fd-about-values {
+    display: grid;
+    gap: 19px;
+    padding: 23px 0;
+    border-top: 1px solid #f0e6e9;
+    border-bottom: 1px solid #f0e6e9;
+}
+
+.fd-about-value {
+    display: flex;
+    align-items: flex-start;
+    gap: 14px;
+}
+
+.fd-about-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: 42px;
+    height: 42px;
+    border: 1px solid #f1dce1;
+    border-radius: 13px;
+    background: #fff6f8;
+    color: var(--about-red);
+    font-size: 17px;
+}
+
+.fd-about .fd-about-value h3 {
+    margin: 0 0 5px;
+    color: var(--about-ink);
+    font-family: "Open Sans", sans-serif !important;
+    font-size: 14px;
+    font-weight: 700 !important;
+    line-height: 1.5;
+}
+
+.fd-about-value p {
+    margin: 0;
+    color: var(--about-muted);
+    font-size: 12px;
+    line-height: 1.8;
+}
+
+.fd-about-signoff {
+    display: flex;
+    align-items: center;
+    gap: 13px;
+    margin-top: 22px;
+    color: var(--about-muted);
+    font-size: 12px;
+    line-height: 1.8;
+}
+
+.fd-about-signoff-line {
+    flex-shrink: 0;
+    width: 32px;
+    height: 1px;
+    background: var(--about-red);
+}
+
+.fd-about-signoff strong {
+    color: var(--about-red);
+    font-weight: 600;
+}
+
+/* Máy tính bảng và điện thoại */
+@media (max-width: 991.98px) {
+    .fd-about {
+        padding: 45px 0;
+    }
+
+    .fd-about-content {
+        max-width: 600px;
+        margin: 0 auto;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .fd-about-visual {
+        max-width: 390px;
+        padding: 12px 30px 36px 0;
+    }
+
+    .fd-about-outline {
+        right: 16px;
+        bottom: 58px;
+        left: 18px;
+    }
+
+    .fd-about-main {
+        height: 300px;
+        border-radius: 17px;
+    }
+
+        .fd-about-main figcaption {
+            bottom: 25px;
+            left: 20px;
+            max-width: 180px;
+            font-size: 14px;
+        }
+
+    .fd-about-inset {
+        width: 140px;
+        height: 120px;
+        border-width: 5px;
+        border-radius: 16px;
+    }
+
+    .fd-about-seal {
+        top: 30px;
+        right: 0;
+        width: 112px;
+        height: 112px;
+        border-width: 4px;
+    }
+
+        .fd-about-seal i {
+            font-size: 19px;
+        }
+
+        .fd-about-seal strong {
+            font-size: 9px;
+        }
+
+    .fd-about-lead {
+        font-size: 15px;
+    }
+
+    .fd-about-description {
+        font-size: 13px;
+    }
+}
+
+/*** DoraFood About End ***/
