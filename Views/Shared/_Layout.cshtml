@@ -74,66 +74,8 @@
 
                 <div class="collapse navbar-collapse" id="navbarCollapse">
 
-                    <!-- Menu chính -->
-                    <div class="navbar-nav mx-auto gap-lg-1 py-3 py-lg-0">
-
-                        <a href="@Url.Content("~/")"
-                           class="nav-item nav-link active"
-                           aria-current="page">
-                            Trang chủ
-                        </a>
-
-                        <a href="@Url.Content("~/about.html")"
-                           class="nav-item nav-link">
-                            Giới thiệu
-                        </a>
-
-                        <a href="@Url.Content("~/menu.html")"
-                           class="nav-item nav-link">
-                            Thực đơn
-                        </a>
-
-                        <div class="nav-item dropdown">
-                            <a href="#"
-                               class="nav-link dropdown-toggle"
-                               id="fapdoraServices"
-                               role="button"
-                               data-bs-toggle="dropdown"
-                               aria-expanded="false">
-                                Dịch vụ
-                            </a>
-
-                            <div class="dropdown-menu fapdora-dropdown"
-                                 aria-labelledby="fapdoraServices">
-
-                                <a href="@Url.Content("~/service.html")"
-                                   class="dropdown-item">
-                                    <i class="fas fa-concierge-bell"
-                                       aria-hidden="true"></i>
-                                    Dịch vụ nhà hàng
-                                </a>
-
-                                <a href="@Url.Content("~/event.html")"
-                                   class="dropdown-item">
-                                    <i class="fas fa-glass-cheers"
-                                       aria-hidden="true"></i>
-                                    Tiệc & sự kiện
-                                </a>
-
-                                <a href="@Url.Content("~/book.html")"
-                                   class="dropdown-item">
-                                    <i class="far fa-calendar-check"
-                                       aria-hidden="true"></i>
-                                    Đặt bàn trước
-                                </a>
-                            </div>
-                        </div>
-
-                        <a href="@Url.Content("~/contact.html")"
-                           class="nav-item nav-link">
-                            Liên hệ
-                        </a>
-                    </div>
+                    <!-- Menu chính lấy từ SQL Server -->
+                    @await Component.InvokeAsync("MainMenu")
 
                     <!-- Thao tác -->
                     <div class="fapdora-actions d-flex align-items-center gap-3 pb-3 pb-lg-0">

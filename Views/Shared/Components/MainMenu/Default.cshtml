@@ -1,0 +1,110 @@
+﻿@using System
+@using System.Linq
+@using System.Collections.Generic
+@model List<DoraFood.Models.NavigationItem>
+
+@functions {
+    // Menu hiện tại dùng các đường dẫn nội bộ của website.
+    private string MenuHref(string value)
+    {
+        return Url.IsLocalUrl(value)
+            ? Url.Content(value)
+            : "#";
+    }
+
+    private bool IsCurrent(string value)
+    {
+        if (!Url.IsLocalUrl(value))
+        {
+            return false;
+        }
+
+        var targetPath = Url.Content(value)
+            .Split('?', '#')[0]
+            .TrimEnd('/');
+
+        var currentPath = (
+            Context.Request.PathBase.Value
+            + Context.Request.Path.Value
+        ).TrimEnd('/');
+
+        return string.Equals(
+            currentPath,
+            targetPath,
+            StringComparison.OrdinalIgnoreCase);
+    }
+
+    private string ChildIcon(string value)
+    {
+        return value switch
+        {
+            "~/service.html" => "fas fa-concierge-bell",
+            "~/event.html" => "fas fa-glass-cheers",
+            "~/book.html" => "far fa-calendar-check",
+            _ => "fas fa-angle-right"
+        };
+    }
+}
+
+@{
+    var rootItems = Model
+        .Where(item => item.ParentId == null)
+        .OrderBy(item => item.SortOrder)
+        .ThenBy(item => item.Id)
+        .ToList();
+}
+
+<div class="navbar-nav mx-auto gap-lg-1 py-3 py-lg-0">
+    @foreach (var item in rootItems)
+    {
+        var children = Model
+            .Where(child => child.ParentId == item.Id)
+            .OrderBy(child => child.SortOrder)
+            .ThenBy(child => child.Id)
+            .ToList();
+
+        var isActive = IsCurrent(item.Url)
+            || children.Any(child => IsCurrent(child.Url));
+
+        if (children.Count > 0)
+        {
+            var dropdownId = $"main-menu-dropdown-{item.Id}";
+
+            <div class="nav-item dropdown">
+                <a href="#"
+                   class="nav-link dropdown-toggle @(isActive ? "active" : "")"
+                   id="@dropdownId"
+                   role="button"
+                   data-bs-toggle="dropdown"
+                   aria-expanded="false">
+                    @item.Label
+                </a>
+
+                <div class="dropdown-menu fapdora-dropdown"
+                     aria-labelledby="@dropdownId">
+
+                    @foreach (var child in children)
+                    {
+                        var childActive = IsCurrent(child.Url);
+
+                        <a href="@MenuHref(child.Url)"
+                           class="dropdown-item @(childActive ? "active" : "")"
+                           aria-current="@(childActive ? "page" : null)">
+                            <i class="@ChildIcon(child.Url)"
+                               aria-hidden="true"></i>
+                            @child.Label
+                        </a>
+                    }
+                </div>
+            </div>
+        }
+        else
+        {
+            <a href="@MenuHref(item.Url)"
+               class="nav-item nav-link @(isActive ? "active" : "")"
+               aria-current="@(isActive ? "page" : null)">
+                @item.Label
+            </a>
+        }
+    }
+</div>

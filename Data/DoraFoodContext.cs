@@ -14,6 +14,7 @@ public partial class DoraFoodContext : DbContext
 
     public virtual DbSet<AddOn> AddOns { get; set; }
 
+
     public virtual DbSet<AddOnRecipeItem> AddOnRecipeItems { get; set; }
 
     public virtual DbSet<AiConversation> AiConversations { get; set; }
