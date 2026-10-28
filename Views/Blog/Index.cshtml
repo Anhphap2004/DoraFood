@@ -1,0 +1,270 @@
+﻿@model DoraFood.Controllers.BlogController.BlogIndexViewModel
+
+@{
+    ViewData["Title"] = "Bài viết";
+
+    var selectedCategory = Model.Categories
+        .FirstOrDefault(c => c.Id == Model.SelectedCategoryId);
+
+    var heading = selectedCategory?.Name ?? "Tất cả bài viết";
+}
+
+<!-- Tiêu đề trang -->
+<section class="bg-light border-bottom py-5">
+    <div class="container">
+
+        <nav aria-label="Đường dẫn">
+            <ol class="breadcrumb mb-3">
+                <li class="breadcrumb-item">
+                    <a href="@Url.Action("Index", "Home")">
+                        Trang chủ
+                    </a>
+                </li>
+
+                <li class="breadcrumb-item active"
+                    aria-current="page">
+                    Bài viết
+                </li>
+            </ol>
+        </nav>
+
+        <span class="text-primary fw-semibold small">
+            CÂU CHUYỆN VÀ CẢM HỨNG
+        </span>
+
+        <h1 class="fw-bold mt-3 mb-3">
+            Góc nhỏ DoraFood
+        </h1>
+
+        <p class="text-muted mb-0">
+            Khám phá những câu chuyện ẩm thực,
+            món ngon và khoảnh khắc đáng nhớ.
+        </p>
+    </div>
+</section>
+
+<!-- Danh sách bài viết -->
+<section class="py-5">
+    <div class="container">
+
+        <!-- Lọc theo danh mục -->
+        <nav class="d-flex flex-wrap gap-2 mb-5"
+             aria-label="Danh mục bài viết">
+
+            <a href="@Url.Action("Index", "Blog")"
+               class="btn rounded-pill px-4 @(Model.SelectedCategoryId == null ? "btn-primary" : "btn-outline-primary")"
+               aria-current="@(Model.SelectedCategoryId == null ? "page" : null)">
+                Tất cả
+            </a>
+
+            @foreach (var category in Model.Categories)
+            {
+                var isSelected =
+                    Model.SelectedCategoryId == category.Id;
+
+                <a href="@Url.Action("Index", "Blog", new
+                   {
+                       categoryId = category.Id
+                   })"
+                   class="btn rounded-pill px-4 @(isSelected ? "btn-primary" : "btn-outline-primary")"
+                   aria-current="@(isSelected ? "page" : null)">
+                    @category.Name
+                </a>
+            }
+        </nav>
+
+        <!-- Tiêu đề kết quả -->
+        <div class="d-flex flex-wrap align-items-center
+            justify-content-between gap-2 mb-4">
+
+            <h2 class="h3 fw-bold mb-0">
+                @heading
+            </h2>
+
+            <span class="text-muted small">
+                @Model.TotalPosts bài viết
+            </span>
+        </div>
+
+        @if (Model.Posts.Count == 0)
+        {
+            <!-- Khi chưa có bài đủ điều kiện hiển thị -->
+            <div class="border rounded-4 bg-light text-center p-5">
+
+                <i class="far fa-newspaper text-primary fs-1 mb-3"
+                   aria-hidden="true"></i>
+
+                <h3 class="h4 fw-bold">
+                    Chưa có bài viết
+                </h3>
+
+                <p class="text-muted mb-0">
+                    Những câu chuyện mới sẽ sớm được cập nhật
+                    tại DoraFood.
+                </p>
+            </div>
+        }
+        else
+        {
+            <div class="row g-4">
+
+                @foreach (var post in Model.Posts)
+                {
+                    <div class="col-md-6 col-lg-4">
+                        <article class="card h-100 border
+                            rounded-4 overflow-hidden shadow-sm">
+
+                            <!-- Ảnh đại diện -->
+                            <div class="ratio ratio-16x9 bg-light">
+
+                                @if (!string.IsNullOrWhiteSpace(post.Cover?.Url))
+                                {
+                                    <img src="@Url.Content(post.Cover.Url)"
+                                         alt="@(post.Cover.AltText ?? post.Title)"
+                                         class="w-100 h-100 object-fit-cover"
+                                         loading="lazy"
+                                         decoding="async" />
+                                }
+                                else
+                                {
+                                    <div class="d-flex align-items-center
+                                        justify-content-center">
+                                        <i class="far fa-image
+                                        text-secondary fs-1"
+                                           aria-hidden="true"></i>
+                                    </div>
+                                }
+
+                            </div>
+
+                            <!-- Nội dung thẻ -->
+                            <div class="card-body p-4">
+
+                                <div class="d-flex flex-wrap
+                                    align-items-center gap-3 mb-3">
+
+                                    <a href="@Url.Action("Index", "Blog", new
+                                       {
+                                           categoryId = post.CategoryId
+                                       })"
+                                       class="badge bg-light text-primary
+                                        rounded-pill text-decoration-none
+                                        px-3 py-2">
+                                        @post.Category.Name
+                                    </a>
+
+                                    @if (post.PublishedAtUtc.HasValue)
+                                    {
+                                        <time class="text-muted small"
+                                              datetime="@post.PublishedAtUtc.Value.ToString("yyyy-MM-ddTHH:mm:ss'Z'")">
+                                            @post.PublishedAtUtc.Value
+                                            .AddHours(7)
+                                            .ToString("dd/MM/yyyy")
+                                        </time>
+                                    }
+
+                                </div>
+
+                                <h3 class="h4 fw-bold mb-3">
+                                    <a href="@Url.Action("Details", "Blog", new
+                                       {
+                                           slug = post.Slug
+                                       })"
+                                       class="text-dark text-decoration-none">
+                                        @post.Title
+                                    </a>
+                                </h3>
+
+                                @if (!string.IsNullOrWhiteSpace(post.Summary))
+                                {
+                                    <p class="text-muted mb-0">
+                                        @post.Summary
+                                    </p>
+                                }
+
+                            </div>
+                        </article>
+                    </div>
+                }
+
+            </div>
+        }
+
+        <!-- Phân trang -->
+        @if (Model.TotalPages > 1)
+        {
+            var startPage = Math.Max(1, Model.CurrentPage - 2);
+            var endPage = Math.Min(
+                Model.TotalPages,
+                Model.CurrentPage + 2);
+
+            <nav class="mt-5" aria-label="Phân trang bài viết">
+                <ul class="pagination justify-content-center flex-wrap">
+
+                    <li class="page-item @(Model.CurrentPage == 1 ? "disabled" : "")">
+                        @if (Model.CurrentPage > 1)
+                        {
+                            <a class="page-link"
+                               href="@Url.Action("Index", "Blog", new
+                               {
+                                   categoryId = Model.SelectedCategoryId,
+                                   page = Model.CurrentPage - 1
+                               })">
+                                Trước
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="page-link" aria-disabled="true">
+                                Trước
+                            </span>
+                        }
+                    </li>
+
+                    @for (var number = startPage;
+                          number <= endPage;
+                          number++)
+                    {
+                        var isCurrent =
+                            number == Model.CurrentPage;
+
+                        <li class="page-item @(isCurrent ? "active" : "")">
+                            <a class="page-link"
+                               href="@Url.Action("Index", "Blog", new
+                               {
+                                   categoryId = Model.SelectedCategoryId,
+                                   page = number
+                               })"
+                               aria-current="@(isCurrent ? "page" : null)"
+                               aria-label="Trang @number">
+                                @number
+                            </a>
+                        </li>
+                    }
+
+                    <li class="page-item @(Model.CurrentPage == Model.TotalPages ? "disabled" : "")">
+                        @if (Model.CurrentPage < Model.TotalPages)
+                        {
+                            <a class="page-link"
+                               href="@Url.Action("Index", "Blog", new
+                               {
+                                   categoryId = Model.SelectedCategoryId,
+                                   page = Model.CurrentPage + 1
+                               })">
+                                Sau
+                            </a>
+                        }
+                        else
+                        {
+                            <span class="page-link" aria-disabled="true">
+                                Sau
+                            </span>
+                        }
+                    </li>
+
+                </ul>
+            </nav>
+        }
+
+    </div>
+</section>

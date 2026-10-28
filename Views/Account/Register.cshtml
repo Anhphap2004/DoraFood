@@ -1,0 +1,181 @@
+﻿@model DoraFood.Controllers.AccountController.RegisterInput
+
+@{
+    ViewData["Title"] = "Đăng ký";
+}
+
+<section class="bg-light py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-9 col-lg-7 col-xl-6">
+
+                <div class="bg-white border rounded-4 shadow-sm p-4 p-md-5">
+
+                    <!-- Thương hiệu -->
+                    <a href="@Url.Action("Index", "Home")"
+                       class="d-inline-flex align-items-center gap-2
+                        text-decoration-none mb-4">
+
+                        <i class="fas fa-utensils text-primary fs-3"
+                           aria-hidden="true"></i>
+
+                        <span class="fs-3 fw-bold text-dark">
+                            Dora<span class="text-primary">Food</span>
+                        </span>
+                    </a>
+
+                    <p class="text-primary fw-semibold small mb-2">
+                        CHÀO MỪNG BẠN ĐẾN VỚI DORAFOOD
+                    </p>
+
+                    <h1 class="h2 fw-bold mb-3"
+                        style="font-family: 'Segoe UI', Arial, sans-serif;">
+                        Tạo tài khoản
+                    </h1>
+
+                    <p class="text-muted mb-4">
+                        Đăng ký để kết nối và chia sẻ trải nghiệm
+                        ẩm thực cùng DoraFood.
+                    </p>
+
+                    <form action="@Url.Action("Register", "Account")"
+                          method="post">
+
+                        @Html.AntiForgeryToken()
+
+                        <!-- Lỗi chung của quá trình đăng ký -->
+                        <div asp-validation-summary="ModelOnly"
+                             class="text-danger mb-3"
+                             role="alert"></div>
+
+                        <!-- Tên đăng nhập -->
+                        <div class="mb-4">
+                            <label asp-for="UserName"
+                                   class="form-label fw-semibold">
+                                Tên đăng nhập
+                            </label>
+
+                            <input asp-for="UserName"
+                                   class="form-control rounded-3 py-3"
+                                   placeholder="Ví dụ: nguyenan"
+                                   autocomplete="username"
+                                   autocapitalize="none"
+                                   spellcheck="false"
+                                   minlength="3"
+                                   maxlength="100"
+                                   aria-describedby="register-username-help"
+                                   required />
+
+                            <div id="register-username-help"
+                                 class="form-text">
+                                Từ 3 đến 100 ký tự; dùng chữ không dấu,
+                                số, dấu chấm, gạch dưới hoặc gạch ngang.
+                            </div>
+
+                            <span asp-validation-for="UserName"
+                                  class="text-danger small"></span>
+                        </div>
+
+                        <!-- Email -->
+                        <div class="mb-4">
+                            <label asp-for="Email"
+                                   class="form-label fw-semibold">
+                                Email
+                            </label>
+
+                            <input asp-for="Email"
+                                   type="email"
+                                   class="form-control rounded-3 py-3"
+                                   placeholder="Ví dụ: ban@email.com"
+                                   autocomplete="email"
+                                   maxlength="254"
+                                   required />
+
+                            <span asp-validation-for="Email"
+                                  class="text-danger small"></span>
+                        </div>
+
+                        <!-- Mật khẩu -->
+                        <div class="mb-4">
+                            <label asp-for="Password"
+                                   class="form-label fw-semibold">
+                                Mật khẩu
+                            </label>
+
+                            <input asp-for="Password"
+                                   type="password"
+                                   class="form-control rounded-3 py-3"
+                                   placeholder="Nhập mật khẩu"
+                                   autocomplete="new-password"
+                                   minlength="8"
+                                   maxlength="128"
+                                   aria-describedby="register-password-help"
+                                   required />
+
+                            <div id="register-password-help"
+                                 class="form-text">
+                                Từ 8 đến 128 ký tự.
+                                Nên dùng mật khẩu dài và khó đoán.
+                            </div>
+
+                            <span asp-validation-for="Password"
+                                  class="text-danger small"></span>
+                        </div>
+
+                        <!-- Xác nhận mật khẩu -->
+                        <div class="mb-4">
+                            <label asp-for="ConfirmPassword"
+                                   class="form-label fw-semibold">
+                                Nhập lại mật khẩu
+                            </label>
+
+                            <input asp-for="ConfirmPassword"
+                                   type="password"
+                                   class="form-control rounded-3 py-3"
+                                   placeholder="Nhập lại mật khẩu"
+                                   autocomplete="new-password"
+                                   minlength="8"
+                                   maxlength="128"
+                                   required />
+
+                            <span asp-validation-for="ConfirmPassword"
+                                  class="text-danger small"></span>
+                        </div>
+
+                        <button type="submit"
+                                class="btn btn-primary rounded-pill
+                            w-100 py-3 fw-semibold">
+                            Tạo tài khoản
+                            <i class="fas fa-arrow-right ms-2"
+                               aria-hidden="true"></i>
+                        </button>
+
+                    </form>
+
+                    <div class="text-center border-top mt-4 pt-4">
+                        <span class="text-muted">
+                            Bạn đã có tài khoản?
+                        </span>
+
+                        <a href="@Url.Action("Login", "Account")"
+                           class="text-primary fw-semibold
+                            text-decoration-none ms-1">
+                            Đăng nhập
+                        </a>
+                    </div>
+
+                </div>
+
+                <div class="text-center mt-4">
+                    <a href="@Url.Action("Index", "Home")"
+                       class="text-muted text-decoration-none small">
+                        <i class="fas fa-arrow-left me-2"
+                           aria-hidden="true"></i>
+                        Quay lại trang chủ
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>

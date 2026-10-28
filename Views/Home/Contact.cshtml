@@ -1,0 +1,212 @@
+﻿@model DoraFood.Controllers.HomeController.ContactInput
+
+@{
+    ViewData["Title"] = "Liên hệ";
+}
+
+<!-- Tiêu đề trang -->
+<section class="bg-light border-bottom py-5">
+    <div class="container">
+
+        <nav aria-label="Đường dẫn">
+            <ol class="breadcrumb mb-3">
+                <li class="breadcrumb-item">
+                    <a href="@Url.Action("Index", "Home")">
+                        Trang chủ
+                    </a>
+                </li>
+
+                <li class="breadcrumb-item active"
+                    aria-current="page">
+                    Liên hệ
+                </li>
+            </ol>
+        </nav>
+
+        <h1 class="fw-bold mb-3">Kết nối cùng DoraFood</h1>
+
+        <p class="text-muted mb-0">
+            Một lời góp ý, một câu hỏi hay một mong muốn sẻ chia —
+            DoraFood luôn sẵn sàng lắng nghe.
+        </p>
+    </div>
+</section>
+
+<!-- Nội dung Liên hệ -->
+<section class="py-5">
+    <div class="container">
+        <div class="row g-5">
+
+            <!-- Giới thiệu -->
+            <div class="col-lg-4">
+                <span class="text-primary fw-semibold small">
+                    CHÚNG TÔI LẮNG NGHE BẠN
+                </span>
+
+                <h2 class="fw-bold mt-3 mb-4">
+                    Mỗi lời nhắn đều được trân trọng.
+                </h2>
+
+                <p class="text-muted">
+                    Bạn muốn tìm hiểu thêm về món ăn, dịch vụ
+                    hay chia sẻ trải nghiệm tại DoraFood?
+                    Hãy để lại lời nhắn qua biểu mẫu.
+                </p>
+
+                <div class="border rounded-4 p-4 mt-4">
+                    <i class="far fa-comment-dots text-primary fs-3 mb-3"
+                       aria-hidden="true"></i>
+
+                    <h3 class="h5 fw-bold">Để chúng tôi liên hệ lại</h3>
+
+                    <p class="text-muted mb-0">
+                        Vui lòng cung cấp email hoặc số điện thoại
+                        chính xác cùng nội dung bạn cần hỗ trợ.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Form liên hệ -->
+            <div class="col-lg-8">
+                <div class="border rounded-4 bg-white p-4 p-md-5 shadow-sm">
+
+                    <h2 class="h3 fw-bold mb-2">Gửi lời nhắn</h2>
+
+                    <p class="text-muted mb-4">
+                        Các trường có dấu
+                        <span class="text-danger">*</span>
+                        là bắt buộc.
+                    </p>
+
+                    @if (TempData["ContactSuccess"] is string successMessage)
+                    {
+                        <div class="alert alert-success"
+                             role="status">
+                            @successMessage
+                        </div>
+                    }
+
+                    <form action="@Url.Action("Contact", "Home")"
+                          method="post">
+
+                        @Html.AntiForgeryToken()
+
+                        <div asp-validation-summary="All"
+                             class="text-danger mb-3"
+                             role="alert"></div>
+
+                        <div class="row g-4">
+
+                            <div class="col-12">
+                                <label asp-for="FullName"
+                                       class="form-label fw-semibold">
+                                    Họ và tên
+                                    <span class="text-danger">*</span>
+                                </label>
+
+                                <input asp-for="FullName"
+                                       class="form-control rounded-3 py-3"
+                                       placeholder="Nhập họ và tên của bạn"
+                                       autocomplete="name"
+                                       maxlength="150"
+                                       required />
+
+                                <span asp-validation-for="FullName"
+                                      class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="Email"
+                                       class="form-label fw-semibold">
+                                    Email
+                                </label>
+
+                                <input asp-for="Email"
+                                       type="email"
+                                       class="form-control rounded-3 py-3"
+                                       placeholder="Ví dụ: ban@email.com"
+                                       autocomplete="email"
+                                       aria-describedby="contact-method-note"
+                                       maxlength="254" />
+
+                                <span asp-validation-for="Email"
+                                      class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label asp-for="PhoneNumber"
+                                       class="form-label fw-semibold">
+                                    Số điện thoại
+                                </label>
+
+                                <input asp-for="PhoneNumber"
+                                       type="tel"
+                                       class="form-control rounded-3 py-3"
+                                       placeholder="Nhập số điện thoại"
+                                       autocomplete="tel"
+                                       aria-describedby="contact-method-note"
+                                       maxlength="20" />
+
+                                <span asp-validation-for="PhoneNumber"
+                                      class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-12 mt-2">
+                                <p id="contact-method-note"
+                                   class="text-muted small mb-0">
+                                    Cần nhập ít nhất email hoặc số điện thoại.
+                                </p>
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="Subject"
+                                       class="form-label fw-semibold">
+                                    Chủ đề
+                                    <span class="text-danger">*</span>
+                                </label>
+
+                                <input asp-for="Subject"
+                                       class="form-control rounded-3 py-3"
+                                       placeholder="Bạn cần DoraFood hỗ trợ điều gì?"
+                                       maxlength="250"
+                                       required />
+
+                                <span asp-validation-for="Subject"
+                                      class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="Body"
+                                       class="form-label fw-semibold">
+                                    Lời nhắn
+                                    <span class="text-danger">*</span>
+                                </label>
+
+                                <textarea asp-for="Body"
+                                          class="form-control rounded-3"
+                                          rows="6"
+                                          placeholder="Nhập nội dung bạn muốn chia sẻ..."
+                                          maxlength="5000"
+                                          required></textarea>
+
+                                <span asp-validation-for="Body"
+                                      class="text-danger small"></span>
+                            </div>
+
+                            <div class="col-12">
+                                <button type="submit"
+                                        class="btn btn-primary rounded-pill px-4 py-3">
+                                    Gửi lời nhắn
+                                    <i class="fas fa-paper-plane ms-2"
+                                       aria-hidden="true"></i>
+                                </button>
+                            </div>
+
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>

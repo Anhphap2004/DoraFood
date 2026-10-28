@@ -1,0 +1,148 @@
+﻿@model DoraFood.Controllers.AccountController.LoginInput
+
+@{
+    ViewData["Title"] = "Đăng nhập";
+}
+
+<section class="bg-light py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-9 col-lg-7 col-xl-6">
+
+                <div class="bg-white border rounded-4 shadow-sm p-4 p-md-5">
+
+                    <!-- Thương hiệu -->
+                    <a href="@Url.Action("Index", "Home")"
+                       class="d-inline-flex align-items-center gap-2
+                        text-decoration-none mb-4">
+
+                        <i class="fas fa-utensils text-primary fs-3"
+                           aria-hidden="true"></i>
+
+                        <span class="fs-3 fw-bold text-dark">
+                            Dora<span class="text-primary">Food</span>
+                        </span>
+                    </a>
+
+                    <p class="text-primary fw-semibold small mb-2">
+                        CHÀO MỪNG BẠN TRỞ LẠI
+                    </p>
+
+                    <h1 class="h2 fw-bold mb-3"
+                        style="font-family: 'Segoe UI', Arial, sans-serif;">
+                        Đăng nhập
+                    </h1>
+
+                    <p class="text-muted mb-4">
+                        Tiếp tục khám phá những hương vị
+                        và câu chuyện cùng DoraFood.
+                    </p>
+
+                    <!-- Thông báo sau khi đăng ký thành công -->
+                    @if (TempData["AuthSuccess"] is string successMessage)
+                    {
+                        <div class="alert alert-success"
+                             role="status">
+                            @successMessage
+                        </div>
+                    }
+
+                    <form action="@Url.Action("Login", "Account")"
+                          method="post">
+
+                        @Html.AntiForgeryToken()
+
+                        <!-- Giữ lại trang cần quay về sau đăng nhập -->
+                        <input asp-for="ReturnUrl" type="hidden" />
+
+                        <div asp-validation-summary="ModelOnly"
+                             class="text-danger mb-3"
+                             role="alert"></div>
+
+                        <!-- Tên đăng nhập -->
+                        <div class="mb-4">
+                            <label asp-for="UserName"
+                                   class="form-label fw-semibold">
+                                Tên đăng nhập
+                            </label>
+
+                            <input asp-for="UserName"
+                                   class="form-control rounded-3 py-3"
+                                   placeholder="Nhập tên đăng nhập"
+                                   autocomplete="username"
+                                   autocapitalize="none"
+                                   spellcheck="false"
+                                   maxlength="100"
+                                   required />
+
+                            <span asp-validation-for="UserName"
+                                  class="text-danger small"></span>
+                        </div>
+
+                        <!-- Mật khẩu -->
+                        <div class="mb-4">
+                            <label asp-for="Password"
+                                   class="form-label fw-semibold">
+                                Mật khẩu
+                            </label>
+
+                            <input asp-for="Password"
+                                   type="password"
+                                   class="form-control rounded-3 py-3"
+                                   placeholder="Nhập mật khẩu"
+                                   autocomplete="current-password"
+                                   maxlength="128"
+                                   required />
+
+                            <span asp-validation-for="Password"
+                                  class="text-danger small"></span>
+                        </div>
+
+                        <!-- Ghi nhớ đăng nhập -->
+                        <div class="form-check mb-4">
+                            <input asp-for="RememberMe"
+                                   class="form-check-input" />
+
+                            <label asp-for="RememberMe"
+                                   class="form-check-label">
+                                Ghi nhớ đăng nhập
+                            </label>
+                        </div>
+
+                        <button type="submit"
+                                class="btn btn-primary rounded-pill
+                            w-100 py-3 fw-semibold">
+                            Đăng nhập
+                            <i class="fas fa-arrow-right ms-2"
+                               aria-hidden="true"></i>
+                        </button>
+
+                    </form>
+
+                    <div class="text-center border-top mt-4 pt-4">
+                        <span class="text-muted">
+                            Bạn chưa có tài khoản?
+                        </span>
+
+                        <a href="@Url.Action("Register", "Account")"
+                           class="text-primary fw-semibold
+                            text-decoration-none ms-1">
+                            Đăng ký
+                        </a>
+                    </div>
+
+                </div>
+
+                <div class="text-center mt-4">
+                    <a href="@Url.Action("Index", "Home")"
+                       class="text-muted text-decoration-none small">
+                        <i class="fas fa-arrow-left me-2"
+                           aria-hidden="true"></i>
+                        Quay lại trang chủ
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</section>

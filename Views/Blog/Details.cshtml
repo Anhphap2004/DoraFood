@@ -1,0 +1,319 @@
+﻿@using System.Collections.Generic
+@using DoraFood.Controllers
+@model DoraFood.Models.Post
+
+@{
+    ViewData["Title"] = Model.Title;
+
+    var comments = ViewData["Comments"]
+        as List<BlogController.CommentItem>
+        ?? new List<BlogController.CommentItem>();
+
+    var commentCount = ViewData["CommentCount"] is int count
+        ? count
+        : 0;
+
+    var commentInput = ViewData["CommentInput"]
+        as BlogController.CommentInput
+        ?? new BlogController.CommentInput
+        {
+            PostId = Model.Id
+        };
+
+    var loginReturnUrl = Url.Action(
+        "Details",
+        "Blog",
+        new { slug = Model.Slug }) + "#comments";
+}
+<style>
+    .df-blog-detail,
+    .df-blog-detail h1,
+    .df-blog-detail h2,
+    .df-blog-detail h3,
+    .df-blog-detail h4 {
+        font-family: "Segoe UI", Arial, sans-serif;
+    }
+
+    .df-blog-detail .df-article-title {
+        font-size: clamp(2rem, 4vw, 3.25rem);
+        line-height: 1.25;
+        overflow-wrap: anywhere;
+    }
+
+    .df-blog-detail .df-article-cover {
+        display: block;
+        width: 100%;
+        max-height: 520px;
+        object-fit: cover;
+    }
+
+    .df-blog-detail .df-article-content {
+        font-size: 1.05rem;
+        line-height: 1.9;
+        color: #494149;
+        overflow-wrap: anywhere;
+    }
+
+    .df-blog-detail .df-article-content h2,
+    .df-blog-detail .df-article-content h3,
+    .df-blog-detail .df-article-content h4 {
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+        font-weight: 700;
+        line-height: 1.4;
+        color: #29252a;
+    }
+
+    .df-blog-detail .df-article-content p {
+        margin-bottom: 1.25rem;
+    }
+
+    .df-blog-detail .df-article-content img {
+        max-width: 100%;
+        height: auto;
+        border-radius: 12px;
+    }
+
+    .df-blog-detail .df-article-content blockquote {
+        border-left: 4px solid var(--bs-primary, #b92032);
+        padding: 1rem 1.5rem;
+        background: #fff6f6;
+        margin: 1.5rem 0;
+    }
+</style>
+
+<main class="df-blog-detail py-5">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-10 col-xl-9">
+
+                <!-- Đường dẫn -->
+                <nav aria-label="Đường dẫn">
+                    <ol class="breadcrumb mb-4">
+                        <li class="breadcrumb-item">
+                            <a href="@Url.Action("Index", "Home")">
+                                Trang chủ
+                            </a>
+                        </li>
+
+                        <li class="breadcrumb-item">
+                            <a href="@Url.Action("Index", "Blog")">
+                                Bài viết
+                            </a>
+                        </li>
+
+                        <li class="breadcrumb-item active"
+                            aria-current="page">
+                            Chi tiết
+                        </li>
+                    </ol>
+                </nav>
+
+                <article>
+
+                    <!-- Danh mục và ngày đăng -->
+                    <div class="d-flex flex-wrap align-items-center
+                        gap-3 mb-4">
+
+                        <a href="@Url.Action("Index", "Blog", new
+                           {
+                               categoryId = Model.CategoryId
+                           })"
+                           class="badge bg-light text-primary
+                            rounded-pill text-decoration-none
+                            px-3 py-2">
+                            @Model.Category.Name
+                        </a>
+
+                        @if (Model.PublishedAtUtc.HasValue)
+                        {
+                            <time class="text-muted small"
+                                  datetime="@Model.PublishedAtUtc.Value.ToString("yyyy-MM-ddTHH:mm:ss'Z'")">
+                                <i class="far fa-calendar-alt me-1"
+                                   aria-hidden="true"></i>
+                                @Model.PublishedAtUtc.Value.AddHours(7).ToString("dd/MM/yyyy")
+                            </time>
+                        }
+
+                    </div>
+
+                    <!-- Tiêu đề -->
+                    <h1 class="df-article-title fw-bold mb-4">
+                        @Model.Title
+                    </h1>
+
+                    <!-- Tóm tắt -->
+                    @if (!string.IsNullOrWhiteSpace(Model.Summary))
+                    {
+                        <p class="lead text-muted mb-4">
+                            @Model.Summary
+                        </p>
+                    }
+
+                    <!-- Ảnh đại diện -->
+                    @if (!string.IsNullOrWhiteSpace(Model.Cover?.Url))
+                    {
+                        <figure class="mb-5">
+                            <img src="@Url.Content(Model.Cover.Url)"
+                                 alt="@(Model.Cover.AltText ?? Model.Title)"
+                                 class="df-article-cover rounded-4"
+                                 decoding="async" />
+                        </figure>
+                    }
+
+                    <!-- Nội dung đầy đủ -->
+                    <div class="df-article-content">
+                        @Html.Raw(Model.ContentHtml)
+                    </div>
+
+                </article>
+
+                <!-- Bình luận bài viết -->
+                <section id="comments"
+                         class="border-top mt-5 pt-5"
+                         aria-labelledby="comments-title">
+
+                    <div class="d-flex flex-wrap align-items-center
+                        justify-content-between gap-2 mb-4">
+
+                        <h2 id="comments-title"
+                            class="h3 fw-bold mb-0">
+                            Bình luận
+                        </h2>
+
+                        <span class="text-muted small">
+                            @commentCount bình luận đã duyệt
+                        </span>
+                    </div>
+
+                    <!-- Thông báo sau khi gửi -->
+                    @if (TempData["CommentSuccess"] is string successMessage)
+                    {
+                        <div class="alert alert-success" role="status">
+                            @successMessage
+                        </div>
+                    }
+
+                    <!-- Danh sách bình luận đã duyệt -->
+                    @if (comments.Count == 0)
+                    {
+                        <div class="bg-light border rounded-4 p-4 mb-4">
+                            <p class="text-muted mb-0">
+                                Chưa có bình luận được duyệt.
+                                Hãy chia sẻ cảm nhận của bạn về bài viết!
+                            </p>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="mb-5">
+                            @foreach (var comment in comments)
+                            {
+                                <article class="border rounded-4 p-4 mb-3">
+
+                                    <div class="d-flex align-items-start gap-3">
+
+                                        <span class="bg-light text-primary
+                                            rounded-circle d-inline-flex
+                                            align-items-center justify-content-center
+                                            flex-shrink-0"
+                                              style="width: 44px; height: 44px;">
+                                            <i class="far fa-user"
+                                               aria-hidden="true"></i>
+                                        </span>
+
+                                        <div class="flex-grow-1"
+                                             style="min-width: 0;">
+
+                                            <div class="d-flex flex-wrap
+                                                align-items-center gap-2 mb-2">
+
+                                                <h3 class="h6 fw-bold mb-0">
+                                                    @comment.UserName
+                                                </h3>
+
+                                                <time class="text-muted small"
+                                                      datetime="@comment.CreatedAtUtc.ToString("yyyy-MM-ddTHH:mm:ss'Z'")">
+                                                    @comment.CreatedAtUtc.AddHours(7).ToString("dd/MM/yyyy HH:mm")
+                                                </time>
+                                            </div>
+
+                                            <p class="mb-0"
+                                               style="white-space: pre-wrap; overflow-wrap: anywhere;">@comment.Body</p>
+
+                                        </div>
+                                    </div>
+
+                                </article>
+                            }
+
+                            @if (commentCount > comments.Count)
+                            {
+                                <p class="text-muted small mb-0">
+                                    Đang hiển thị @comments.Count bình luận
+                                    mới nhất trong tổng số @commentCount bình luận đã duyệt.
+                                </p>
+                            }
+                        </div>
+                    }
+
+                    <!-- Form hoặc lời mời đăng nhập -->
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <div class="border rounded-4 p-4 p-md-5">
+
+                            <h3 class="h4 fw-bold mb-2">
+                                Chia sẻ cảm nhận
+                            </h3>
+
+                            <p class="text-muted mb-4">
+                                Bạn đang bình luận với tài khoản
+                                <strong>@User.Identity.Name</strong>.
+                                Bình luận sẽ hiển thị sau khi được duyệt.
+                            </p>
+
+                            @await Html.PartialAsync("_CommentForm", commentInput)
+
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="bg-light border rounded-4 p-4">
+
+                            <h3 class="h5 fw-bold mb-2">
+                                Tham gia cuộc trò chuyện
+                            </h3>
+
+                            <p class="text-muted mb-3">
+                                Đăng nhập để gửi bình luận về bài viết.
+                            </p>
+
+                            <a href="@Url.Action("Login", "Account", new
+                               {
+                                   returnUrl = loginReturnUrl
+                               })"
+                               class="btn btn-primary rounded-pill px-4 py-2">
+                                <i class="far fa-user me-2"
+                                   aria-hidden="true"></i>
+                                Đăng nhập để bình luận
+                            </a>
+
+                        </div>
+                    }
+
+                </section>
+
+                <!-- Quay lại danh sách -->
+                <div class="border-top mt-5 pt-4">
+                    <a href="@Url.Action("Index", "Blog")"
+                       class="btn btn-outline-primary rounded-pill px-4 py-2">
+                        <i class="fas fa-arrow-left me-2"
+                           aria-hidden="true"></i>
+                        Tất cả bài viết
+                    </a>
+                </div>
+
+            </div>
+        </div>
+    </div>
+</main>

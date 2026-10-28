@@ -1,0 +1,110 @@
+﻿@model DoraFood.Models.Page
+@{
+    ViewData["Title"] = Model.Title;
+}
+
+<!-- Tiêu đề trang -->
+<section class="bg-light border-bottom py-5">
+    <div class="container">
+
+        <nav aria-label="Đường dẫn">
+            <ol class="breadcrumb mb-3">
+                <li class="breadcrumb-item">
+                    <a href="@Url.Action("Index", "Home")">
+                        Trang chủ
+                    </a>
+                </li>
+
+                <li class="breadcrumb-item active"
+                    aria-current="page">
+                    Giới thiệu
+                </li>
+            </ol>
+        </nav>
+
+        <h1 class="fw-bold mb-3">
+            @Model.Title
+        </h1>
+
+        @if (!string.IsNullOrWhiteSpace(Model.MetaDescription))
+        {
+            <p class="text-muted mb-0">
+                @Model.MetaDescription
+            </p>
+        }
+    </div>
+</section>
+
+<!-- Nội dung giới thiệu -->
+<section class="fd-about" aria-labelledby="about-content-title">
+    <div class="container">
+        <div class="row g-5 align-items-center">
+
+            <!-- Bộ ảnh giới thiệu -->
+            <div class="col-lg-6">
+                <div class="fd-about-visual">
+
+                    <span class="fd-about-outline"
+                          aria-hidden="true"></span>
+
+                    <figure class="fd-about-main">
+                        <img src="@Url.Content("~/assets/img/about.jpg")"
+                             alt="Không gian trải nghiệm ẩm thực DoraFood"
+                             loading="lazy">
+
+                        <figcaption>
+                            <span>DORAFOOD</span>
+                            Nơi những cuộc hẹn thêm trọn vẹn.
+                        </figcaption>
+                    </figure>
+
+                    <div class="fd-about-inset">
+                        <img src="@Url.Content("~/assets/img/menu-04.jpg")"
+                             alt="Một góc ẩm thực DoraFood"
+                             loading="lazy">
+                    </div>
+
+                    <div class="fd-about-seal">
+                        <i class="fas fa-utensils"
+                           aria-hidden="true"></i>
+
+                        <span>Chạm vị ngon</span>
+
+                        <strong>Gắn kết yêu thương</strong>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Nội dung lấy từ SQL Server -->
+            <div class="col-lg-6">
+                <div class="fd-about-content">
+
+                    <span class="fd-about-eyebrow">
+                        CÂU CHUYỆN DORAFOOD
+                    </span>
+
+                    <h2 id="about-content-title">
+                        Một bàn ăn ngon.
+                        <span>Nhiều điều để nhớ.</span>
+                    </h2>
+
+                    <div class="fd-about-description">
+                        @Html.Raw(Model.ContentHtml)
+                    </div>
+
+                    <div class="fd-about-signoff">
+                        <span class="fd-about-signoff-line"
+                              aria-hidden="true"></span>
+
+                        <span>
+                            DoraFood.
+                            <strong>Trọn vị những cuộc hẹn.</strong>
+                        </span>
+                    </div>
+
+                </div>
+            </div>
+
+        </div>
+    </div>
+</section>
