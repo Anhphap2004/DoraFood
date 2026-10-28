@@ -1,33 +1,38 @@
 ﻿@{
+    ViewData["Title"] = "Hương vị tinh tế, cuộc hẹn trọn vẹn";
+    var menuPageUrl = Url.RouteUrl("DoraFoodMenu") ?? Url.Content("~/thuc-don");
+    var reservationPageUrl = ViewData["BookingUrl"] as string ?? Url.Content("~/book.html");
+}
+@{
     var foodGallery = new[]
     {
         new {
-            Image = "menu-01.jpg",
+            Image = "p1.jpg",
             Label = "CẢM HỨNG ẨM THỰC",
             Title = "Đánh thức vị giác"
         },
         new {
-            Image = "menu-02.jpg",
+            Image = "p2.jpg",
             Label = "HƯƠNG VỊ YÊU THÍCH",
             Title = "Ngon từ ánh nhìn"
         },
         new {
-            Image = "menu-03.jpg",
+            Image = "p3.jpg",
             Label = "PHÚT GIÂY THƯ GIÃN",
             Title = "Chậm lại, thưởng thức"
         },
         new {
-            Image = "menu-04.jpg",
+            Image = "p4.jpg",
             Label = "SẮC VỊ HÒA QUYỆN",
             Title = "Một bàn đầy cảm hứng"
         },
         new {
-            Image = "menu-05.jpg",
+            Image = "p5.webp",
             Label = "NIỀM VUI SẺ CHIA",
             Title = "Hẹn nhau bữa ngon"
         },
         new {
-            Image = "menu-06.jpg",
+            Image = "p6.jfif",
             Label = "KHOẢNH KHẮC SUM VẦY",
             Title = "Trọn vị bên nhau"
         }
@@ -38,21 +43,19 @@
 <section class="fd-food-strip" aria-labelledby="foodStripTitle">
 
     <div class="container">
-        <div class="fd-food-heading">
-            <span class="fd-food-eyebrow">
-                <span></span>
-                DORAFOOD · THE ART OF TASTE
-                <span></span>
-            </span>
-
-            <h1 id="foodStripTitle">
-                Đẹp từ ánh nhìn.<br>
-                <em>Đậm sâu hương vị.</em>
-            </h1>
-
-            <p>
-                Một bữa ăn ngon, một cuộc hẹn đáng nhớ.
-            </p>
+        <div class="df-home-intro">
+            <div class="fd-food-heading">
+                <span class="df-premium-label"><span aria-hidden="true"></span>DORAFOOD · DINING & MOMENTS</span>
+                <h1 id="foodStripTitle">Đậm vị tinh tế.<br><em>Trọn những cuộc hẹn.</em></h1>
+                <p>Một món ăn hợp ý. Một cuộc gặp đúng lúc.<br class="df-desktop-break"> Cùng DoraFood dành thời gian cho những điều đáng nhớ.</p>
+                <div class="df-home-intro-actions"><a href="@menuPageUrl" class="df-premium-button">Khám phá thực đơn <span aria-hidden="true">↗</span></a><a href="@reservationPageUrl" class="df-premium-text-link">Lên lịch cuộc hẹn <span aria-hidden="true">→</span></a></div>
+            </div>
+            <aside class="df-editorial-box" aria-label="Cảm hứng cho cuộc hẹn">
+                <span class="df-editorial-mark" aria-hidden="true">✦</span><span class="df-editorial-kicker">THE JOY OF DINING</span>
+                <h2>Chọn món bạn thích.<br>Dành thời gian cho nhau.</h2>
+                <p>Gia đình · Bạn bè · Những dịp đặc biệt</p>
+                <a href="#df-dining-guide">Gợi ý cho cuộc hẹn của bạn <span aria-hidden="true">↗</span></a>
+            </aside>
         </div>
     </div>
 
@@ -66,32 +69,37 @@
                 <div class="fd-food-group"
                      aria-hidden="@(copy == 1 ? "true" : "false")">
 
-                    @foreach (var food in foodGallery)
+                    @for (var repeat = 0; repeat < 2; repeat++)
                     {
-                        <figure class="fd-food-card">
+                        <div class="fd-food-repeat" aria-hidden="@(repeat == 1 ? "true" : "false")">
+                            @foreach (var food in foodGallery)
+                            {
+                                <figure class="fd-food-card">
 
-                            <div class="fd-food-photo">
-                                <img src="@Url.Content("~/assets/img/" + food.Image)"
-                                     alt="@(copy == 0 ? food.Title : "")"
-                                     draggable="false">
-                            </div>
+                                    <div class="fd-food-photo">
+                                        <img src="@Url.Content("~/images/" + food.Image)"
+                                             alt="@(copy == 0 && repeat == 0 ? food.Title : "")"
+                                             draggable="false">
+                                    </div>
 
-                            <figcaption>
-                                <div>
-                                    <span class="fd-food-category">
-                                        @food.Label
-                                    </span>
+                                    <figcaption>
+                                        <div>
+                                            <span class="fd-food-category">
+                                                @food.Label
+                                            </span>
 
-                                    <span class="fd-food-name">
-                                        @food.Title
-                                    </span>
-                                </div>
+                                            <span class="fd-food-name">
+                                                @food.Title
+                                            </span>
+                                        </div>
 
-                                <span class="fd-food-detail"
-                                      aria-hidden="true">✦</span>
-                            </figcaption>
+                                        <span class="fd-food-detail"
+                                              aria-hidden="true">✦</span>
+                                    </figcaption>
 
-                        </figure>
+                                </figure>
+                            }
+                        </div>
                     }
                 </div>
             }
@@ -102,7 +110,7 @@
         <div class="fd-food-bottom">
             <span class="fd-food-note">
                 <span class="fd-food-dot" aria-hidden="true"></span>
-                Mỗi hương vị, một câu chuyện
+                Cảm hứng ẩm thực · Những khoảnh khắc sẻ chia
             </span>
 
             <button type="button"
@@ -115,6 +123,13 @@
 
 </section>
 <!-- Food Strip End -->
+<section class="df-home-paths" aria-label="Khám phá trải nghiệm DoraFood">
+    <div class="container df-home-paths-grid">
+        <a href="@menuPageUrl"><span class="df-path-icon"><i class="fas fa-utensils" aria-hidden="true"></i></span><div><h2>Thực đơn theo sở thích</h2><p>Tìm món và khám phá từng danh mục.</p></div><span class="df-path-arrow" aria-hidden="true">↗</span></a>
+        <a href="@menuPageUrl"><span class="df-path-icon"><i class="fas fa-concierge-bell" aria-hidden="true"></i></span><div><h2>Khẩu phần dễ lựa chọn</h2><p>Xem giá theo từng phần phục vụ.</p></div><span class="df-path-arrow" aria-hidden="true">↗</span></a>
+        <a href="@reservationPageUrl"><span class="df-path-icon"><i class="far fa-calendar-check" aria-hidden="true"></i></span><div><h2>Cuộc hẹn có chuẩn bị</h2><p>Chọn thời gian, số khách và lời nhắn.</p></div><span class="df-path-arrow" aria-hidden="true">↗</span></a>
+    </div>
+</section>
 <!-- About Start -->
 <section class="fd-about" aria-labelledby="fdAboutTitle">
     <div class="container">
@@ -225,3 +240,25 @@
 </section>
 <!-- About End -->
 @await Html.PartialAsync("_HomeSections")
+<!-- Hướng dẫn lựa chọn và FAQ bổ sung -->
+<section class="df-dining-guide" id="df-dining-guide" aria-labelledby="dfGuideTitle">
+    <div class="container">
+        <div class="df-guide-heading"><div><span class="df-premium-label">CHO MỘT CUỘC HẸN TRỌN VẸN</span><h2 id="dfGuideTitle">Một chút chuẩn bị.<br><span>Thêm nhiều niềm vui.</span></h2></div><p>Ba gợi ý nhỏ để bạn dễ chọn món và sắp xếp buổi gặp gỡ.</p></div>
+        <div class="df-guide-grid">
+            <article><span class="df-guide-number">01</span><h3>Chọn hương vị hợp ý</h3><p>Dùng danh mục và ô tìm kiếm để xem món bạn thích. Kiểm tra tên món, mô tả và từng khẩu phần trước khi lựa chọn.</p><a href="@menuPageUrl">Mở thực đơn <span aria-hidden="true">↗</span></a></article>
+            <article><span class="df-guide-number">02</span><h3>Hẹn một thời gian phù hợp</h3><p>Dự kiến số khách, ngày và giờ đến. Nếu có dịp đặc biệt hoặc mong muốn về vị trí ngồi, hãy ghi lại để trao đổi với nhà hàng.</p><a href="@reservationPageUrl">Chuẩn bị cuộc hẹn <span aria-hidden="true">↗</span></a></article>
+            <article><span class="df-guide-number">03</span><h3>Nhắn những điều cần lưu ý</h3><p>Cho nhà hàng biết nếu bạn có dị ứng, món kiêng hoặc yêu cầu riêng. Kiểm tra lại thông tin và trạng thái đặt bàn trước khi đến.</p><a href="#df-faq">Xem điều cần biết <span aria-hidden="true">↗</span></a></article>
+        </div>
+    </div>
+</section>
+<section class="df-faq-section" id="df-faq" aria-labelledby="dfFaqTitle">
+    <div class="container df-faq-layout">
+        <div class="df-faq-intro"><span class="df-premium-label">ĐIỀU BẠN MUỐN BIẾT</span><h2 id="dfFaqTitle">Trước cuộc hẹn,<br><span>mình cùng làm rõ.</span></h2><p>Một vài thông tin để bạn dễ khám phá thực đơn và chuẩn bị bữa ăn.</p><a href="@menuPageUrl" class="df-premium-text-link">Khám phá thực đơn <span aria-hidden="true">↗</span></a></div>
+        <div class="df-faq-list">
+            <details open><summary>Làm sao để tìm món phù hợp?<span aria-hidden="true">+</span></summary><div>Vào trang Thực đơn, chọn danh mục hoặc nhập tên món. Bạn có thể sắp xếp theo món nổi bật, tên món hoặc giá để dễ so sánh.</div></details>
+            <details><summary>Giá món ăn được hiển thị như thế nào?<span aria-hidden="true">+</span></summary><div>Giá được hiển thị theo từng khẩu phần và đơn vị phục vụ trong thẻ món ăn. Hãy xem đúng khẩu phần bạn muốn chọn trước khi quyết định.</div></details>
+            <details><summary>Tôi cần chuẩn bị gì khi đặt bàn?<span aria-hidden="true">+</span></summary><div>Chuẩn bị tên, số điện thoại, ngày giờ dự kiến và số khách. Ghi thêm những mong muốn riêng, sau đó kiểm tra trạng thái xác nhận của yêu cầu.</div></details>
+            <details><summary>Nếu có dị ứng hoặc món cần kiêng thì sao?<span aria-hidden="true">+</span></summary><div>Xem thông tin lưu ý trên món nếu có, đồng thời trao đổi trực tiếp với nhân viên về nguyên liệu cần tránh trước khi gọi món.</div></details>
+        </div>
+    </div>
+</section>

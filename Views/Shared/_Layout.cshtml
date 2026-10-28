@@ -1,317 +1,164 @@
-﻿<!DOCTYPE html>
-<html lang="en">
-
+﻿@{
+    var pageTitle = ViewData["Title"] as string;
+    var description = ViewData["Description"] as string ?? "DoraFood — hương vị tinh tế cho những cuộc hẹn đáng nhớ.";
+    var homeUrl = Url.Content("~/");
+    var menuUrl = Url.RouteUrl("DoraFoodMenu") ?? Url.Content("~/thuc-don");
+    // Giữ đường dẫn gốc khi chưa được cung cấp route đặt bàn thật.
+    var bookingUrl = ViewData["BookingUrl"] as string ?? Url.Content("~/book.html");
+    var address = ViewData["RestaurantAddress"] as string;
+    var phone = ViewData["RestaurantPhone"] as string;
+    var email = ViewData["RestaurantEmail"] as string;
+    var hours = ViewData["RestaurantHours"] as string;
+    var hasContact = !string.IsNullOrWhiteSpace(address) || !string.IsNullOrWhiteSpace(phone)
+        || !string.IsNullOrWhiteSpace(email) || !string.IsNullOrWhiteSpace(hours);
+}
+<!DOCTYPE html>
+<html lang="vi">
 <head>
     <meta charset="utf-8">
-    <title>DoraFood - Catering Services Website Template</title>
-    <meta content="width=device-width, initial-scale=1.0" name="viewport">
-    <meta content="" name="keywords">
-    <meta content="" name="description">                
-
-    <!-- Google Web Fonts -->
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="@description">
+    <meta name="theme-color" content="#a71930">
+    <title>@(string.IsNullOrWhiteSpace(pageTitle) ? "DoraFood | Tinh hoa ẩm thực" : $"{pageTitle} | DoraFood")</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600&family=Playball&display=swap" rel="stylesheet">
-
-    <!-- Icon Font Stylesheet -->
-    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.4/css/all.css">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.4.1/font/bootstrap-icons.css" rel="stylesheet">
-
-    <!-- Libraries Stylesheet -->
     <link href="~/assets/lib/animate/animate.min.css" rel="stylesheet">
     <link href="~/assets/lib/lightbox/css/lightbox.min.css" rel="stylesheet">
     <link href="~/assets/lib/owlcarousel/owl.carousel.min.css" rel="stylesheet">
-
-    <!-- Customized Bootstrap Stylesheet -->
     <link href="~/assets/css/bootstrap.min.css" rel="stylesheet">
-
-    <!-- Template Stylesheet -->
-    <link href="~/assets/css/style.css" rel="stylesheet">
+    <link href="~/assets/css/style.css" rel="stylesheet" asp-append-version="true">
     <link href="~/assets/css/dorafood-home.css" rel="stylesheet" asp-append-version="true">
+    @await RenderSectionAsync("Styles", required: false)
+    <link href="~/assets/css/dorafood-premium.css" rel="stylesheet" asp-append-version="true">
 </head>
+<body class="df-site" id="df-page-top">
+    <a class="df-skip-link" href="#df-main-content">Đến nội dung chính</a>
 
-<body>
-
-    <!-- Spinner Start -->
-    <div id="spinner" class="show w-100 vh-100 bg-white position-fixed translate-middle top-50 start-50  d-flex align-items-center justify-content-center">
-        <div class="spinner-grow text-primary" role="status"></div>
+    <div class="df-announcement">
+        <div class="df-shell df-announcement-inner">
+            <span><span class="df-small-diamond" aria-hidden="true">✦</span> Ẩm thực tinh tế · Những cuộc hẹn đáng nhớ</span>
+            <a href="@menuUrl">Khám phá thực đơn <span aria-hidden="true">↗</span></a>
+        </div>
     </div>
-    <!-- Spinner End -->
-    <!-- Navbar Start -->
-    <header class="container-fluid nav-bar fapdora-header sticky-top">
-        <div class="container">
-            <nav class="navbar navbar-light navbar-expand-lg py-3"
-                 aria-label="Điều hướng chính">
 
-                <!-- Logo -->
-                <a href="@Url.Content("~/")"
-                   class="navbar-brand fapdora-brand d-flex align-items-center gap-2">
-
-                    <span class="fapdora-brand-icon">
-                        <i class="fas fa-utensils" aria-hidden="true"></i>
-                    </span>
-
-                    <span class="d-flex flex-column">
-                        <span class="fapdora-brand-name">
-                            Dora<span class="text-primary">Food</span>
-                        </span>
-                        <span class="fapdora-brand-caption">
-                            TINH HOA ẨM THỰC
-                        </span>
-                    </span>
-                </a>
-
-                <!-- Nút mở menu trên điện thoại -->
-                <button class="navbar-toggler fapdora-toggler"
-                        type="button"
-                        data-bs-toggle="collapse"
-                        data-bs-target="#navbarCollapse"
-                        aria-controls="navbarCollapse"
-                        aria-expanded="false"
-                        aria-label="Mở hoặc đóng menu">
-                    <i class="fas fa-bars" aria-hidden="true"></i>
-                </button>
-
-                <div class="collapse navbar-collapse" id="navbarCollapse">
-
-                    <!-- Menu chính lấy từ SQL Server -->
+    <!-- Navbar luôn hiển thị: không collapse, không nút hamburger. -->
+    <header class="df-site-header">
+        <div class="df-shell df-brandbar">
+            <a href="@homeUrl" class="df-site-brand" aria-label="DoraFood — Trang chủ">
+                <span class="df-brand-symbol" aria-hidden="true"><i class="fas fa-utensils"></i></span>
+                <span><span class="df-brand-word">Dora<span>Food</span><sup aria-hidden="true">✦</sup></span><span class="df-brand-tagline">TINH HOA ẨM THỰC</span></span>
+            </a>
+            <div class="df-brand-message"><span>CHẠM VỊ NGON · GẮN KẾT CẢM XÚC</span><strong>Mỗi bữa ăn, một khoảnh khắc đẹp.</strong></div>
+            <div class="df-header-actions">
+                <button type="button" class="df-header-search" data-bs-toggle="modal" data-bs-target="#searchModal" aria-label="Tìm nhanh nội dung"><i class="fas fa-search" aria-hidden="true"></i></button>
+                @if (User.Identity?.IsAuthenticated == true)
+                {
+                    <div class="dropdown df-user-dropdown">
+                        <button type="button" class="df-user-button dropdown-toggle" id="accountDropdown" data-bs-toggle="dropdown" aria-expanded="false"><i class="far fa-user" aria-hidden="true"></i><span>@User.Identity.Name</span></button>
+                        <div class="dropdown-menu dropdown-menu-end" aria-labelledby="accountDropdown">
+                            <div class="df-user-intro"><span>TÀI KHOẢN CỦA BẠN</span><strong>@User.Identity.Name</strong></div>
+                            <a href="@Url.RouteUrl("DoraFoodMyBookings")" class="dropdown-item"><i class="far fa-calendar-check" aria-hidden="true"></i> Đặt bàn của tôi</a>
+                            <div class="dropdown-divider"></div>
+                            <form action="@Url.Action("Logout", "Account")" method="post">@Html.AntiForgeryToken()<button type="submit" class="dropdown-item df-logout"><i class="fas fa-sign-out-alt" aria-hidden="true"></i> Đăng xuất</button></form>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <a class="df-login-link" href="@Url.Action("Login", "Account")"><i class="far fa-user" aria-hidden="true"></i><span>Đăng nhập</span></a>
+                }
+                <a class="df-reserve-link" href="@bookingUrl"><i class="far fa-calendar-check" aria-hidden="true"></i><span>Đặt bàn</span><span aria-hidden="true">↗</span></a>
+            </div>
+        </div>
+        <nav class="df-primary-navigation" aria-label="Điều hướng chính">
+            <div class="df-shell df-navigation-inner">
+                <div class="df-mainmenu">
                     @await Component.InvokeAsync("MainMenu")
-
-                    <!-- Thao tác -->
-                    <div class="fapdora-actions d-flex align-items-center
-                        gap-3 pb-3 pb-lg-0">
-
-                        <!-- Tìm kiếm -->
-                        <button type="button"
-                                class="btn fapdora-search"
-                                data-bs-toggle="modal"
-                                data-bs-target="#searchModal"
-                                aria-label="Tìm kiếm">
-                            <i class="fas fa-search" aria-hidden="true"></i>
-                        </button>
-
-                        <!-- Tài khoản -->
-                        @if (User.Identity?.IsAuthenticated == true)
-                        {
-                            <div class="dropdown">
-
-                                <button type="button"
-                                        class="btn btn-outline-primary rounded-pill
-                                    dropdown-toggle d-inline-flex
-                                    align-items-center gap-2"
-                                        id="accountDropdown"
-                                        data-bs-toggle="dropdown"
-                                        aria-expanded="false">
-
-                                    <i class="far fa-user" aria-hidden="true"></i>
-
-                                    <span class="text-truncate"
-                                          style="max-width: 130px;">
-                                        @User.Identity.Name
-                                    </span>
-                                </button>
-
-                                <div class="dropdown-menu dropdown-menu-end
-                                    fapdora-dropdown"
-                                     aria-labelledby="accountDropdown">
-
-                                    <span class="dropdown-header">
-                                        Tài khoản của bạn
-                                    </span>
-
-                                    <a href="@Url.RouteUrl("DoraFoodMyBookings")"
-                                       class="dropdown-item">
-                                        <i class="far fa-calendar-check me-2"
-                                           aria-hidden="true"></i>
-                                        Đặt bàn của tôi
-                                    </a>
-
-                                    <div class="dropdown-divider"></div>
-
-                                    <div class="dropdown-divider"></div>
-
-                                    <form action="@Url.Action("Logout", "Account")"
-                                          method="post">
-
-                                        @Html.AntiForgeryToken()
-
-                                        <button type="submit"
-                                                class="dropdown-item text-danger">
-                                            <i class="fas fa-sign-out-alt me-2"
-                                               aria-hidden="true"></i>
-                                            Đăng xuất
-                                        </button>
-
-                                    </form>
-                                </div>
-                            </div>
-                        }
-                        else
-                        {
-                            <a href="@Url.Action("Login", "Account")"
-                               class="btn btn-outline-primary rounded-pill
-                                d-inline-flex align-items-center gap-2">
-
-                                <i class="far fa-user" aria-hidden="true"></i>
-                                Đăng nhập
-                            </a>
-                        }
-
-                        <!-- Đặt bàn -->
-                        <a href="@Url.Content("~/book.html")"
-                           class="btn btn-primary fapdora-booking rounded-pill">
-
-                            <i class="far fa-calendar-check me-2"
-                               aria-hidden="true"></i>
-
-                            Đặt bàn
-
-                            <i class="fas fa-arrow-right ms-2"
-                               aria-hidden="true"></i>
-                        </a>
-
-                    </div>
                 </div>
-            </nav>
-        </div>
+            </div>
+        </nav>
     </header>
-    <!-- Navbar End -->
-    <!-- Modal Search Start -->
-    <div class="modal fade" id="searchModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-fullscreen">
-            <div class="modal-content rounded-0">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="exampleModalLabel">Search by keyword</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body d-flex align-items-center">
-                    <div class="input-group w-75 mx-auto d-flex">
-                        <input type="search" class="form-control bg-transparent p-3" placeholder="keywords" aria-describedby="search-icon-1">
-                        <span id="search-icon-1" class="input-group-text p-3"><i class="fa fa-search"></i></span>
-                    </div>
+
+    <div class="modal fade df-search-modal" id="searchModal" tabindex="-1" aria-labelledby="dfSearchTitle" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header"><span class="df-overline">KHÁM PHÁ DORAFOOD</span><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Đóng tìm kiếm"></button></div>
+                <div class="modal-body">
+                    <h2 id="dfSearchTitle">Bạn đang tìm điều gì?</h2><p>Tìm nhanh menu hoặc nội dung trong trang đang xem.</p>
+                    <label for="df-quick-search" class="visually-hidden">Từ khóa tìm nhanh</label>
+                    <div class="df-quick-search-field"><i class="fas fa-search" aria-hidden="true"></i><input id="df-quick-search" type="search" placeholder="Thực đơn, giới thiệu, cuộc hẹn..." autocomplete="off"></div>
+                    <a class="df-search-menu-link" href="@menuUrl">Tìm món ăn trong thực đơn <span aria-hidden="true">↗</span></a>
+                    <div id="df-quick-results" class="df-quick-results"></div><p id="df-quick-empty" hidden role="status">Chưa tìm thấy nội dung phù hợp.</p>
+                    <noscript><p>Bạn có thể dùng menu luôn hiển thị ở đầu trang.</p></noscript>
                 </div>
             </div>
         </div>
     </div>
-    <!-- Modal Search End -->
-    @RenderBody()
-    <!-- Footer Start -->
-    <div class="container-fluid footer py-6 my-6 mb-0 bg-light wow bounceInUp" data-wow-delay="0.1s">
-        <div class="container">
-            <div class="row">
-                <div class="col-lg-3 col-md-6">
-                    <div class="footer-item">
-                        <h1 class="text-primary">Cater<span class="text-dark">Serv</span></h1>
-                        <p class="lh-lg mb-4">There cursus massa at urnaaculis estieSed aliquamellus vitae ultrs condmentum leo massamollis its estiegittis miristum.</p>
-                        <div class="footer-icon d-flex">
-                            <a class="btn btn-primary btn-sm-square me-2 rounded-circle" href=""><i class="fab fa-facebook-f"></i></a>
-                            <a class="btn btn-primary btn-sm-square me-2 rounded-circle" href=""><i class="fab fa-twitter"></i></a>
-                            <a href="#" class="btn btn-primary btn-sm-square me-2 rounded-circle"><i class="fab fa-instagram"></i></a>
-                            <a href="#" class="btn btn-primary btn-sm-square rounded-circle"><i class="fab fa-linkedin-in"></i></a>
-                        </div>
-                    </div>
+
+    <main id="df-main-content" class="df-site-main" tabindex="-1">@RenderBody()</main>
+
+    <footer class="df-site-footer">
+        <div class="df-shell">
+            <div class="df-footer-invitation"><div><span class="df-overline">DÀNH THỜI GIAN CHO NHAU</span><h2>Một bàn ăn ngon.<br><span>Nhiều điều để nhớ.</span></h2><p>Chọn món bạn thích, hẹn người bạn quý. DoraFood chờ cuộc hẹn của bạn.</p></div><a href="@bookingUrl" class="df-footer-button">Lên lịch ghé DoraFood <span aria-hidden="true">↗</span></a></div>
+            <div class="df-footer-columns @(hasContact ? "has-contact" : "")">
+                <div class="df-footer-brand"><a href="@homeUrl" class="df-site-brand" aria-label="DoraFood — Trang chủ"><span class="df-brand-symbol" aria-hidden="true"><i class="fas fa-utensils"></i></span><span><span class="df-brand-word">Dora<span>Food</span></span><span class="df-brand-tagline">TINH HOA ẨM THỰC</span></span></a><p>Hương vị tạo nên cảm hứng.<br>Những cuộc gặp tạo nên kỷ niệm.</p><span class="df-footer-signature">CHẠM VỊ NGON · GẮN KẾT CẢM XÚC</span></div>
+                <div class="df-footer-links"><h3>Khám phá DoraFood</h3><a href="@homeUrl">Trang chủ <span aria-hidden="true">↗</span></a><a href="@menuUrl">Thực đơn & khẩu phần <span aria-hidden="true">↗</span></a><a href="@(homeUrl + "#fdAboutTitle")">Câu chuyện DoraFood <span aria-hidden="true">↗</span></a><a href="@(homeUrl + "#df-dining-guide")">Gợi ý cho cuộc hẹn <span aria-hidden="true">↗</span></a></div>
+                <div class="df-footer-links">
+                    <h3>Cuộc hẹn của bạn</h3><a href="@bookingUrl">Đặt bàn <span aria-hidden="true">↗</span></a><a href="@(homeUrl + "#df-faq")">Điều bạn muốn biết <span aria-hidden="true">↗</span></a>
+                    @if (User.Identity?.IsAuthenticated == true)
+                    {
+                        <a href="@Url.RouteUrl("DoraFoodMyBookings")">Đặt bàn của tôi <span aria-hidden="true">↗</span></a>
+                    }
+                    else
+                    {
+
+                        <a href="@Url.Action("Login", "Account")">Đăng nhập <span aria-hidden="true">↗</span></a>
+                    }
                 </div>
-                <div class="col-lg-3 col-md-6">
-                    <div class="footer-item">
-                        <h4 class="mb-4">Special Facilities</h4>
-                        <div class="d-flex flex-column align-items-start">
-                            <a class="text-body mb-3" href=""><i class="fa fa-check text-primary me-2"></i>Cheese Burger</a>
-                            <a class="text-body mb-3" href=""><i class="fa fa-check text-primary me-2"></i>Sandwich</a>
-                            <a class="text-body mb-3" href=""><i class="fa fa-check text-primary me-2"></i>Panner Burger</a>
-                            <a class="text-body mb-3" href=""><i class="fa fa-check text-primary me-2"></i>Special Sweets</a>
-                        </div>
+                @if (hasContact)
+                {
+                    <div class="df-footer-contact">
+                        <h3>Ghé thăm nhà hàng</h3>
+                        @if (!string.IsNullOrWhiteSpace(address))
+                        {
+                            <p><i class="fas fa-map-marker-alt" aria-hidden="true"></i><span>@address</span></p>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(phone))
+                        {
+                            <p><i class="fas fa-phone-alt" aria-hidden="true"></i><a href="tel:@phone">@phone</a></p>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(email))
+                        {
+                            <p><i class="far fa-envelope" aria-hidden="true"></i><a href="mailto:@email">@email</a></p>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(hours))
+                        {
+                            <p><i class="far fa-clock" aria-hidden="true"></i><span>@hours</span></p>
+                        }
                     </div>
-                </div>
-                <div class="col-lg-3 col-md-6">
-                    <div class="footer-item">
-                        <h4 class="mb-4">Contact Us</h4>
-                        <div class="d-flex flex-column align-items-start">
-                            <p><i class="fa fa-map-marker-alt text-primary me-2"></i> 123 Street, New York, USA</p>
-                            <p><i class="fa fa-phone-alt text-primary me-2"></i> (+012) 3456 7890 123</p>
-                            <p><i class="fas fa-envelope text-primary me-2"></i> info@example.com</p>
-                            <p><i class="fa fa-clock text-primary me-2"></i> 26/7 Hours Service</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="col-lg-3 col-md-6">
-                    <div class="footer-item">
-                        <h4 class="mb-4">Social Gallery</h4>
-                        <div class="row g-2">
-                            <div class="col-4">
-                                <img src="img/menu-01.jpg" class="img-fluid rounded-circle border border-primary p-2" alt="">
-                            </div>
-                            <div class="col-4">
-                                <img src="img/menu-02.jpg" class="img-fluid rounded-circle border border-primary p-2" alt="">
-                            </div>
-                            <div class="col-4">
-                                <img src="img/menu-03.jpg" class="img-fluid rounded-circle border border-primary p-2" alt="">
-                            </div>
-                            <div class="col-4">
-                                <img src="img/menu-04.jpg" class="img-fluid rounded-circle border border-primary p-2" alt="">
-                            </div>
-                            <div class="col-4">
-                                <img src="img/menu-05.jpg" class="img-fluid rounded-circle border border-primary p-2" alt="">
-                            </div>
-                            <div class="col-4">
-                                <img src="img/menu-06.jpg" class="img-fluid rounded-circle border border-primary p-2" alt="">
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                }
             </div>
+            <div class="df-footer-strip" aria-label="Góc ẩm thực DoraFood">@for (var i = 1; i <= 6; i++) {
+                <img src="@Url.Content($"~/images/p{i:0}.jpg")" alt="Góc ẩm thực DoraFood @i" width="240" height="140" loading="lazy">
+            }
         </div>
+            <div class="df-footer-bottom"><span>© @DateTime.Now.Year DoraFood. Bảo lưu mọi quyền.</span><span>Template: <a href="https://www.facebook.com/AnhPhapp24/" rel="noopener">Anhh Phapp</a></span><a href="#df-page-top">Về đầu trang <span aria-hidden="true">↑</span></a></div>
     </div>
-    <!-- Footer End -->
-    <!-- Copyright Start -->
-    <div class="container-fluid copyright bg-dark py-4">
-        <div class="container">
-            <div class="row">
-                <div class="col-md-6 text-center text-md-start mb-3 mb-md-0">
-                    <span class="text-light"><a href="#"><i class="fas fa-copyright text-light me-2"></i>Your Site Name</a>, All right reserved.</span>
-                </div>
-                <div class="col-md-6 my-auto text-center text-md-end text-white">
-                    <!--/*** This template is free as long as you keep the below author’s credit link/attribution link/backlink. ***/-->
-                    <!--/*** If you'd like to use the template without the below author’s credit link/attribution link/backlink, ***/-->
-                    <!--/*** you can purchase the Credit Removal License from "https://htmlcodex.com/credit-removal". ***/-->
-                    Designed By <a class="border-bottom" href="https://htmlcodex.com">HTML Codex</a>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- Copyright End -->
-    <!-- Back to Top -->
-    <a href="#" class="btn btn-md-square btn-primary rounded-circle back-to-top"><i class="fa fa-arrow-up"></i></a>
-
-        
-    <!-- JavaScript Libraries -->
-    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            document.querySelectorAll(".fd-food-strip").forEach(function(strip) {
-                const button = strip.querySelector(".fd-food-toggle");
-
-                if (!button) return;
-
-                button.addEventListener("click", function() {
-                    const paused = strip.classList.toggle("is-paused");
-
-                    button.setAttribute("aria-pressed", String(paused));
-                    button.textContent = paused ? "Tiếp tục chạy" : "Tạm dừng";
-                });
-            });
-        });
-    </script>
-    <script src="~/assets/lib/wow/wow.min.js"></script>
-    <script src="~/assets/lib/easing/easing.min.js"></script>
-    <script src="~/assets/lib/waypoints/waypoints.min.js"></script>
-    <script src="~/assets/lib/counterup/counterup.min.js"></script>
-    <script src="~/assets/lib/lightbox/js/lightbox.min.js"></script>
-    <script src="~/assets/lib/owlcarousel/owl.carousel.min.js"></script>
-
-    <!-- Template Javascript -->
-    <script src="~/assets/js/main.js"></script>
-    <script src="~/assets/js/dorafood-home.js" asp-append-version="true"></script>
-
+</footer>
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+<script src="~/assets/lib/wow/wow.min.js"></script>
+<script src="~/assets/lib/easing/easing.min.js"></script>
+<script src="~/assets/lib/waypoints/waypoints.min.js"></script>
+<script src="~/assets/lib/counterup/counterup.min.js"></script>
+<script src="~/assets/lib/lightbox/js/lightbox.min.js"></script>
+<script src="~/assets/lib/owlcarousel/owl.carousel.min.js"></script>
+<script src="~/assets/js/main.js" asp-append-version="true"></script>
+<script src="~/assets/js/dorafood-home.js" asp-append-version="true"></script>
+<script src="~/assets/js/dorafood-premium.js" asp-append-version="true"></script>
+@await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

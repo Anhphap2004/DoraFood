@@ -8,7 +8,7 @@
     var culture = CultureInfo.GetCultureInfo("vi-VN");
     var firstItem = Model.TotalItems == 0 ? 0 : (Model.Page - 1) * Model.PageSize + 1;
     var lastItem = Math.Min(Model.Page * Model.PageSize, Model.TotalItems);
-    var fallbackImage = Url.Content("~/images/dish-placeholder.svg");
+    var fallbackImage = Url.Content("~/assets/img/dish-placeholder.svg");
     var menuUrl = Url.RouteUrl("DoraFoodMenu") ?? Url.Content("~/thuc-don");
 }
 
@@ -25,9 +25,11 @@
     }
 }
 
-<link rel="stylesheet" href="@Url.Content("~/assets/css/dorafood-menu.css")" />
+@section Styles {
+    <link href="~/assets/css/dorafood-menu.css" rel="stylesheet" asp-append-version="true">
+}
 
-<main class="df-menu" id="menu-page">
+<div class="df-menu" id="menu-page">
     <section class="df-menu-hero" aria-labelledby="menu-title">
         <div class="container df-menu-hero-inner">
             <div>
@@ -43,12 +45,17 @@
             <div class="df-menu-hero-note">
                 <span class="df-menu-note-symbol" aria-hidden="true">✦</span>
                 <span>MỖI KHẨU PHẦN</span>
-                <strong>Một lựa chọn<br />vừa ý.</strong>
-                <p>Xem giá theo từng khẩu phần<br />ngay trong thực đơn.</p>
+                <strong>@Model.TotalItems <span class="df-menu-count-unit">món ăn</span><br />để khám phá.</strong>
+                <p>Xem giá theo từng khẩu phần.<br />Tìm hương vị hợp với bạn.</p>
             </div>
         </div>
     </section>
 
+    <div class="container df-menu-service-notes" aria-label="Hướng dẫn xem thực đơn">
+        <span><i class="fas fa-utensils" aria-hidden="true"></i> Lựa chọn theo danh mục</span>
+        <span><i class="fas fa-concierge-bell" aria-hidden="true"></i> Giá theo từng khẩu phần</span>
+        <span><i class="fas fa-info-circle" aria-hidden="true"></i> Xem lưu ý về dị ứng</span>
+    </div>
     <section class="container df-menu-content" aria-label="Khám phá món ăn">
         <form method="get" action="@menuUrl" class="df-menu-search" role="search">
             @if (Model.CategoryId.HasValue)
@@ -197,7 +204,11 @@
                         @if (startPage > 1)
                         {
                             <a href="@MenuLink(Model.CategoryId, 1)" aria-label="Trang 1">1</a>
-                            if (startPage > 2) { <span class="df-menu-ellipsis">…</span> }
+                            if (startPage > 2)
+                            {
+
+                                <span class="df-menu-ellipsis">…</span>
+                            }
                         }
                         @for (var number = startPage; number <= endPage; number++)
                         {
@@ -206,7 +217,10 @@
                         }
                         @if (endPage < Model.TotalPages)
                         {
-                            if (endPage < Model.TotalPages - 1) { <span class="df-menu-ellipsis">…</span> }
+                            if (endPage < Model.TotalPages - 1)
+                            {
+                                <span class="df-menu-ellipsis">…</span>
+                            }
                             <a href="@MenuLink(Model.CategoryId, Model.TotalPages)" aria-label="Trang @Model.TotalPages">@Model.TotalPages</a>
                         }
                         @if (Model.Page < Model.TotalPages)
@@ -214,7 +228,7 @@
                             <a href="@MenuLink(Model.CategoryId, Model.Page + 1)" aria-label="Trang tiếp theo">→</a>
                         }
                         else
-                        {                     
+                        {
                             <span class="is-disabled" aria-disabled="true" aria-label="Trang tiếp theo">→</span>
                         }
                     </nav>
@@ -223,5 +237,7 @@
             </div>
         </div>
     </section>
-</main>
-<script src="@Url.Content("~/assets/js/dorafood-menu.js")" defer></script>
+</div>
+@section Scripts {
+    <script src="~/assets/js/dorafood-menu.js" asp-append-version="true" defer></script>
+}

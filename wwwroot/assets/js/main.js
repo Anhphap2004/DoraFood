@@ -1,111 +1,42 @@
+/* Giữ tính năng template; chỉ khởi tạo khi thư viện tương ứng đang có. */
 (function ($) {
-    "use strict";
+    'use strict';
+    if (!$) return;
+    $(function () {
+        $('#spinner').removeClass('show');
+        const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        if (!reduceMotion && typeof window.WOW === 'function') new window.WOW().init();
+        else $('.wow').css('visibility', 'visible');
 
-    // Spinner
-    var spinner = function () {
-        setTimeout(function () {
-            if ($('#spinner').length > 0) {
-                $('#spinner').removeClass('show');
-            }
-        }, 1);
-    };
-    spinner(0);
-    
-    
-    // Initiate the wowjs
-    new WOW().init();
-    
-    
-   // Back to top button
-   $(window).scroll(function () {
-    if ($(this).scrollTop() > 300) {
-        $('.back-to-top').fadeIn('slow');
-    } else {
-        $('.back-to-top').fadeOut('slow');
-    }
-    });
-    $('.back-to-top').click(function () {
-        $('html, body').animate({scrollTop: 0}, 1500, 'easeInOutExpo');
-        return false;
-    });
-
-
-    // Modal Video
-    $(document).ready(function () {
-        var $videoSrc;
-        $('.btn-play').click(function () {
-            $videoSrc = $(this).data("src");
+        function backToTopVisibility() {
+            $('.back-to-top').toggle($(window).scrollTop() > 300);
+        }
+        backToTopVisibility();
+        $(window).on('scroll', backToTopVisibility);
+        $('.back-to-top').on('click', function (event) {
+            event.preventDefault();
+            const easing = $.easing && $.easing.easeInOutExpo ? 'easeInOutExpo' : 'swing';
+            $('html, body').animate({ scrollTop: 0 }, reduceMotion ? 0 : 500, easing);
         });
-        console.log($videoSrc);
 
-        $('#videoModal').on('shown.bs.modal', function (e) {
-            $("#video").attr('src', $videoSrc + "?autoplay=1&amp;modestbranding=1&amp;showinfo=0");
-        })
+        let videoSource = '';
+        $('.btn-play').on('click', function () { videoSource = $(this).data('src') || ''; });
+        $('#videoModal').on('shown.bs.modal', function () {
+            if (!videoSource) return;
+            $('#video').attr('src', videoSource + (videoSource.includes('?') ? '&' : '?') + 'autoplay=1&modestbranding=1&showinfo=0');
+        });
+        $('#videoModal').on('hide.bs.modal', function () { $('#video').attr('src', ''); });
 
-        $('#videoModal').on('hide.bs.modal', function (e) {
-            $("#video").attr('src', $videoSrc);
-        })
-    });
-
-
-    // Facts counter
-    $('[data-toggle="counter-up"]').counterUp({
-        delay: 10,
-        time: 2000
-    });
-
-
-    // Testimonial carousel
-    $(".testimonial-carousel-1").owlCarousel({
-        loop: true,
-        dots: false,
-        margin: 25,
-        autoplay: true,
-        slideTransition: 'linear',
-        autoplayTimeout: 0,
-        autoplaySpeed: 10000,
-        autoplayHoverPause: false,
-        responsive: {
-            0:{
-                items:1
-            },
-            575:{
-                items:1
-            },
-            767:{
-                items:2
-            },
-            991:{
-                items:3
-            }
+        if ($.fn.counterUp && !reduceMotion) $('[data-toggle="counter-up"]').counterUp({ delay: 10, time: 1500 });
+        if ($.fn.owlCarousel) {
+            const options = {
+                loop: true, dots: false, margin: 25, autoplay: !reduceMotion,
+                slideTransition: 'linear', autoplayTimeout: 5000, autoplaySpeed: 1000,
+                autoplayHoverPause: true,
+                responsive: { 0: { items: 1 }, 575: { items: 1 }, 767: { items: 2 }, 991: { items: 3 } }
+            };
+            $('.testimonial-carousel-1').owlCarousel(options);
+            $('.testimonial-carousel-2').owlCarousel(Object.assign({}, options, { rtl: true }));
         }
     });
-
-    $(".testimonial-carousel-2").owlCarousel({
-        loop: true,
-        dots: false,
-        rtl: true,
-        margin: 25,
-        autoplay: true,
-        slideTransition: 'linear',
-        autoplayTimeout: 0,
-        autoplaySpeed: 10000,
-        autoplayHoverPause: false,
-        responsive: {
-            0:{
-                items:1
-            },
-            575:{
-                items:1
-            },
-            767:{
-                items:2
-            },
-            991:{
-                items:3
-            }
-        }
-    });
-
-})(jQuery);
-
+})(window.jQuery);
