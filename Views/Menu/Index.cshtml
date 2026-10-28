@@ -1,0 +1,227 @@
+@using System
+@using System.Globalization
+@using DoraFood.ViewModels
+@model MenuPageViewModel
+
+@{
+    ViewData["Title"] = "Thực đơn";
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+    var firstItem = Model.TotalItems == 0 ? 0 : (Model.Page - 1) * Model.PageSize + 1;
+    var lastItem = Math.Min(Model.Page * Model.PageSize, Model.TotalItems);
+    var fallbackImage = Url.Content("~/images/dish-placeholder.svg");
+    var menuUrl = Url.RouteUrl("DoraFoodMenu") ?? Url.Content("~/thuc-don");
+}
+
+@functions {
+    private string MenuLink(long? categoryId, int page = 1)
+    {
+        return Url.RouteUrl("DoraFoodMenu", new
+        {
+            categoryId,
+            q = Model.Search,
+            sort = Model.Sort,
+            page
+        }) ?? Url.Content("~/thuc-don");
+    }
+}
+
+<link rel="stylesheet" href="@Url.Content("~/assets/css/dorafood-menu.css")" />
+
+<main class="df-menu" id="menu-page">
+    <section class="df-menu-hero" aria-labelledby="menu-title">
+        <div class="container df-menu-hero-inner">
+            <div>
+                <nav class="df-menu-breadcrumb" aria-label="Đường dẫn">
+                    <a href="@Url.Content("~/")">Trang chủ</a>
+                    <span aria-hidden="true">/</span>
+                    <span aria-current="page">Thực đơn</span>
+                </nav>
+                <p class="df-menu-eyebrow"><span aria-hidden="true"></span> THỰC ĐƠN DORAFOOD</p>
+                <h1 id="menu-title">Chọn món ngon.<br /><span>Hẹn một bữa vui.</span></h1>
+                <p class="df-menu-intro">Từ món quen yêu thích đến hương vị muốn thử —<br class="df-menu-desktop" /> tìm một món ngon cho cuộc hẹn của bạn.</p>
+            </div>
+            <div class="df-menu-hero-note">
+                <span class="df-menu-note-symbol" aria-hidden="true">✦</span>
+                <span>MỖI KHẨU PHẦN</span>
+                <strong>Một lựa chọn<br />vừa ý.</strong>
+                <p>Xem giá theo từng khẩu phần<br />ngay trong thực đơn.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="container df-menu-content" aria-label="Khám phá món ăn">
+        <form method="get" action="@menuUrl" class="df-menu-search" role="search">
+            @if (Model.CategoryId.HasValue)
+            {
+                <input type="hidden" name="categoryId" value="@Model.CategoryId" />
+            }
+            <input type="hidden" name="sort" value="@Model.Sort" />
+            <label class="df-menu-search-label" for="dish-search">Hôm nay bạn muốn ăn gì?</label>
+            <div class="df-menu-search-field">
+                <i class="fas fa-search" aria-hidden="true"></i>
+                <input id="dish-search" type="search" name="q" value="@Model.Search"
+                       maxlength="200" placeholder="Tìm tên món, hương vị yêu thích…" />
+                <button type="submit">Tìm món <span aria-hidden="true">→</span></button>
+            </div>
+        </form>
+
+        <div class="df-menu-layout">
+            <aside class="df-menu-sidebar" aria-labelledby="category-title">
+                <p class="df-menu-small-label">CHỌN THEO SỞ THÍCH</p>
+                <h2 id="category-title">Danh mục</h2>
+                <nav class="df-menu-categories" aria-label="Danh mục món ăn">
+                    <a href="@MenuLink(null)" class="df-menu-category @(Model.CategoryId == null ? "is-active" : "")"
+                       aria-current="@(Model.CategoryId == null ? "page" : null)">
+                        <span>Tất cả món ăn</span><span aria-hidden="true">↗</span>
+                    </a>
+                    @foreach (var category in Model.Categories)
+                    {
+                        <a href="@MenuLink(category.Id)"
+                           class="df-menu-category @(category.ParentId.HasValue ? "is-child" : "") @(Model.CategoryId == category.Id ? "is-active" : "")"
+                           aria-current="@(Model.CategoryId == category.Id ? "page" : null)">
+                            <span>@category.Name</span><span aria-hidden="true">↗</span>
+                        </a>
+                    }
+                </nav>
+                <div class="df-menu-sidebar-note">
+                    <i class="fas fa-utensils" aria-hidden="true"></i>
+                    <strong>Ngon hơn khi sẻ chia.</strong>
+                    <p>Chọn vài món yêu thích,<br />cùng nhau trọn vị bữa ngon.</p>
+                </div>
+            </aside>
+
+            <div class="df-menu-results">
+                <div class="df-menu-toolbar">
+                    <div>
+                        <h2>@Model.SelectedCategoryName</h2>
+                        <p role="status">
+                            @if (Model.TotalItems > 0)
+                            {
+                                <span>Hiển thị @firstItem–@lastItem trong @Model.TotalItems món</span>
+                            }
+                            else
+                            {
+                                <span>Chưa có món phù hợp</span>
+                            }
+                            @if (!string.IsNullOrEmpty(Model.Search))
+                            {
+                                <span> cho “@Model.Search”</span>
+                            }
+                        </p>
+                    </div>
+                    <form method="get" action="@menuUrl" class="df-menu-sort">
+                        @if (Model.CategoryId.HasValue)
+                        {
+                            <input type="hidden" name="categoryId" value="@Model.CategoryId" />
+                        }
+                        @if (!string.IsNullOrEmpty(Model.Search))
+                        {
+                            <input type="hidden" name="q" value="@Model.Search" />
+                        }
+                        <label for="dish-sort">Sắp xếp</label>
+                        <div>
+                            <select id="dish-sort" name="sort">
+                                <option value="featured" selected="@(Model.Sort == "featured")">Món nổi bật trước</option>
+                                <option value="price-asc" selected="@(Model.Sort == "price-asc")">Giá thấp đến cao</option>
+                                <option value="price-desc" selected="@(Model.Sort == "price-desc")">Giá cao đến thấp</option>
+                                <option value="name" selected="@(Model.Sort == "name")">Tên món A–Z</option>
+                            </select>
+                            <button type="submit">Áp dụng</button>
+                        </div>
+                    </form>
+                </div>
+
+                @if (Model.Dishes.Count == 0)
+                {
+                    <div class="df-menu-empty">
+                        <span aria-hidden="true">✦</span>
+                        <h3>Chưa tìm thấy món phù hợp</h3>
+                        <p>Thử từ khóa khác hoặc xem lại tất cả danh mục.<br />Món ăn sẽ xuất hiện khi có khẩu phần đang được phục vụ.</p>
+                        <a href="@menuUrl">Xem tất cả món ăn <span aria-hidden="true">→</span></a>
+                    </div>
+                }
+                else
+                {
+                    <div class="df-menu-grid">
+                        @foreach (var dish in Model.Dishes)
+                        {
+                            <article class="df-menu-card">
+                                <div class="df-menu-card-media">
+                                    <img src="@Url.Content(dish.ImageUrl)" alt="@(dish.ImageAlt ?? dish.Name)"
+                                         loading="lazy" decoding="async" width="640" height="480"
+                                         data-menu-image data-fallback="@fallbackImage" />
+                                    @if (dish.IsFeatured)
+                                    {
+                                        <span class="df-menu-featured"><span aria-hidden="true">✦</span> Món nổi bật</span>
+                                    }
+                                </div>
+                                <div class="df-menu-card-body">
+                                    <p class="df-menu-card-category">@dish.CategoryName</p>
+                                    <h3>@dish.Name</h3>
+                                    @if (!string.IsNullOrWhiteSpace(dish.Description))
+                                    {
+                                        <p class="df-menu-card-description">@dish.Description</p>
+                                    }
+                                    <ul class="df-menu-portions" aria-label="Khẩu phần và giá">
+                                        @foreach (var variant in dish.Variants)
+                                        {
+                                            <li>
+                                                <span><strong>@variant.Name</strong><small>@variant.SellingUnit</small></span>
+                                                <span class="df-menu-price">@variant.Price.ToString("N0", culture)<small>₫</small></span>
+                                            </li>
+                                        }
+                                    </ul>
+                                    @if (!string.IsNullOrWhiteSpace(dish.AllergenNote))
+                                    {
+                                        <p class="df-menu-allergen"><i class="fas fa-info-circle" aria-hidden="true"></i> @dish.AllergenNote</p>
+                                    }
+                                </div>
+                            </article>
+                        }
+                    </div>
+                }
+
+                @if (Model.TotalPages > 1)
+                {
+                    var startPage = Math.Max(1, Model.Page - 2);
+                    var endPage = Math.Min(Model.TotalPages, Model.Page + 2);
+                    <nav class="df-menu-pagination" aria-label="Phân trang thực đơn">
+                        @if (Model.Page > 1)
+                        {
+                            <a href="@MenuLink(Model.CategoryId, Model.Page - 1)" aria-label="Trang trước">←</a>
+                        }
+                        else
+                        {
+                            <span class="is-disabled" aria-disabled="true" aria-label="Trang trước">←</span>
+                        }
+                        @if (startPage > 1)
+                        {
+                            <a href="@MenuLink(Model.CategoryId, 1)" aria-label="Trang 1">1</a>
+                            if (startPage > 2) { <span class="df-menu-ellipsis">…</span> }
+                        }
+                        @for (var number = startPage; number <= endPage; number++)
+                        {
+                            <a href="@MenuLink(Model.CategoryId, number)" class="@(number == Model.Page ? "is-current" : "")"
+                               aria-current="@(number == Model.Page ? "page" : null)" aria-label="Trang @number">@number</a>
+                        }
+                        @if (endPage < Model.TotalPages)
+                        {
+                            if (endPage < Model.TotalPages - 1) { <span class="df-menu-ellipsis">…</span> }
+                            <a href="@MenuLink(Model.CategoryId, Model.TotalPages)" aria-label="Trang @Model.TotalPages">@Model.TotalPages</a>
+                        }
+                        @if (Model.Page < Model.TotalPages)
+                        {
+                            <a href="@MenuLink(Model.CategoryId, Model.Page + 1)" aria-label="Trang tiếp theo">→</a>
+                        }
+                        else
+                        {                     
+                            <span class="is-disabled" aria-disabled="true" aria-label="Trang tiếp theo">→</span>
+                        }
+                    </nav>
+                }
+                <p class="df-menu-footnote">Giá hiển thị theo từng khẩu phần, làm tròn đến đồng. Vui lòng trao đổi với nhân viên nếu bạn có yêu cầu về dị ứng thực phẩm.</p>
+            </div>
+        </div>
+    </section>
+</main>
+<script src="@Url.Content("~/assets/js/dorafood-menu.js")" defer></script>
