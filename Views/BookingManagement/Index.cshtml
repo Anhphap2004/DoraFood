@@ -1,0 +1,391 @@
+﻿@using System.Linq
+@model DoraFood.Controllers.BookingManagementController.BookingManagementViewModel
+
+@{
+    ViewData["Title"] = "Quản lý đặt bàn";
+
+    var managementUrl = Url.RouteUrl("DoraFoodManageBookings");
+
+    var filters = new[]
+    {
+        new { Code = "ALL", Label = "Tất cả trạng thái" },
+        new { Code = "PENDING", Label = "Chờ xác nhận" },
+        new { Code = "CONFIRMED", Label = "Đã xác nhận" },
+        new { Code = "SEATED", Label = "Đã nhận bàn" },
+        new { Code = "COMPLETED", Label = "Đã hoàn thành" },
+        new { Code = "CANCELLED", Label = "Đã hủy" },
+        new { Code = "NO_SHOW", Label = "Không đến" }
+    };
+}
+
+@functions {
+    private (string Label, string CssClass) StatusDisplay(string status)
+    {
+        return status switch
+        {
+            "PENDING" => ("Chờ xác nhận", "bg-warning text-dark"),
+            "CONFIRMED" => ("Đã xác nhận", "bg-primary"),
+            "SEATED" => ("Đã nhận bàn", "bg-info text-dark"),
+            "COMPLETED" => ("Đã hoàn thành", "bg-success"),
+            "CANCELLED" => ("Đã hủy", "bg-secondary"),
+            "NO_SHOW" => ("Không đến", "bg-danger"),
+            _ => ("Chưa xác định", "bg-secondary")
+        };
+    }
+}
+
+<!-- Tiêu đề -->
+<section class="bg-light border-bottom py-5">
+    <div class="container">
+
+        <span class="text-primary fw-semibold small">
+            DORAFOOD · QUẢN LÝ
+        </span>
+
+        <h1 class="fw-bold mt-3 mb-3"
+            style="font-family: 'Segoe UI', Arial, sans-serif;">
+            Quản lý đặt bàn
+        </h1>
+
+        <p class="text-muted mb-0">
+            Theo dõi yêu cầu của khách hàng và tình trạng phân bàn.
+            Thời gian hiển thị theo giờ Việt Nam.
+        </p>
+
+    </div>
+</section>
+
+<section class="py-5">
+    <div class="container">
+
+        @if (TempData["BookingManagementSuccess"] is string successMessage)
+        {
+            <div class="alert alert-success" role="status">
+                @successMessage
+            </div>
+        }
+
+        @if (TempData["BookingManagementError"] is string errorMessage)
+        {
+            <div class="alert alert-danger" role="alert">
+                @errorMessage
+            </div>
+        }
+
+        <!-- Lọc trạng thái -->
+        <div class="border rounded-4 bg-white p-4 mb-4">
+            <form action="@managementUrl"
+                  method="get"
+                  class="row g-3 align-items-end">
+
+                <div class="col-md-6 col-lg-4">
+                    <label for="booking-status"
+                           class="form-label fw-semibold">
+                        Trạng thái yêu cầu
+                    </label>
+
+                    <select id="booking-status"
+                            name="status"
+                            class="form-select rounded-3">
+
+                        @foreach (var filter in filters)
+                        {
+                            <option value="@filter.Code"
+                                    selected="@(Model.Status == filter.Code)">
+                                @filter.Label
+                            </option>
+                        }
+
+                    </select>
+                </div>
+
+                <div class="col-md-auto">
+                    <button type="submit"
+                            class="btn btn-primary rounded-pill px-4">
+                        <i class="fas fa-filter me-2"
+                           aria-hidden="true"></i>
+                        Lọc yêu cầu
+                    </button>
+                </div>
+
+            </form>
+        </div>
+
+        <div class="d-flex flex-wrap align-items-center
+            justify-content-between gap-2 mb-3">
+
+            <h2 class="h4 fw-bold mb-0">
+                Danh sách yêu cầu
+            </h2>
+
+            <span class="text-muted small">
+                @Model.TotalItems yêu cầu phù hợp
+            </span>
+
+        </div>
+
+        @if (Model.Reservations.Count == 0)
+        {
+            <div class="border rounded-4 bg-light text-center p-5">
+
+                <i class="far fa-calendar-alt
+                text-primary display-5 mb-3"
+                   aria-hidden="true"></i>
+
+                <h3 class="h4 fw-bold">
+                    Chưa có yêu cầu phù hợp
+                </h3>
+
+                <p class="text-muted mb-0">
+                    Thử chọn trạng thái khác để kiểm tra danh sách.
+                </p>
+
+            </div>
+        }
+        else
+        {
+            <div class="border rounded-4 overflow-hidden">
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+
+                        <caption class="visually-hidden">
+                            Danh sách yêu cầu đặt bàn theo trạng thái đã chọn.
+                        </caption>
+
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col" class="p-3">Mã yêu cầu</th>
+                                <th scope="col" class="p-3">Khách hàng</th>
+                                <th scope="col" class="p-3">Thời gian</th>
+                                <th scope="col" class="p-3">Số khách</th>
+                                <th scope="col" class="p-3">Bàn được gán</th>
+                                <th scope="col" class="p-3">Trạng thái</th>
+                                <th scope="col" class="p-3">Thao tác</th>
+                            </tr>
+                        </thead>
+
+                        <tbody>
+                            @foreach (var reservation in Model.Reservations)
+                            {
+                                var badge = StatusDisplay(
+                                    reservation.Status);
+
+                                <tr>
+
+                                    <td class="p-3">
+                                        <div class="fw-semibold text-break"
+                                             style="min-width: 150px; max-width: 220px;">
+                                            @reservation.Code
+                                        </div>
+
+                                        <div class="text-muted small mt-2">
+                                            Gửi:
+                                            @reservation.CreatedAtUtc.AddHours(7).ToString("dd/MM/yyyy HH:mm")
+                                        </div>
+                                    </td>
+
+                                    <td class="p-3">
+                                        <div class="fw-semibold">
+                                            @reservation.GuestName
+                                        </div>
+
+                                        <div class="text-muted small mt-1">
+                                            @reservation.GuestPhone
+                                        </div>
+
+                                        @if (!string.IsNullOrWhiteSpace(reservation.Note))
+                                        {
+                                            <div class="small mt-2"
+                                                 style="min-width: 160px; max-width: 250px; white-space: pre-wrap; overflow-wrap: anywhere;">
+                                                Ghi chú: @reservation.Note
+                                            </div>
+                                        }
+                                    </td>
+
+                                    <td class="p-3">
+                                        <div class="small text-nowrap">
+                                            <span class="text-muted">Đến:</span>
+                                            @reservation.StartsAtUtc.AddHours(7).ToString("dd/MM/yyyy HH:mm")
+                                        </div>
+
+                                        <div class="small text-nowrap mt-2">
+                                            <span class="text-muted">Kết thúc:</span>
+                                            @reservation.EndsAtUtc.AddHours(7).ToString("dd/MM/yyyy HH:mm")
+                                        </div>
+                                    </td>
+
+                                    <td class="p-3 text-center">
+                                        <span class="fw-semibold">
+                                            @reservation.PartySize
+                                        </span>
+                                    </td>
+
+                                    <td class="p-3">
+                                        @if (reservation.Tables.Count == 0)
+                                        {
+                                            <span class="text-muted small">
+                                                Chưa phân bàn
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <div class="d-flex flex-column gap-2">
+                                                @foreach (var table in reservation.Tables
+                                                    .OrderBy(t => t.Area.Name)
+                                                    .ThenBy(t => t.Code))
+                                                {
+                                                    <span class="badge bg-light text-dark border">
+                                                        @table.Area.Name · @table.Code
+                                                    </span>
+                                                }
+                                            </div>
+                                        }
+                                    </td>
+
+                                    <td class="p-3">
+                                        <span class="badge rounded-pill
+                                            px-3 py-2 @badge.CssClass">
+                                            @badge.Label
+                                        </span>
+                                    </td>
+                                    <td class="p-3">
+                                        <a href="@Url.RouteUrl(
+                                           "DoraFoodManageBookingDetails",
+                                           new { id = reservation.Id })"
+                                           class="btn btn-outline-secondary rounded-pill
+                                            text-nowrap px-3 py-2 me-2 mb-2">
+                                            Chi tiết
+                                        </a>
+                                        @if (reservation.Status == "PENDING"
+                                            && reservation.StartsAtUtc > DateTime.UtcNow)
+                                        {
+                                            <a href="@Url.RouteUrl(
+                                                         "DoraFoodConfirmBooking",
+                                                         new { id = reservation.Id })"
+                                               class="btn btn-outline-primary rounded-pill text-nowrap px-3 py-2">
+                                                Chọn bàn
+                                            </a>
+                                        }
+                                        else if (reservation.Status == "CONFIRMED"
+                                            && reservation.EndsAtUtc > DateTime.UtcNow)
+                                        {
+                                            <form action="@Url.RouteUrl(
+                                                              "DoraFoodSeatBooking",
+                                                              new { id = reservation.Id })"
+                                                  method="post"
+                                                  class="d-inline"
+                                                  onsubmit="return confirm('Xác nhận khách đã đến và vào các bàn đã phân?');">
+
+                                                @Html.AntiForgeryToken()
+
+                                                <input type="hidden"
+                                                       name="version"
+                                                       value="@Convert.ToBase64String(reservation.Version)" />
+
+                                                <button type="submit"
+                                                        class="btn btn-success rounded-pill text-nowrap px-3 py-2">
+                                                    Nhận khách
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted small">—</span>
+                                        }
+                                        else if (reservation.Status == "SEATED")
+                                        {
+                                        <form action="@Url.RouteUrl(
+                                                          "DoraFoodCompleteBooking",
+                                                          new { id = reservation.Id })"
+                                              method="post"
+                                              class="d-inline"
+                                              onsubmit="return confirm('Xác nhận khách đã rời bàn và hoàn tất lượt đặt bàn này?');">
+
+                                            @Html.AntiForgeryToken()
+
+                                            <input type="hidden"
+                                                   name="version"
+                                                   value="@Convert.ToBase64String(reservation.Version)" />
+
+                                            <button type="submit"
+                                                    class="btn btn-primary rounded-pill text-nowrap px-3 py-2">
+                                                Hoàn tất
+                                            </button>
+                                        </form>
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+
+                    </table>
+                </div>
+            </div>
+        }
+
+        <!-- Phân trang -->
+        @if (Model.TotalPages > 1)
+        {
+            var startPage = Math.Max(1, Model.CurrentPage - 2);
+            var endPage = Math.Min(
+                Model.TotalPages,
+                Model.CurrentPage + 2);
+
+            <nav class="mt-4" aria-label="Phân trang quản lý đặt bàn">
+                <ul class="pagination justify-content-center flex-wrap">
+
+                    @if (Model.CurrentPage > 1)
+                    {
+                        <li class="page-item">
+                            <a class="page-link"
+                               href="@Url.RouteUrl("DoraFoodManageBookings", new
+                               {
+                                   status = Model.Status,
+                                   page = Model.CurrentPage - 1
+                               })">
+                                Trước
+                            </a>
+                        </li>
+                    }
+
+                    @for (var number = startPage;
+                          number <= endPage;
+                          number++)
+                    {
+                        var isCurrent =
+                            number == Model.CurrentPage;
+
+                        <li class="page-item @(isCurrent ? "active" : "")">
+                            <a class="page-link"
+                               href="@Url.RouteUrl("DoraFoodManageBookings", new
+                               {
+                                   status = Model.Status,
+                                   page = number
+                               })"
+                               aria-current="@(isCurrent ? "page" : null)"
+                               aria-label="Trang @number">
+                                @number
+                            </a>
+                        </li>
+                    }
+
+                    @if (Model.CurrentPage < Model.TotalPages)
+                    {
+                        <li class="page-item">
+                            <a class="page-link"
+                               href="@Url.RouteUrl("DoraFoodManageBookings", new
+                               {
+                                   status = Model.Status,
+                                   page = Model.CurrentPage + 1
+                               })">
+                                Sau
+                            </a>
+                        </li>
+                    }
+
+                </ul>
+            </nav>
+        }
+
+    </div>
+</section>

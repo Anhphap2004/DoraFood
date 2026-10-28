@@ -1,0 +1,1131 @@
+﻿@using System
+@using System.Linq
+@model DoraFood.Controllers.BookingManagementController.BookingDetailsViewModel
+@{
+    var reservation = Model.Reservation;
+    ViewData["Title"] = $"Chi tiết đặt bàn {reservation.Code}";
+    var startsAt = reservation.StartsAtUtc.AddHours(7);
+    var endsAt = reservation.EndsAtUtc.AddHours(7);
+    var createdAt = reservation.CreatedAtUtc.AddHours(7);
+    var assignedSeats = reservation.Tables.Sum(t => (int)t.Capacity);
+
+    var statusText = reservation.Status switch
+    {
+        "PENDING" => "Chờ xác nhận",
+        "CONFIRMED" => "Đã xác nhận",
+        "SEATED" => "Khách đã vào bàn",
+        "COMPLETED" => "Đã hoàn tất",
+        "CANCELLED" => "Đã hủy",
+        "NO_SHOW" => "Khách không đến",
+        _ => reservation.Status
+    };
+    var statusClass = reservation.Status switch
+    {
+        "PENDING" => "is-pending",
+        "CONFIRMED" => "is-confirmed",
+        "SEATED" => "is-seated",
+        "COMPLETED" => "is-completed",
+        "CANCELLED" => "is-cancelled",
+        _ => "is-neutral"
+    };
+    string ActionText(string action) => action switch
+    {
+        "BOOKING_CREATED" => "Tạo yêu cầu đặt bàn",
+        "BOOKING_CONFIRMED" => "Xác nhận và phân bàn",
+        "BOOKING_SEATED" => "Nhận khách",
+        "BOOKING_COMPLETED" => "Hoàn tất lượt đặt bàn",
+        "BOOKING_CANCELLED" => "Hủy đặt bàn",
+        "BOOKING_NO_SHOW" => "Đánh dấu khách không đến",
+        "BOOKING_UPDATED" => "Điều chỉnh đặt bàn",
+        _ => action
+    };
+}
+
+<style>
+    /* Tất cả quy tắc chỉ áp dụng cho trang chi tiết đặt bàn. */
+    .dbd {
+        --dbd-red: #ad1830;
+        --dbd-ink: #2b2025;
+        --dbd-muted: #81767b;
+        --dbd-line: #eee6e9;
+        background: #faf8f9;
+        padding: 34px 0 58px;
+        color: var(--dbd-ink);
+        font-family: "Open Sans",Arial,sans-serif;
+        font-size: 14px;
+        line-height: 1.7
+    }
+
+        .dbd * {
+            box-sizing: border-box
+        }
+
+        .dbd .dbd-wrap {
+            width: calc(100% - 40px);
+            max-width: 1200px;
+            margin: 0 auto
+        }
+
+        .dbd h1, .dbd h2, .dbd h3 {
+            font-family: "Open Sans",Arial,sans-serif !important;
+            font-weight: 700 !important;
+            color: var(--dbd-ink);
+            letter-spacing: -.5px
+        }
+
+        .dbd h1 {
+            font-size: clamp(25px,3vw,33px);
+            line-height: 1.3;
+            margin: 0 0 9px
+        }
+
+        .dbd h2 {
+            font-size: 16px;
+            margin: 0;
+            line-height: 1.5
+        }
+
+        .dbd h3 {
+            font-size: 13px;
+            line-height: 1.6;
+            margin: 0
+        }
+
+        .dbd p {
+            margin: 0
+        }
+
+        .dbd .dbd-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 22px;
+            color: var(--dbd-muted);
+            font-size: 12px;
+            font-weight: 600;
+            text-decoration: none
+        }
+
+            .dbd .dbd-back:hover {
+                color: var(--dbd-red)
+            }
+
+            .dbd .dbd-back > span:first-child {
+                font-size: 20px;
+                line-height: 1
+            }
+
+        .dbd a:focus-visible, .dbd summary:focus-visible {
+            outline: 3px solid var(--dbd-red);
+            outline-offset: 4px
+        }
+
+        .dbd .dbd-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 26px
+        }
+
+        .dbd .dbd-kicker {
+            display: block;
+            color: var(--dbd-red);
+            font-size: 9px;
+            letter-spacing: 2.3px;
+            font-weight: 700;
+            margin-bottom: 9px
+        }
+
+        .dbd .dbd-booking-code {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px 10px;
+            align-items: center;
+            color: var(--dbd-muted);
+            font-size: 12px
+        }
+
+            .dbd .dbd-booking-code strong {
+                color: var(--dbd-ink);
+                font-family: Consolas,monospace;
+                font-size: 13px;
+                font-weight: 600;
+                overflow-wrap: anywhere
+            }
+
+        .dbd .dbd-status {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 9px 15px;
+            max-width: 100%;
+            border: 1px solid transparent;
+            border-radius: 30px;
+            font-size: 11px;
+            line-height: 1.6;
+            font-weight: 700;
+            white-space: normal;
+            flex-shrink: 0;
+            background: #f0edef;
+            color: #6b6067
+        }
+
+            .dbd .dbd-status::before {
+                content: "";
+                width: 6px;
+                height: 6px;
+                flex-shrink: 0;
+                border-radius: 50%;
+                background: currentColor
+            }
+
+        .dbd .is-pending {
+            background: #fff7e7;
+            border-color: #f2e4c4;
+            color: #8b6114
+        }
+
+        .dbd .is-confirmed {
+            background: #eef3ff;
+            border-color: #dce5fb;
+            color: #3b59a2
+        }
+
+        .dbd .is-seated {
+            background: #edf8f7;
+            border-color: #cfeae6;
+            color: #227569
+        }
+
+        .dbd .is-completed {
+            background: #edf7ee;
+            border-color: #d6e9d7;
+            color: #34743f
+        }
+
+        .dbd .is-cancelled {
+            background: #fff0f3;
+            border-color: #f1d3db;
+            color: #ad1830
+        }
+
+        .dbd .is-neutral {
+            border-color: #e5dfe3
+        }
+
+        .dbd .dbd-alert {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+            padding: 15px 19px;
+            border: 1px solid;
+            border-radius: 13px;
+            margin-bottom: 20px;
+            font-size: 13px;
+            overflow-wrap: anywhere
+        }
+
+        .dbd .dbd-alert-success {
+            background: #f1f8f2;
+            border-color: #d6e9d7;
+            color: #34743f
+        }
+
+        .dbd .dbd-alert-error {
+            background: #fff1f4;
+            border-color: #f1d3db;
+            color: #ad1830
+        }
+
+        .dbd .dbd-summary {
+            display: grid;
+            grid-template-columns: repeat(4,minmax(0,1fr));
+            gap: 15px;
+            margin-bottom: 23px
+        }
+
+        .dbd .dbd-stat {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            min-width: 0;
+            padding: 20px;
+            background: #fff;
+            border: 1px solid var(--dbd-line);
+            border-radius: 16px;
+            box-shadow: 0 3px 12px #38202a02
+        }
+
+        .dbd .dbd-stat-icon {
+            display: grid;
+            place-items: center;
+            flex-shrink: 0;
+            width: 41px;
+            height: 41px;
+            border-radius: 12px;
+            background: #fbf0f3;
+            color: var(--dbd-red)
+        }
+
+        .dbd svg {
+            display: block;
+            width: 20px;
+            height: 20px;
+            fill: none;
+            stroke: currentColor;
+            
+            stroke-linecap: round;
+            stroke-linejoin: round
+        }
+
+        .dbd .dbd-stat > div {
+            min-width: 0
+        }
+
+        .dbd .dbd-stat-label {
+            display: block;
+            font-size: 10px;
+            color: var(--dbd-muted);
+            margin-bottom: 3px
+        }
+
+        .dbd .dbd-stat-value {
+            display: block;
+            font-size: 20px;
+            line-height: 1.4;
+            color: var(--dbd-ink);
+            font-weight: 700;
+            letter-spacing: -.5px;
+            overflow-wrap: anywhere
+        }
+
+            .dbd .dbd-stat-value small {
+                font-size: 11px;
+                font-weight: 400;
+                letter-spacing: 0;
+                color: var(--dbd-muted)
+            }
+
+        .dbd .dbd-stat-sub {
+            display: block;
+            font-size: 10px;
+            color: var(--dbd-muted)
+        }
+
+        .dbd .dbd-grid {
+            display: grid;
+            grid-template-columns: minmax(0,1.25fr) minmax(0,1fr);
+            gap: 23px;
+            align-items: start
+        }
+
+        .dbd .dbd-panel {
+            min-width: 0;
+            border: 1px solid var(--dbd-line);
+            border-radius: 18px;
+            background: #fff;
+            overflow: hidden
+        }
+
+        .dbd .dbd-panel-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 14px;
+            padding: 20px 24px;
+            border-bottom: 1px solid #f1eaed
+        }
+
+        .dbd .dbd-panel-heading {
+            display: flex;
+            align-items: center;
+            gap: 10px
+        }
+
+            .dbd .dbd-panel-heading > span {
+                display: block;
+                width: 3px;
+                height: 18px;
+                border-radius: 4px;
+                background: var(--dbd-red)
+            }
+
+        .dbd .dbd-panel-meta {
+            font-size: 10px;
+            color: var(--dbd-muted)
+        }
+
+        .dbd .dbd-panel-body {
+            padding: 23px 24px
+        }
+
+        .dbd .dbd-guest {
+            display: flex;
+            gap: 13px;
+            align-items: center;
+            padding-bottom: 21px;
+            border-bottom: 1px solid #f1eaed
+        }
+
+        .dbd .dbd-avatar {
+            display: grid;
+            place-items: center;
+            width: 48px;
+            height: 48px;
+            flex-shrink: 0;
+            border-radius: 15px;
+            background: #ad1830;
+            color: #fff
+        }
+
+            .dbd .dbd-avatar svg {
+                width: 23px;
+                height: 23px
+            }
+
+        .dbd .dbd-guest > div {
+            min-width: 0
+        }
+
+        .dbd .dbd-guest-name {
+            font-size: 17px;
+            font-weight: 700;
+            line-height: 1.5;
+            overflow-wrap: anywhere
+        }
+
+        .dbd .dbd-phone {
+            display: inline-block;
+            color: var(--dbd-muted);
+            font-size: 12px;
+            text-decoration: none;
+            overflow-wrap: anywhere
+        }
+
+            .dbd .dbd-phone:hover {
+                color: var(--dbd-red)
+            }
+
+        .dbd .dbd-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px 24px;
+            margin: 22px 0
+        }
+
+            .dbd .dbd-details > div {
+                min-width: 0
+            }
+
+            .dbd .dbd-details dt {
+                font-size: 11px;
+                color: var(--dbd-muted);
+                font-weight: 400;
+                margin-bottom: 5px
+            }
+
+            .dbd .dbd-details dd {
+                font-size: 13px;
+                font-weight: 600;
+                margin: 0;
+                overflow-wrap: anywhere
+            }
+
+        .dbd .dbd-note {
+            padding: 16px 18px;
+            border-radius: 11px;
+            background: #fcf8f9;
+            border-left: 2px solid #dba5b1
+        }
+
+        .dbd .dbd-note-label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 10px;
+            font-weight: 700;
+            color: var(--dbd-red);
+            letter-spacing: .6px
+        }
+
+        .dbd .dbd-note-text {
+            font-size: 12px;
+            line-height: 1.8;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere
+        }
+
+        .dbd .dbd-muted {
+            color: var(--dbd-muted)
+        }
+
+        .dbd .dbd-timezone {
+            display: flex;
+            gap: 7px;
+            align-items: center;
+            color: var(--dbd-muted);
+            font-size: 10px;
+            margin-top: 16px
+        }
+
+            .dbd .dbd-timezone svg {
+                width: 13px;
+                height: 13px;
+                flex-shrink: 0
+            }
+
+        .dbd .dbd-tables {
+            display: grid;
+            gap: 10px
+        }
+
+        .dbd .dbd-table-card {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 13px;
+            padding: 13px;
+            border: 1px solid #eee5e8;
+            border-radius: 12px;
+            background: #fff
+        }
+
+        .dbd .dbd-table-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0
+        }
+
+        .dbd .dbd-table-symbol {
+            display: grid;
+            place-items: center;
+            width: 38px;
+            height: 38px;
+            flex-shrink: 0;
+            border: 1px solid #f1dce2;
+            border-radius: 10px;
+            color: var(--dbd-red);
+            background: #fff7f9
+        }
+
+        .dbd .dbd-table-info > div {
+            min-width: 0
+        }
+
+        .dbd .dbd-table-code {
+            font-size: 14px;
+            font-weight: 700;
+            overflow-wrap: anywhere
+        }
+
+        .dbd .dbd-area {
+            font-size: 11px;
+            color: var(--dbd-muted);
+            overflow-wrap: anywhere
+        }
+
+        .dbd .dbd-capacity {
+            font-size: 13px;
+            font-weight: 700;
+            flex-shrink: 0
+        }
+
+            .dbd .dbd-capacity span {
+                font-size: 10px;
+                font-weight: 400;
+                color: var(--dbd-muted)
+            }
+
+        .dbd .dbd-seats-total {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            margin-top: 16px;
+            padding-top: 16px;
+            border-top: 1px dashed #e7dbe0;
+            font-size: 12px;
+            color: var(--dbd-muted)
+        }
+
+            .dbd .dbd-seats-total strong {
+                color: var(--dbd-red);
+                font-size: 17px
+            }
+
+        .dbd .dbd-empty {
+            text-align: center;
+            padding: 24px 10px;
+            color: var(--dbd-muted)
+        }
+
+        .dbd .dbd-empty-icon {
+            display: grid;
+            place-items: center;
+            width: 56px;
+            height: 56px;
+            margin: 0 auto 13px;
+            background: #fbf1f4;
+            color: #b88995;
+            border-radius: 18px
+        }
+
+        .dbd .dbd-empty h3 {
+            font-size: 14px;
+            margin-bottom: 5px
+        }
+
+        .dbd .dbd-empty p {
+            font-size: 12px;
+            max-width: 290px;
+            margin: auto;
+            line-height: 1.9
+        }
+
+        .dbd .dbd-history {
+            margin-top: 23px
+        }
+
+        .dbd .dbd-history-list {
+            list-style: none;
+            margin: 0;
+            padding: 0
+        }
+
+        .dbd .dbd-history-item {
+            position: relative;
+            display: grid;
+            grid-template-columns: 150px minmax(0,1fr);
+            gap: 28px;
+            padding: 0 0 25px 26px
+        }
+
+            .dbd .dbd-history-item:last-child {
+                padding-bottom: 0
+            }
+
+            .dbd .dbd-history-item::before {
+                position: absolute;
+                left: 4px;
+                top: 6px;
+                bottom: -6px;
+                width: 1px;
+                content: "";
+                background: #e9dbe0
+            }
+
+            .dbd .dbd-history-item:last-child::before {
+                display: none
+            }
+
+            .dbd .dbd-history-item::after {
+                position: absolute;
+                top: 6px;
+                left: 0;
+                width: 9px;
+                height: 9px;
+                content: "";
+                border: 2px solid #d8a1ae;
+                background: #fff;
+                border-radius: 50%
+            }
+
+            .dbd .dbd-history-item:first-child::after {
+                border-color: var(--dbd-red);
+                background: var(--dbd-red);
+                box-shadow: 0 0 0 4px #fcf0f3
+            }
+
+        .dbd .dbd-history-time {
+            display: block;
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--dbd-ink)
+        }
+
+            .dbd .dbd-history-time span {
+                display: block;
+                font-size: 10px;
+                font-weight: 400;
+                color: var(--dbd-muted);
+                margin-top: 2px
+            }
+
+        .dbd .dbd-history-actor {
+            font-size: 10px;
+            color: var(--dbd-muted);
+            margin-top: 4px;
+            overflow-wrap: anywhere
+        }
+
+        .dbd .dbd-history-action {
+            font-size: 13px;
+            font-weight: 700;
+            margin-bottom: 5px
+        }
+
+        .dbd .dbd-history-content {
+            font-size: 12px;
+            color: #74686f;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere
+        }
+
+    @@media(min-width:992px) {
+        .dbd .dbd-assignment {
+            position: sticky;
+            top: 112px
+        }
+    }
+
+    @@media(max-width:991.98px) {
+        .dbd .dbd-summary {
+            grid-template-columns: repeat(2,minmax(0,1fr))
+        }
+
+        .dbd .dbd-grid {
+            grid-template-columns: 1fr
+        }
+
+        .dbd .dbd-tables {
+            grid-template-columns: repeat(2,minmax(0,1fr))
+        }
+    }
+
+    @@media(max-width:575.98px) {
+        .dbd {
+            padding: 23px 0 36px
+        }
+
+            .dbd .dbd-wrap {
+                width: calc(100% - 28px)
+            }
+
+            .dbd .dbd-heading {
+                align-items: flex-start;
+                flex-direction: column;
+                gap: 14px;
+                margin-bottom: 20px
+            }
+
+            .dbd .dbd-back {
+                margin-bottom: 17px
+            }
+
+            .dbd .dbd-summary {
+                gap: 10px;
+                margin-bottom: 16px
+            }
+
+            .dbd .dbd-stat {
+                padding: 14px 12px;
+                gap: 9px;
+                border-radius: 13px
+            }
+
+            .dbd .dbd-stat-icon {
+                width: 31px;
+                height: 34px;
+                border-radius: 10px
+            }
+
+                .dbd .dbd-stat-icon svg {
+                    width: 17px;
+                    height: 17px
+                }
+
+            .dbd .dbd-stat-value {
+                font-size: 17px
+            }
+
+            .dbd .dbd-stat-label {
+                font-size: 9px
+            }
+
+            .dbd .dbd-stat-sub {
+                font-size: 9px
+            }
+
+            .dbd .dbd-panel-head {
+                padding: 17px 18px
+            }
+
+            .dbd h2 {
+                font-size: 15px
+            }
+
+            .dbd .dbd-panel-body {
+                padding: 20px 18px
+            }
+
+            .dbd .dbd-details {
+                gap: 17px
+            }
+
+                .dbd .dbd-details dd {
+                    font-size: 12px
+                }
+
+            .dbd .dbd-tables {
+                grid-template-columns: 1fr
+            }
+
+            .dbd .dbd-grid {
+                gap: 16px
+            }
+
+            .dbd .dbd-history {
+                margin-top: 16px
+            }
+
+            .dbd .dbd-history-item {
+                grid-template-columns: 1fr;
+                gap: 8px;
+                padding-left: 23px
+            }
+
+            .dbd .dbd-history-time span {
+                display: inline;
+                margin-left: 7px
+            }
+
+            .dbd .dbd-history-actor {
+                margin-top: 1px
+            }
+
+            .dbd .dbd-panel-meta {
+                font-size: 9px
+            }
+    }
+    /* Khối hủy đặt bàn */
+    .dbd .dbd-cancel {
+        margin-top: 23px;
+        border-color: #efd0d9
+    }
+
+        .dbd .dbd-cancel .dbd-panel-head {
+            background: #fff8fa;
+            border-bottom-color: #f3e0e6
+        }
+
+        .dbd .dbd-cancel h2 {
+            color: var(--dbd-red)
+        }
+
+    .dbd .dbd-cancel-layout {
+        display: grid;
+        grid-template-columns: minmax(0,.85fr) minmax(0,1.4fr);
+        gap: 35px;
+        align-items: start
+    }
+
+    .dbd .dbd-cancel-description {
+        font-size: 12px;
+        color: var(--dbd-muted);
+        line-height: 1.9
+    }
+
+    .dbd .dbd-cancel label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        margin-bottom: 8px
+    }
+
+        .dbd .dbd-cancel label span {
+            color: var(--dbd-red)
+        }
+
+    .dbd .dbd-cancel textarea {
+        display: block;
+        width: 100%;
+        min-height: 105px;
+        padding: 12px 14px;
+        border: 1px solid #e5d7dd;
+        border-radius: 11px;
+        background: #fff;
+        color: var(--dbd-ink);
+        font: inherit;
+        font-size: 13px;
+        line-height: 1.7;
+        resize: vertical
+    }
+
+        .dbd .dbd-cancel textarea:focus-visible {
+            outline: 2px solid var(--dbd-red);
+            outline-offset: 2px
+        }
+
+    .dbd .dbd-cancel-help {
+        margin-top: 7px;
+        font-size: 10px;
+        color: var(--dbd-muted)
+    }
+
+    .dbd .dbd-cancel-actions {
+        display: flex;
+        justify-content: flex-end;
+        margin-top: 17px
+    }
+
+    .dbd .dbd-cancel-submit {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 9px;
+        padding: 11px 22px;
+        min-height: 44px;
+        border: 1px solid var(--dbd-red);
+        border-radius: 30px;
+        background: var(--dbd-red);
+        color: #fff;
+        font: inherit;
+        font-size: 12px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background .2s ease
+    }
+
+        .dbd .dbd-cancel-submit:hover {
+            background: #861126;
+            border-color: #861126
+        }
+
+        .dbd .dbd-cancel-submit:focus-visible {
+            outline: 3px solid #ad1830;
+            outline-offset: 3px
+        }
+
+        .dbd .dbd-cancel-submit svg {
+            width: 16px;
+            height: 16px
+        }
+
+    @@media(max-width:767.98px) {
+        .dbd .dbd-cancel-layout {
+            grid-template-columns: 1fr;
+            gap: 18px
+        }
+
+        .dbd .dbd-cancel textarea {
+            font-size: 16px
+        }
+    }
+
+    @@media(max-width:575.98px) {
+        .dbd .dbd-cancel {
+            margin-top: 16px
+        }
+    }
+</style>
+
+<section class="dbd" aria-labelledby="dbdTitle">
+    <div class="dbd-wrap">
+        <a href="@Url.RouteUrl("DoraFoodManageBookings", new { status = reservation.Status })" class="dbd-back">
+            <span aria-hidden="true">←</span><span>Danh sách đặt bàn</span>
+        </a>
+        <header class="dbd-heading">
+            <div>
+                <span class="dbd-kicker">DORAFOOD / QUẢN LÝ ĐẶT BÀN</span>
+                <h1 id="dbdTitle">Chi tiết đặt bàn</h1>
+                <div class="dbd-booking-code"><span>Mã đặt bàn</span><strong>@reservation.Code</strong></div>
+            </div>
+            <span class="dbd-status @statusClass">@statusText</span>
+        </header>
+
+        @if (TempData["BookingManagementSuccess"] is string success)
+        {
+            <div class="dbd-alert dbd-alert-success" role="status">@success</div>
+        }
+        @if (TempData["BookingManagementError"] is string error)
+        {
+            <div class="dbd-alert dbd-alert-error" role="alert">@error</div>
+        }
+
+        <div class="dbd-summary" aria-label="Tóm tắt đặt bàn">
+            <div class="dbd-stat">
+                <span class="dbd-stat-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M7 3v4m10-4v4M3 11h18" /></svg></span>
+                <div><span class="dbd-stat-label">Ngày đón khách</span><strong class="dbd-stat-value">@startsAt.ToString("dd/MM")</strong><span class="dbd-stat-sub">Năm @startsAt.ToString("yyyy")</span></div>
+            </div>
+            <div class="dbd-stat">
+                <span class="dbd-stat-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg></span>
+                <div><span class="dbd-stat-label">Giờ đến dự kiến</span><strong class="dbd-stat-value">@startsAt.ToString("HH:mm")</strong><span class="dbd-stat-sub">Giờ Việt Nam</span></div>
+            </div>
+            <div class="dbd-stat">
+                <span class="dbd-stat-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="9" cy="8" r="3" /><path d="M3 20v-2a6 6 0 0 1 12 0v2m2-15a3 3 0 0 1 0 6m3 9v-2a6 6 0 0 0-3-5" /></svg></span>
+                <div><span class="dbd-stat-label">Số lượng khách</span><strong class="dbd-stat-value">@reservation.PartySize <small>người</small></strong><span class="dbd-stat-sub">Theo yêu cầu đặt bàn</span></div>
+            </div>
+            <div class="dbd-stat">
+                <span class="dbd-stat-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="7" width="16" height="9" rx="2" /><path d="M7 16v4m10-4v4M8 7V4m8 3V4" /></svg></span>
+                <div><span class="dbd-stat-label">Bàn đã phân</span><strong class="dbd-stat-value">@reservation.Tables.Count <small>bàn</small></strong><span class="dbd-stat-sub">@assignedSeats chỗ ngồi</span></div>
+            </div>
+        </div>
+
+        <div class="dbd-grid">
+            <article class="dbd-panel" aria-labelledby="dbdGuestTitle">
+                <div class="dbd-panel-head"><div class="dbd-panel-heading"><span aria-hidden="true"></span><h2 id="dbdGuestTitle">Thông tin khách hàng</h2></div></div>
+                <div class="dbd-panel-body">
+                    <div class="dbd-guest">
+                        <span class="dbd-avatar"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4" /><path d="M4 21v-2a8 8 0 0 1 16 0v2" /></svg></span>
+                        <div><div class="dbd-guest-name">@reservation.GuestName</div><a class="dbd-phone" href="tel:@reservation.GuestPhone">@reservation.GuestPhone</a></div>
+                    </div>
+                    <dl class="dbd-details">
+                        <div><dt>Giờ bắt đầu</dt><dd>@startsAt.ToString("dd/MM/yyyy HH:mm")</dd></div>
+                        <div><dt>Giờ kết thúc</dt><dd>@endsAt.ToString("dd/MM/yyyy HH:mm")</dd></div>
+                        <div><dt>Ngày tạo yêu cầu</dt><dd>@createdAt.ToString("dd/MM/yyyy HH:mm")</dd></div>
+                        <div><dt>Số khách đăng ký</dt><dd>@reservation.PartySize người</dd></div>
+                    </dl>
+                    <div class="dbd-note"><span class="dbd-note-label">GHI CHÚ TỪ KHÁCH HÀNG</span><p class="dbd-note-text">@(string.IsNullOrWhiteSpace(reservation.Note) ? "Không có ghi chú." : reservation.Note)</p></div>
+                    <p class="dbd-timezone"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>Thời gian hiển thị theo giờ Việt Nam (UTC+7).</p>
+                </div>
+            </article>
+
+            <article class="dbd-panel dbd-assignment" aria-labelledby="dbdTablesTitle">
+                <div class="dbd-panel-head"><div class="dbd-panel-heading"><span aria-hidden="true"></span><h2 id="dbdTablesTitle">Sắp xếp bàn ngồi</h2></div><span class="dbd-panel-meta">@reservation.Tables.Count bàn đã phân</span></div>
+                <div class="dbd-panel-body">
+                    @if (reservation.Tables.Count == 0)
+                    {
+                        <div class="dbd-empty"><span class="dbd-empty-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="7" width="16" height="9" rx="2" /><path d="M7 16v4m10-4v4M8 7V4m8 3V4" /></svg></span><h3>Chưa có bàn được phân</h3><p>Thông tin bàn và khu vực sẽ hiển thị tại đây sau khi được phân bàn.</p></div>
+                    }
+                    else
+                    {
+                        <div class="dbd-tables">
+                            @foreach (var table in reservation.Tables.OrderBy(t => t.Area.Name).ThenBy(t => t.Code))
+                            {
+                                <div class="dbd-table-card">
+                                    <div class="dbd-table-info"><span class="dbd-table-symbol"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="7" width="16" height="9" rx="2" /><path d="M7 16v4m10-4v4" /></svg></span><div><div class="dbd-table-code">@table.Code</div><div class="dbd-area">@table.Area.Name</div></div></div>
+                                    <div class="dbd-capacity">@table.Capacity <span>chỗ</span></div>
+                                </div>
+                            }
+                        </div>
+                        <div class="dbd-seats-total"><span>Tổng sức chứa các bàn</span><strong>@assignedSeats chỗ</strong></div>
+                    }
+                </div>
+            </article>
+        </div>
+        @if (reservation.Status == "CONFIRMED")
+        {
+            var canMarkNoShow =
+                reservation.StartsAtUtc <= DateTime.UtcNow.AddMinutes(-30);
+
+            <section class="dbd-panel dbd-cancel"
+                     aria-labelledby="dbdNoShowTitle">
+
+                <div class="dbd-panel-head">
+                    <div class="dbd-panel-heading">
+                        <span aria-hidden="true"></span>
+                        <h2 id="dbdNoShowTitle">Khách không đến</h2>
+                    </div>
+
+                    <span class="dbd-panel-meta">
+                        Thời gian chờ: 30 phút
+                    </span>
+                </div>
+
+                <div class="dbd-panel-body dbd-cancel-layout">
+                    <div>
+                        <p class="dbd-cancel-description">
+                            Chỉ đánh dấu sau khi đã kiểm tra khách chưa đến
+                            và đã chờ ít nhất 30 phút kể từ giờ bắt đầu.
+                            Thao tác này sẽ giải phóng lịch giữ bàn
+                            và được ghi vào lịch sử.
+                        </p>
+                    </div>
+
+                    <div>
+                        @if (canMarkNoShow)
+                        {
+                            <form action="@Url.RouteUrl(
+                                              "DoraFoodNoShowBooking",
+                                              new { id = reservation.Id })"
+                                  method="post"
+                                  onsubmit="return confirm('Xác nhận đã kiểm tra khách chưa đến và muốn giải phóng lịch giữ bàn?');">
+
+                                @Html.AntiForgeryToken()
+
+                                <input type="hidden"
+                                       name="version"
+                                       value="@Convert.ToBase64String(reservation.Version)" />
+
+                                <p class="dbd-cancel-description">
+                                    Yêu cầu đã đủ thời gian chờ.
+                                    Anh kiểm tra tình hình thực tế trước khi xác nhận.
+                                </p>
+
+                                <div class="dbd-cancel-actions">
+                                    <button type="submit"
+                                            class="dbd-cancel-submit">
+                                        Đánh dấu khách không đến
+                                    </button>
+                                </div>
+                            </form>
+                        }
+                        else
+                        {
+                            <div class="dbd-note" role="status">
+                                <span class="dbd-note-label">
+                                    CHƯA ĐỦ THỜI GIAN CHỜ
+                                </span>
+
+                                <p class="dbd-note-text">Cần chờ đủ 30 phút kể từ giờ bắt đầu. Anh tải lại trang khi đã đủ thời gian.</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </section>
+        }
+        <article class="dbd-panel dbd-history" aria-labelledby="dbdHistoryTitle">
+            <div class="dbd-panel-head"><div class="dbd-panel-heading"><span aria-hidden="true"></span><h2 id="dbdHistoryTitle">Lịch sử thao tác</h2></div><span class="dbd-panel-meta">@Model.History.Count hoạt động</span></div>
+            <div class="dbd-panel-body">
+                @if (Model.History.Count == 0)
+                {
+                    <div class="dbd-empty"><span class="dbd-empty-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg></span><h3>Chưa có hoạt động</h3><p>Các thao tác với yêu cầu đặt bàn sẽ được hiển thị tại đây khi có lịch sử được ghi nhận.</p></div>
+                }
+                else
+                {
+                    <ol class="dbd-history-list">
+                        @foreach (var log in Model.History)
+                        {
+                            <li class="dbd-history-item">
+                                <div><time class="dbd-history-time">@log.CreatedAtUtc.AddHours(7).ToString("dd/MM/yyyy")<span>@log.CreatedAtUtc.AddHours(7).ToString("HH:mm:ss")</span></time><div class="dbd-history-actor">@(log.Actor != null ? log.Actor.UserName : "Không có thông tin tài khoản")</div></div>
+                                <div><div class="dbd-history-action">@ActionText(log.Action)</div><p class="dbd-history-content">@(string.IsNullOrWhiteSpace(log.Summary) ? "—" : log.Summary)</p></div>
+                            </li>
+                        }
+                    </ol>
+                }
+            </div>
+        </article>
+
+        @if (reservation.Status == "PENDING" || reservation.Status == "CONFIRMED")
+        {
+            <section class="dbd-panel dbd-cancel" aria-labelledby="dbdCancelTitle">
+                <div class="dbd-panel-head">
+                    <div class="dbd-panel-heading"><span aria-hidden="true"></span><h2 id="dbdCancelTitle">Hủy đặt bàn</h2></div>
+                </div>
+                <div class="dbd-panel-body dbd-cancel-layout">
+                    <div>
+                        <p class="dbd-cancel-description">Chỉ hủy khi đã kiểm tra thông tin. Lý do hủy và tài khoản thực hiện sẽ được lưu trong lịch sử.</p>
+                    </div>
+                    <form action="@Url.RouteUrl("DoraFoodManageCancelBooking", new { id = reservation.Id })"
+                          method="post"
+                          onsubmit="return confirm('Anh chắc chắn muốn hủy yêu cầu đặt bàn này?');">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="Version" value="@Convert.ToBase64String(reservation.Version)" />
+                        <label for="cancelReason">Lý do hủy <span aria-hidden="true">*</span></label>
+                        <textarea id="cancelReason" name="Reason" rows="3" maxlength="300" required
+                                  aria-describedby="cancelReasonHelp" placeholder="Nhập lý do hủy đặt bàn..."></textarea>
+                        <div id="cancelReasonHelp" class="dbd-cancel-help">Bắt buộc nhập, tối đa 300 ký tự.</div>
+                        <div class="dbd-cancel-actions">
+                            <button type="submit" class="dbd-cancel-submit">
+                                <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="m9 9 6 6m0-6-6 6" /></svg>
+                                Hủy đặt bàn
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </section>
+        }
+    </div>
+</section>
