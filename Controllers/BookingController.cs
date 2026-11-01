@@ -1,14 +1,21 @@
-﻿using System.ComponentModel.DataAnnotations;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
 using System.Security.Claims;
+using System.Threading.Tasks;
 using DoraFood.Data;
 using DoraFood.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
+using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using Microsoft.Data.SqlClient;
+
 namespace DoraFood.Controllers
 {
     public class BookingController : Controller
@@ -28,25 +35,30 @@ namespace DoraFood.Controllers
             _logger = logger;
         }
 
+        // Dữ liệu nhận từ form đặt bàn.
         public class BookingInput
         {
             [Display(Name = "Họ và tên")]
             [Required(ErrorMessage = "Vui lòng nhập họ và tên.")]
-            [StringLength(150,
+            [StringLength(
+                150,
                 ErrorMessage = "Họ và tên tối đa 150 ký tự.")]
             public string GuestName { get; set; } = string.Empty;
 
             [Display(Name = "Số điện thoại")]
             [Required(ErrorMessage = "Vui lòng nhập số điện thoại.")]
-            [Phone(ErrorMessage =
-                "Số điện thoại không đúng định dạng.")]
-            [StringLength(20,
+            [Phone(
+                ErrorMessage = "Số điện thoại không đúng định dạng.")]
+            [StringLength(
+                20,
                 ErrorMessage = "Số điện thoại tối đa 20 ký tự.")]
             public string GuestPhone { get; set; } = string.Empty;
 
             [Display(Name = "Số khách")]
             [Required(ErrorMessage = "Vui lòng nhập số khách.")]
-            [Range(1, short.MaxValue,
+            [Range(
+                1,
+                short.MaxValue,
                 ErrorMessage = "Số khách phải từ 1 đến 32.767.")]
             public short? PartySize { get; set; }
 
@@ -55,17 +67,21 @@ namespace DoraFood.Controllers
             [DataType(DataType.DateTime)]
             public DateTime? StartsAtLocal { get; set; }
 
-            [Display(Name = "Giờ kết thúc dự kiến")]
-            [Required(ErrorMessage =
-                "Vui lòng chọn giờ kết thúc dự kiến.")]
-            [DataType(DataType.DateTime)]
+            // Giữ thuộc tính để View cũ chưa bị lỗi.
+            // Không nhận giá trị do khách gửi lên.
+            // Hệ thống tự tính giờ kết thúc buổi phục vụ.
+            [BindNever]
+            [ValidateNever]
+            [Display(Name = "Kết thúc buổi phục vụ")]
             public DateTime? EndsAtLocal { get; set; }
 
             [Display(Name = "Ghi chú")]
-            [StringLength(1000,
+            [StringLength(
+                1000,
                 ErrorMessage = "Ghi chú tối đa 1.000 ký tự.")]
             public string? Note { get; set; }
         }
+
         public class MyBookingsViewModel
         {
             public List<Reservation> Reservations { get; set; } = new();
@@ -76,7 +92,8 @@ namespace DoraFood.Controllers
 
             public int TotalItems { get; set; }
         }
-        // Mở trang đặt bàn.
+
+        // GET: /dat-ban
         [HttpGet("/dat-ban", Name = "DoraFoodBooking")]
         [HttpGet("/book.html")]
         [HttpGet("/Booking")]
@@ -84,19 +101,59 @@ namespace DoraFood.Controllers
         [AllowAnonymous]
         public IActionResult Index()
         {
-            var localNow = TimeZoneInfo.ConvertTimeFromUtc(
-                DateTime.UtcNow,
-                RestaurantTimeZone);
+            var localNow = GetRestaurantTime(DateTime.UtcNow);
 
-            return View(new BookingInput
+            var model = new BookingInput
             {
-                PartySize = 2,
-                StartsAtLocal = localNow.AddHours(2),
-                EndsAtLocal = localNow.AddHours(4)
-            });
+                PartySize = 2
+            };
+
+            if (localNow.TimeOfDay >= TimeSpan.FromHours(18))
+            {
+                ViewData["BookingClosedMessage"] =
+                    "Nhà hàng ngừng nhận yêu cầu đặt mới từ 18:00. "
+                    + "Các bàn đã đặt trước đó vẫn được giữ theo quy định.";
+            }
+            else
+            {
+                // Gợi ý giờ đến trong ngày và trong khung phục vụ.
+                var suggested = localNow.AddMinutes(15);
+
+                suggested = new DateTime(
+                    suggested.Year,
+                    suggested.Month,
+                    suggested.Day,
+                    suggested.Hour,
+                    suggested.Minute,
+                    0,
+                    DateTimeKind.Unspecified);
+
+                var lunchStart = localNow.Date.AddHours(10);
+                var lunchEnd = localNow.Date.AddHours(14);
+                var dinnerStart = localNow.Date.AddHours(16);
+
+                if (suggested < lunchStart)
+                {
+                    suggested = lunchStart;
+                }
+                else if (suggested >= lunchEnd
+                    && suggested < dinnerStart)
+                {
+                    suggested = dinnerStart;
+                }
+
+                model.StartsAtLocal = suggested;
+
+                model.EndsAtLocal = suggested.Date.AddHours(
+                    suggested.TimeOfDay < TimeSpan.FromHours(14)
+                        ? 14
+                        : 22);
+            }
+
+            return View(model);
         }
 
-        // Nhận yêu cầu từ form.
+        // POST: /dat-ban
         [HttpPost("/dat-ban")]
         [HttpPost("/book.html")]
         [HttpPost("/Booking")]
@@ -105,79 +162,40 @@ namespace DoraFood.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Index(BookingInput input)
         {
-            if (!ModelState.IsValid)
-            {
-                return View(input);
-            }
-
-            // Giá trị từ datetime-local là giờ tại nhà hàng.
-            var startsAtLocal = DateTime.SpecifyKind(
-                input.StartsAtLocal!.Value,
-                DateTimeKind.Unspecified);
-
-            var endsAtLocal = DateTime.SpecifyKind(
-                input.EndsAtLocal!.Value,
-                DateTimeKind.Unspecified);
-
-            var startsAtUtc = TimeZoneInfo.ConvertTimeToUtc(
-                startsAtLocal,
-                RestaurantTimeZone);
-
-            var endsAtUtc = TimeZoneInfo.ConvertTimeToUtc(
-                endsAtLocal,
-                RestaurantTimeZone);
-
-            if (startsAtUtc <= DateTime.UtcNow)
-            {
-                ModelState.AddModelError(
-                    nameof(BookingInput.StartsAtLocal),
-                    "Giờ đến phải nằm trong tương lai.");
-            }
-
-            if (endsAtUtc <= startsAtUtc)
-            {
-                ModelState.AddModelError(
-                    nameof(BookingInput.EndsAtLocal),
-                    "Giờ kết thúc phải sau giờ đến.");
-            }
-
-            if (!ModelState.IsValid)
+            if (!TryPrepareBooking(
+                    input,
+                    DateTime.UtcNow,
+                    out var startsAtUtc,
+                    out var sessionEndsAtUtc))
             {
                 return View(input);
             }
 
             long? customerId = null;
 
-            // Khách có thể gửi yêu cầu mà không cần đăng nhập.
-            // Nếu đã đăng nhập, liên kết với đúng tài khoản.
+            // Khách được gửi yêu cầu mà không cần đăng nhập.
+            // Nếu đăng nhập thì liên kết với đúng tài khoản.
             if (User.Identity?.IsAuthenticated == true)
             {
-                if (!long.TryParse(
-                        User.FindFirstValue(
-                            ClaimTypes.NameIdentifier),
-                        out var userId)
-                    || !Guid.TryParse(
-                        User.FindFirstValue("SecurityStamp"),
-                        out var securityStamp))
+                customerId = await GetActiveCustomerIdAsync();
+
+                if (!customerId.HasValue)
                 {
                     return await RestartBookingLoginAsync();
                 }
+            }
 
-                var validAccount = await _context
-                    .Set<DoraFood.Models.User>()
-                    .AsNoTracking()
-                    .AnyAsync(
-                        u => u.Id == userId
-                            && u.IsActive
-                            && u.SecurityStamp == securityStamp,
-                        HttpContext.RequestAborted);
+            // Kiểm tra lại sau khi đọc tài khoản,
+            // tránh xử lý kéo dài qua 18:00 hoặc qua giờ hẹn.
+            var acceptedAtUtc = DateTime.UtcNow;
 
-                if (!validAccount)
-                {
-                    return await RestartBookingLoginAsync();
-                }
-
-                customerId = userId;
+            if (!TryPrepareBooking(
+                    input,
+                    acceptedAtUtc,
+                    out startsAtUtc,
+                    out sessionEndsAtUtc))
+            {
+                return View(input);
             }
 
             var reservation = new Reservation
@@ -191,7 +209,10 @@ namespace DoraFood.Controllers
                 PartySize = input.PartySize!.Value,
 
                 StartsAtUtc = startsAtUtc,
-                EndsAtUtc = endsAtUtc,
+
+                // Tạm dùng giờ kết thúc buổi phục vụ
+                // để tương thích với cấu trúc SQL hiện tại.
+                EndsAtUtc = sessionEndsAtUtc,
 
                 Status = "PENDING",
 
@@ -199,10 +220,8 @@ namespace DoraFood.Controllers
                     ? null
                     : input.Note.Trim(),
 
-                // Đây là yêu cầu từ khách, chưa có nhân viên xử lý.
                 CreatedBy = null,
-
-                CreatedAtUtc = DateTime.UtcNow
+                CreatedAtUtc = acceptedAtUtc
             };
 
             _context.Set<Reservation>().Add(reservation);
@@ -220,7 +239,8 @@ namespace DoraFood.Controllers
 
                 ModelState.AddModelError(
                     string.Empty,
-                    "Chưa thể gửi yêu cầu lúc này. Vui lòng thử lại sau.");
+                    "Chưa thể gửi yêu cầu lúc này. "
+                    + "Vui lòng thử lại sau.");
 
                 return View(input);
             }
@@ -231,8 +251,109 @@ namespace DoraFood.Controllers
 
             return RedirectToRoute("DoraFoodBooking");
         }
+
+        // Kiểm tra quy định và chuẩn bị thời gian để lưu SQL.
+        private bool TryPrepareBooking(
+            BookingInput input,
+            DateTime utcNow,
+            out DateTime startsAtUtc,
+            out DateTime sessionEndsAtUtc)
+        {
+            startsAtUtc = default;
+            sessionEndsAtUtc = default;
+
+            // Không dùng giờ kết thúc gửi từ form cũ.
+            ModelState.Remove(nameof(BookingInput.EndsAtLocal));
+            input.EndsAtLocal = null;
+
+            var localNow = GetRestaurantTime(utcNow);
+
+            if (localNow.TimeOfDay >= TimeSpan.FromHours(18))
+            {
+                const string message =
+                    "Nhà hàng ngừng nhận yêu cầu đặt mới từ 18:00. "
+                    + "Các bàn đã đặt trước đó vẫn được giữ theo quy định.";
+
+                ModelState.AddModelError(string.Empty, message);
+
+                ViewData["BookingClosedMessage"] = message;
+            }
+
+            if (!input.StartsAtLocal.HasValue)
+            {
+                // Trường bắt buộc đã được kiểm tra bằng Required.
+                return false;
+            }
+
+            var arrival = DateTime.SpecifyKind(
+                input.StartsAtLocal.Value,
+                DateTimeKind.Unspecified);
+
+            if (arrival.Date != localNow.Date)
+            {
+                ModelState.AddModelError(
+                    nameof(BookingInput.StartsAtLocal),
+                    "Nhà hàng chỉ nhận đặt bàn cho ngày hiện tại.");
+            }
+
+            if (arrival <= localNow)
+            {
+                ModelState.AddModelError(
+                    nameof(BookingInput.StartsAtLocal),
+                    "Giờ đến phải nằm trong tương lai.");
+            }
+
+            var arrivalTime = arrival.TimeOfDay;
+
+            var isLunch =
+                arrivalTime >= TimeSpan.FromHours(10)
+                && arrivalTime < TimeSpan.FromHours(14);
+
+            var isDinner =
+                arrivalTime >= TimeSpan.FromHours(16)
+                && arrivalTime < TimeSpan.FromHours(22);
+
+            if (!isLunch && !isDinner)
+            {
+                ModelState.AddModelError(
+                    nameof(BookingInput.StartsAtLocal),
+                    "Giờ đến phải trong khung phục vụ: "
+                    + "10:00 đến trước 14:00 hoặc "
+                    + "16:00 đến trước 22:00.");
+            }
+            else
+            {
+                input.EndsAtLocal = arrival.Date.AddHours(
+                    isLunch ? 14 : 22);
+            }
+
+            if (!ModelState.IsValid)
+            {
+                return false;
+            }
+
+            startsAtUtc = TimeZoneInfo.ConvertTimeToUtc(
+                arrival,
+                RestaurantTimeZone);
+
+            sessionEndsAtUtc = TimeZoneInfo.ConvertTimeToUtc(
+                input.EndsAtLocal!.Value,
+                RestaurantTimeZone);
+
+            return true;
+        }
+
+        private static DateTime GetRestaurantTime(DateTime utcNow)
+        {
+            return TimeZoneInfo.ConvertTimeFromUtc(
+                utcNow,
+                RestaurantTimeZone);
+        }
+
         // GET: /dat-ban/cua-toi
-        [HttpGet("/dat-ban/cua-toi", Name = "DoraFoodMyBookings")]
+        [HttpGet(
+            "/dat-ban/cua-toi",
+            Name = "DoraFoodMyBookings")]
         [HttpGet("/Booking/MyBookings")]
         [Authorize]
         public async Task<IActionResult> MyBookings(int page = 1)
@@ -251,9 +372,9 @@ namespace DoraFood.Controllers
             }
 
             const int pageSize = 10;
+
             var cancellationToken = HttpContext.RequestAborted;
 
-            // Chỉ đọc yêu cầu thuộc tài khoản đang đăng nhập.
             var query = _context.Set<Reservation>()
                 .AsNoTracking()
                 .Where(r => r.CustomerId == customerId.Value);
@@ -284,6 +405,7 @@ namespace DoraFood.Controllers
                 TotalItems = totalItems
             });
         }
+
         // POST: /dat-ban/huy
         [HttpPost("/dat-ban/huy")]
         [ValidateAntiForgeryToken]
@@ -294,7 +416,6 @@ namespace DoraFood.Controllers
                 return BadRequest("Mã yêu cầu không hợp lệ.");
             }
 
-            // Kiểm tra đăng nhập tại server.
             var customerId = await GetActiveCustomerIdAsync();
 
             if (!customerId.HasValue)
@@ -311,27 +432,25 @@ namespace DoraFood.Controllers
                     await _context.Database.BeginTransactionAsync(
                         cancellationToken);
 
-                // Dùng cùng khóa nghiệp vụ với quy trình phân bàn.
                 await _context.Database.ExecuteSqlRawAsync(
-                    @"
-            DECLARE @LockResult int;
+                    """
+                    DECLARE @LockResult int;
 
-            EXEC @LockResult = sys.sp_getapplock
-                @Resource = N'DoraFood.Reservations',
-                @LockMode = 'Exclusive',
-                @LockOwner = 'Transaction',
-                @LockTimeout = 10000;
+                    EXEC @LockResult = sys.sp_getapplock
+                        @Resource = N'DoraFood.Reservations',
+                        @LockMode = 'Exclusive',
+                        @LockOwner = 'Transaction',
+                        @LockTimeout = 10000;
 
-            IF @LockResult < 0
-                THROW 56021,
-                    N'Lịch đặt bàn đang bận. Vui lòng thử lại.',
-                    1;
-            ",
+                    IF @LockResult < 0
+                        THROW 56021,
+                            N'Lịch đặt bàn đang bận. Vui lòng thử lại.',
+                            1;
+                    """,
                     cancellationToken);
 
                 var now = DateTime.UtcNow;
 
-                // Kiểm tra chủ sở hữu và trạng thái ngay trong UPDATE.
                 var affectedRows = await _context.Set<Reservation>()
                     .Where(r =>
                         r.Id == id
@@ -339,10 +458,9 @@ namespace DoraFood.Controllers
                         && r.Status == "PENDING"
                         && r.StartsAtUtc > now)
                     .ExecuteUpdateAsync(
-                        setters => setters
-                            .SetProperty(
-                                r => r.Status,
-                                "CANCELLED"),
+                        setters => setters.SetProperty(
+                            r => r.Status,
+                            "CANCELLED"),
                         cancellationToken);
 
                 await transaction.CommitAsync(cancellationToken);
@@ -355,8 +473,9 @@ namespace DoraFood.Controllers
                 else
                 {
                     TempData["BookingHistoryError"] =
-                        "Không thể hủy yêu cầu. Yêu cầu không tồn tại, "
-                        + "đã đến giờ hẹn hoặc không còn chờ xác nhận.";
+                        "Không thể hủy yêu cầu. "
+                        + "Yêu cầu không tồn tại, đã đến giờ hẹn "
+                        + "hoặc không còn chờ xác nhận.";
                 }
             }
             catch (SqlException ex)
@@ -367,14 +486,15 @@ namespace DoraFood.Controllers
                     id);
 
                 TempData["BookingHistoryError"] =
-                    "Chưa thể hủy yêu cầu lúc này. Vui lòng thử lại sau.";
+                    "Chưa thể hủy yêu cầu lúc này. "
+                    + "Vui lòng thử lại sau.";
             }
 
             return RedirectToRoute("DoraFoodMyBookings");
         }
-        
+
         private async Task<IActionResult> RestartBookingLoginAsync(
-     string? returnUrl = null)
+            string? returnUrl = null)
         {
             await HttpContext.SignOutAsync(
                 CookieAuthenticationDefaults.AuthenticationScheme);
@@ -388,11 +508,13 @@ namespace DoraFood.Controllers
                         ?? Url.RouteUrl("DoraFoodBooking")
                 });
         }
+
         private async Task<long?> GetActiveCustomerIdAsync()
         {
             if (User.Identity?.IsAuthenticated != true
                 || !long.TryParse(
-                    User.FindFirstValue(ClaimTypes.NameIdentifier),
+                    User.FindFirstValue(
+                        ClaimTypes.NameIdentifier),
                     out var userId)
                 || !Guid.TryParse(
                     User.FindFirstValue("SecurityStamp"),

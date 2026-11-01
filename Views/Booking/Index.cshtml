@@ -1,16 +1,44 @@
-﻿@model DoraFood.Controllers.BookingController.BookingInput
+﻿@using System
+@using System.Globalization
+@model DoraFood.Controllers.BookingController.BookingInput
 
 @{
     ViewData["Title"] = "Đặt bàn";
 
     var bookingUrl = Url.RouteUrl("DoraFoodBooking")
         ?? Url.Content("~/dat-ban");
+
+    var restaurantTimeZone = TimeZoneInfo.FindSystemTimeZoneById(
+        "SE Asia Standard Time");
+
+    var localNow = TimeZoneInfo.ConvertTimeFromUtc(
+        DateTime.UtcNow,
+        restaurantTimeZone);
+
+    var closedMessage =
+        ViewData["BookingClosedMessage"] as string;
+
+    var bookingClosed =
+        localNow.TimeOfDay >= TimeSpan.FromHours(18)
+        || !string.IsNullOrWhiteSpace(closedMessage);
+
+    var minimumArrival = localNow.Date
+        .AddHours(10)
+        .ToString(
+            "yyyy-MM-ddTHH:mm",
+            CultureInfo.InvariantCulture);
+
+    var maximumArrival = localNow.Date
+        .AddHours(22)
+        .AddMinutes(-1)
+        .ToString(
+            "yyyy-MM-ddTHH:mm",
+            CultureInfo.InvariantCulture);
 }
 
-<!-- Tiêu đề trang -->
+<!-- Tiêu đề -->
 <section class="bg-light border-bottom py-5">
     <div class="container">
-
         <nav aria-label="Đường dẫn">
             <ol class="breadcrumb mb-3">
                 <li class="breadcrumb-item">
@@ -36,21 +64,19 @@
         </h1>
 
         <p class="text-muted mb-0">
-            Chia sẻ thời gian và số khách dự kiến.
-            DoraFood sẽ tiếp nhận yêu cầu để sắp xếp cuộc hẹn của bạn.
+            Chọn giờ đến và số khách.
+            DoraFood sẽ kiểm tra bàn và xác nhận yêu cầu của bạn.
         </p>
-
     </div>
 </section>
 
-<!-- Nội dung đặt bàn -->
+<!-- Nội dung -->
 <section class="py-5">
     <div class="container">
         <div class="row g-5">
 
-            <!-- Thông tin hướng dẫn -->
+            <!-- Hướng dẫn -->
             <div class="col-lg-4">
-
                 <h2 class="h3 fw-bold mb-4"
                     style="font-family: 'Segoe UI', Arial, sans-serif;">
                     Chuẩn bị cho một cuộc hẹn trọn vẹn.
@@ -63,9 +89,44 @@
                 </p>
 
                 <div class="border rounded-4 p-4 mt-4">
+                    <i class="far fa-clock text-primary fs-3 mb-3"
+                       aria-hidden="true"></i>
 
-                    <i class="far fa-calendar-check
-                    text-primary fs-3 mb-3"
+                    <h3 class="h5 fw-bold">Giờ phục vụ</h3>
+
+                    <dl class="row mb-0">
+                        <dt class="col-5 fw-normal text-muted">
+                            Buổi trưa
+                        </dt>
+                        <dd class="col-7 fw-semibold">
+                            10:00–14:00
+                        </dd>
+
+                        <dt class="col-5 fw-normal text-muted">
+                            Buổi tối
+                        </dt>
+                        <dd class="col-7 fw-semibold mb-0">
+                            16:00–22:00
+                        </dd>
+                    </dl>
+                </div>
+
+                <div class="border rounded-4 p-4 mt-3">
+                    <i class="far fa-calendar-alt text-primary fs-3 mb-3"
+                       aria-hidden="true"></i>
+
+                    <h3 class="h5 fw-bold">Nhận đặt trong ngày</h3>
+
+                    <p class="text-muted mb-0">
+                        Chỉ nhận đặt cho ngày hiện tại,
+                        gửi yêu cầu trước 18:00.
+                        Bạn vẫn có thể hẹn đến sau 18:00
+                        trong giờ phục vụ buổi tối.
+                    </p>
+                </div>
+
+                <div class="border rounded-4 p-4 mt-3">
+                    <i class="far fa-calendar-check text-primary fs-3 mb-3"
                        aria-hidden="true"></i>
 
                     <h3 class="h5 fw-bold">
@@ -74,28 +135,14 @@
 
                     <p class="text-muted mb-0">
                         Gửi form là bước tạo yêu cầu.
-                        Bàn ăn chỉ được xác nhận sau khi
-                        nhà hàng kiểm tra và liên hệ lại.
+                        Bàn chỉ được giữ sau khi nhà hàng xác nhận.
+                        Vui lòng đến đúng giờ hoặc liên hệ nếu đến muộn.
                     </p>
-
                 </div>
 
-                <div class="border rounded-4 p-4 mt-3">
-
-                    <i class="far fa-clock text-primary fs-3 mb-3"
-                       aria-hidden="true"></i>
-
-                    <h3 class="h5 fw-bold">
-                        Thời gian theo giờ Việt Nam
-                    </h3>
-
-                    <p class="text-muted mb-0">
-                        Chọn giờ đến và giờ kết thúc dự kiến
-                        để nhà hàng thuận tiện sắp xếp.
-                    </p>
-
-                </div>
-
+                <p class="text-muted small mt-3 mb-0">
+                    Tất cả thời gian trên trang tính theo giờ Việt Nam.
+                </p>
             </div>
 
             <!-- Form -->
@@ -109,6 +156,8 @@
                     </h2>
 
                     <p class="text-muted mb-4">
+                        Ngày đặt:
+                        <strong>@localNow.ToString("dd/MM/yyyy")</strong>.
                         Các trường có dấu
                         <span class="text-danger">*</span>
                         là bắt buộc.
@@ -122,9 +171,20 @@
                         </div>
                     }
 
-                    <form action="@bookingUrl"
-                          method="post">
+                    @if (bookingClosed)
+                    {
+                        <div class="alert alert-warning" role="status">
+                            <strong>Đã hết thời gian nhận đặt mới hôm nay.</strong>
 
+                            <p class="mb-0 mt-2">
+                                Nhà hàng ngừng nhận yêu cầu mới từ 18:00.
+                                Các yêu cầu đã đặt trước đó vẫn được giữ
+                                theo quy định, không bị hủy vì mốc 18:00.
+                            </p>
+                        </div>
+                    }
+
+                    <form action="@bookingUrl" method="post">
                         @Html.AntiForgeryToken()
 
                         <div asp-validation-summary="ModelOnly"
@@ -133,7 +193,6 @@
 
                         <div class="row g-4">
 
-                            <!-- Họ tên -->
                             <div class="col-md-6">
                                 <label asp-for="GuestName"
                                        class="form-label fw-semibold">
@@ -152,7 +211,6 @@
                                       class="text-danger small"></span>
                             </div>
 
-                            <!-- Điện thoại -->
                             <div class="col-md-6">
                                 <label asp-for="GuestPhone"
                                        class="form-label fw-semibold">
@@ -172,8 +230,7 @@
                                       class="text-danger small"></span>
                             </div>
 
-                            <!-- Số khách -->
-                            <div class="col-12">
+                            <div class="col-md-6">
                                 <label asp-for="PartySize"
                                        class="form-label fw-semibold">
                                     Số khách
@@ -186,20 +243,12 @@
                                        min="1"
                                        max="32767"
                                        step="1"
-                                       aria-describedby="booking-party-help"
                                        required />
-
-                                <div id="booking-party-help"
-                                     class="form-text">
-                                    Nhập tổng số khách dự kiến.
-                                    Nhà hàng sẽ kiểm tra khả năng sắp xếp.
-                                </div>
 
                                 <span asp-validation-for="PartySize"
                                       class="text-danger small"></span>
                             </div>
 
-                            <!-- Giờ đến -->
                             <div class="col-md-6">
                                 <label asp-for="StartsAtLocal"
                                        class="form-label fw-semibold">
@@ -211,33 +260,27 @@
                                        type="datetime-local"
                                        asp-format="{0:yyyy-MM-ddTHH:mm}"
                                        class="form-control rounded-3 py-3"
+                                       min="@minimumArrival"
+                                       max="@maximumArrival"
                                        step="60"
+                                       aria-describedby="booking-arrival-help"
                                        required />
 
                                 <span asp-validation-for="StartsAtLocal"
                                       class="text-danger small"></span>
                             </div>
 
-                            <!-- Giờ kết thúc -->
-                            <div class="col-md-6">
-                                <label asp-for="EndsAtLocal"
-                                       class="form-label fw-semibold">
-                                    Giờ kết thúc dự kiến
-                                    <span class="text-danger">*</span>
-                                </label>
-
-                                <input asp-for="EndsAtLocal"
-                                       type="datetime-local"
-                                       asp-format="{0:yyyy-MM-ddTHH:mm}"
-                                       class="form-control rounded-3 py-3"
-                                       step="60"
-                                       required />
-
-                                <span asp-validation-for="EndsAtLocal"
-                                      class="text-danger small"></span>
+                            <div class="col-12">
+                                <div id="booking-arrival-help"
+                                     class="bg-light border rounded-3 p-3 small">
+                                    Chọn giờ đến trong ngày hôm nay và ở tương lai:
+                                    <strong>10:00–trước 14:00</strong>
+                                    hoặc
+                                    <strong>16:00–trước 22:00</strong>.
+                                    Không cần nhập giờ kết thúc dùng bữa.
+                                </div>
                             </div>
 
-                            <!-- Ghi chú -->
                             <div class="col-12">
                                 <label asp-for="Note"
                                        class="form-label fw-semibold">
@@ -261,20 +304,18 @@
                                 </p>
 
                                 <button type="submit"
-                                        class="btn btn-primary
-                                    rounded-pill px-4 py-3">
-                                    Gửi yêu cầu đặt bàn
-                                    <i class="fas fa-arrow-right ms-2"
-                                       aria-hidden="true"></i>
+                                        class="btn btn-primary rounded-pill px-4 py-3"
+                                        disabled="@bookingClosed">
+                                    @(bookingClosed
+                                        ? "Đã ngừng nhận đặt mới"
+                                        : "Gửi yêu cầu đặt bàn")
                                 </button>
                             </div>
 
                         </div>
                     </form>
-
                 </div>
             </div>
-
         </div>
     </div>
 </section>

@@ -3,9 +3,11 @@ using DoraFood.Models;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using DoraFood.Services;
 
 var builder = WebApplication.CreateBuilder(args);
-
+                     // Tự động hủy yêu cầu đặt bàn quá hạn.
+builder.Services.AddHostedService<BookingExpiryService>();
 // Đăng ký MVC.
 builder.Services.AddControllersWithViews();
 
@@ -51,7 +53,8 @@ builder.Services
 
 // Đăng ký dịch vụ phân quyền.
 builder.Services.AddAuthorization();
-
+// Tự động hủy yêu cầu đặt bàn quá hạn.
+builder.Services.AddHostedService<BookingExpiryService>();
 var app = builder.Build();
 
 // Xử lý lỗi ngoài môi trường Development.

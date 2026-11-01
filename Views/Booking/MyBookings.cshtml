@@ -1,4 +1,5 @@
-﻿@model DoraFood.Controllers.BookingController.MyBookingsViewModel
+﻿@using System
+@model DoraFood.Controllers.BookingController.MyBookingsViewModel
 
 @{
     ViewData["Title"] = "Lịch sử đặt bàn";
@@ -14,7 +15,7 @@
         {
             "PENDING" => ("Chờ xác nhận", "bg-warning text-dark"),
             "CONFIRMED" => ("Đã xác nhận", "bg-primary"),
-            "SEATED" => ("Đã nhận bàn", "bg-info text-dark"),
+            "SEATED" => ("Khách đã vào bàn", "bg-info text-dark"),
             "COMPLETED" => ("Đã hoàn thành", "bg-success"),
             "CANCELLED" => ("Đã hủy", "bg-secondary"),
             "NO_SHOW" => ("Không đến", "bg-danger"),
@@ -96,6 +97,13 @@
 
         </div>
 
+        <div class="d-flex justify-content-end mb-3">
+            <a href="@Url.RouteUrl("DoraFoodMyBookings", new { page = Model.CurrentPage })"
+               class="btn btn-outline-secondary rounded-pill px-3 py-2">
+                Cập nhật trạng thái
+            </a>
+        </div>
+
         @if (Model.Reservations.Count == 0)
         {
             <div class="bg-light border rounded-4 text-center p-5">
@@ -125,6 +133,21 @@
             @foreach (var reservation in Model.Reservations)
             {
                 var status = BookingStatus(reservation.Status);
+                var arrivalLocal = reservation.StartsAtUtc.AddHours(7);
+                var arrivalDeadlineUtc = reservation.StartsAtUtc.AddMinutes(30);
+                var deadlineLocal = arrivalDeadlineUtc.AddHours(7);
+                var waitingForArrival = reservation.Status == "PENDING"
+                    || reservation.Status == "CONFIRMED";
+                var arrivalExpired = waitingForArrival && nowUtc >= arrivalDeadlineUtc;
+                var arrivalTime = arrivalLocal.TimeOfDay;
+                var sessionLabel = arrivalTime >= TimeSpan.FromHours(10)
+                    && arrivalTime < TimeSpan.FromHours(14)
+                    ? "Buổi trưa · 10:00–14:00"
+                    : arrivalTime >= TimeSpan.FromHours(16)
+                        && arrivalTime < TimeSpan.FromHours(22)
+                        ? "Buổi tối · 16:00–22:00"
+                        : "Ngoài khung phục vụ hiện tại";
+
 
                 var canCancel =
                     reservation.Status == "PENDING"
@@ -177,17 +200,18 @@
                             </p>
 
                             <p class="fw-semibold mb-0">
-                                @reservation.StartsAtUtc.AddHours(7).ToString("dd/MM/yyyy HH:mm")
+                                @arrivalLocal.ToString("dd/MM/yyyy HH:mm")
                             </p>
+                            <p class="text-muted small mt-1 mb-0">@sessionLabel</p>
                         </div>
 
                         <div class="col-md-6 col-lg-3">
                             <p class="text-muted small mb-1">
-                                Giờ kết thúc dự kiến
+                                Hạn khách đến theo giờ hẹn
                             </p>
 
                             <p class="fw-semibold mb-0">
-                                @reservation.EndsAtUtc.AddHours(7).ToString("dd/MM/yyyy HH:mm")
+                                @deadlineLocal.ToString("dd/MM/yyyy HH:mm")
                             </p>
                         </div>
 
@@ -252,11 +276,35 @@
 
                     </div>
 
-                    @if (reservation.Status == "PENDING")
+                    @if (arrivalExpired)
+                    {
+                        <div class="alert alert-warning small mt-3 mb-0" role="status">
+                            Đã quá hạn khách đến 30 phút.
+                            Hệ thống sẽ xử lý hủy nếu nhà hàng chưa nhận khách.
+                            Vui lòng cập nhật trạng thái để xem kết quả mới nhất.
+                        </div>
+                    }
+                    else if (reservation.Status == "PENDING")
                     {
                         <p class="text-muted small mt-3 mb-0">
-                            Yêu cầu đang chờ nhà hàng xác nhận.
-                            Bàn ăn chưa được xác nhận giữ chỗ.
+                            Yêu cầu đang chờ nhà hàng xác nhận, chưa được xác nhận giữ chỗ.
+                            Nếu quá giờ hẹn 30 phút mà chưa nhận khách, yêu cầu sẽ tự hủy.
+                        </p>
+                    }
+                    else if (reservation.Status == "CONFIRMED")
+                    {
+                        <p class="text-muted small mt-3 mb-0">
+                            Nhà hàng đã xác nhận yêu cầu.
+                            Vui lòng đến đúng giờ và báo nhân viên nhận bàn.
+                            Hạn khách đến là @deadlineLocal.ToString("dd/MM/yyyy HH:mm");
+                            yêu cầu sẽ tự hủy nếu hết hạn mà chưa nhận khách.
+                        </p>
+                    }
+                    else if (reservation.Status == "SEATED")
+                    {
+                        <p class="text-muted small mt-3 mb-0">
+                            Bạn đã được nhận vào bàn. Hạn chờ 30 phút không còn áp dụng.
+                            Đây không phải giới hạn thời gian dùng bữa.
                         </p>
                     }
 

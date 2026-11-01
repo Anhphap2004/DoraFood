@@ -5,7 +5,20 @@
     var reservation = Model.Reservation;
     ViewData["Title"] = $"Chi tiết đặt bàn {reservation.Code}";
     var startsAt = reservation.StartsAtUtc.AddHours(7);
-    var endsAt = reservation.EndsAtUtc.AddHours(7);
+    var arrivalDeadlineUtc = reservation.StartsAtUtc.AddMinutes(30);
+    var arrivalDeadlineLocal = arrivalDeadlineUtc.AddHours(7);
+    var waitingForArrival = reservation.Status == "PENDING"
+        || reservation.Status == "CONFIRMED";
+    var arrivalExpired = waitingForArrival
+        && DateTime.UtcNow >= arrivalDeadlineUtc;
+    var arrivalTime = startsAt.TimeOfDay;
+    var sessionText = arrivalTime >= TimeSpan.FromHours(10)
+        && arrivalTime < TimeSpan.FromHours(14)
+        ? "Buổi trưa · 10:00–14:00"
+        : arrivalTime >= TimeSpan.FromHours(16)
+            && arrivalTime < TimeSpan.FromHours(22)
+            ? "Buổi tối · 16:00–22:00"
+            : "Ngoài khung phục vụ hiện tại";
     var createdAt = reservation.CreatedAtUtc.AddHours(7);
     var assignedSeats = reservation.Tables.Sum(t => (int)t.Capacity);
 
@@ -275,7 +288,6 @@
             height: 20px;
             fill: none;
             stroke: currentColor;
-            
             stroke-linecap: round;
             stroke-linejoin: round
         }
@@ -943,7 +955,17 @@
         {
             <div class="dbd-alert dbd-alert-error" role="alert">@error</div>
         }
-
+        @if (waitingForArrival && !arrivalExpired)
+        {
+            <div class="mb-4">
+                <a href="@Url.RouteUrl(
+                             "DoraFoodEditBooking",
+                             new { id = reservation.Id })"
+                   class="btn btn-outline-primary rounded-pill px-4">
+                    Điều chỉnh đặt bàn
+                </a>
+            </div>
+        }
         <div class="dbd-summary" aria-label="Tóm tắt đặt bàn">
             <div class="dbd-stat">
                 <span class="dbd-stat-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M7 3v4m10-4v4M3 11h18" /></svg></span>
@@ -972,10 +994,10 @@
                         <div><div class="dbd-guest-name">@reservation.GuestName</div><a class="dbd-phone" href="tel:@reservation.GuestPhone">@reservation.GuestPhone</a></div>
                     </div>
                     <dl class="dbd-details">
-                        <div><dt>Giờ bắt đầu</dt><dd>@startsAt.ToString("dd/MM/yyyy HH:mm")</dd></div>
-                        <div><dt>Giờ kết thúc</dt><dd>@endsAt.ToString("dd/MM/yyyy HH:mm")</dd></div>
+                        <div><dt>Giờ đến dự kiến</dt><dd>@startsAt.ToString("dd/MM/yyyy HH:mm")</dd></div>
+                        <div><dt>Hạn khách đến theo giờ hẹn</dt><dd>@arrivalDeadlineLocal.ToString("dd/MM/yyyy HH:mm")</dd></div>
                         <div><dt>Ngày tạo yêu cầu</dt><dd>@createdAt.ToString("dd/MM/yyyy HH:mm")</dd></div>
-                        <div><dt>Số khách đăng ký</dt><dd>@reservation.PartySize người</dd></div>
+                        <div><dt>Buổi phục vụ</dt><dd>@sessionText</dd></div>
                     </dl>
                     <div class="dbd-note"><span class="dbd-note-label">GHI CHÚ TỪ KHÁCH HÀNG</span><p class="dbd-note-text">@(string.IsNullOrWhiteSpace(reservation.Note) ? "Không có ghi chú." : reservation.Note)</p></div>
                     <p class="dbd-timezone"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></svg>Thời gian hiển thị theo giờ Việt Nam (UTC+7).</p>
@@ -1005,74 +1027,53 @@
                 </div>
             </article>
         </div>
-        @if (reservation.Status == "CONFIRMED")
+        @if (waitingForArrival)
         {
-            var canMarkNoShow =
-                reservation.StartsAtUtc <= DateTime.UtcNow.AddMinutes(-30);
-
-            <section class="dbd-panel dbd-cancel"
-                     aria-labelledby="dbdNoShowTitle">
-
+            <section class="dbd-panel dbd-cancel" aria-labelledby="dbdArrivalTitle">
                 <div class="dbd-panel-head">
                     <div class="dbd-panel-heading">
                         <span aria-hidden="true"></span>
-                        <h2 id="dbdNoShowTitle">Khách không đến</h2>
+                        <h2 id="dbdArrivalTitle">Thời gian giữ bàn</h2>
                     </div>
-
-                    <span class="dbd-panel-meta">
-                        Thời gian chờ: 30 phút
-                    </span>
+                    <span class="dbd-panel-meta">Giờ hẹn + 30 phút</span>
                 </div>
-
-                <div class="dbd-panel-body dbd-cancel-layout">
-                    <div>
+                <div class="dbd-panel-body">
+                    @if (arrivalExpired)
+                    {
+                        <div class="dbd-note" role="status">
+                            <span class="dbd-note-label">ĐÃ QUÁ HẠN KHÁCH ĐẾN</span>
+                            <p class="dbd-note-text">Yêu cầu đã quá hạn chờ. Hệ thống sẽ xử lý hủy ở lần kiểm tra tiếp theo nếu khách chưa được nhận vào bàn. Anh tải lại trang để xem trạng thái mới nhất.</p>
+                        </div>
+                    }
+                    else
+                    {
                         <p class="dbd-cancel-description">
-                            Chỉ đánh dấu sau khi đã kiểm tra khách chưa đến
-                            và đã chờ ít nhất 30 phút kể từ giờ bắt đầu.
-                            Thao tác này sẽ giải phóng lịch giữ bàn
-                            và được ghi vào lịch sử.
+                            Hạn khách đến:
+                            <strong>@arrivalDeadlineLocal.ToString("dd/MM/yyyy HH:mm")</strong>.
+                            Yêu cầu sẽ tự hủy nếu hết hạn mà chưa nhận khách.
+                            Xác nhận và phân bàn không kéo dài thêm thời gian chờ.
                         </p>
-                    </div>
-
-                    <div>
-                        @if (canMarkNoShow)
+                        @if (reservation.Status == "PENDING")
                         {
-                            <form action="@Url.RouteUrl(
-                                              "DoraFoodNoShowBooking",
-                                              new { id = reservation.Id })"
-                                  method="post"
-                                  onsubmit="return confirm('Xác nhận đã kiểm tra khách chưa đến và muốn giải phóng lịch giữ bàn?');">
-
-                                @Html.AntiForgeryToken()
-
-                                <input type="hidden"
-                                       name="version"
-                                       value="@Convert.ToBase64String(reservation.Version)" />
-
-                                <p class="dbd-cancel-description">
-                                    Yêu cầu đã đủ thời gian chờ.
-                                    Anh kiểm tra tình hình thực tế trước khi xác nhận.
-                                </p>
-
-                                <div class="dbd-cancel-actions">
-                                    <button type="submit"
-                                            class="dbd-cancel-submit">
-                                        Đánh dấu khách không đến
-                                    </button>
-                                </div>
-                            </form>
+                            <p class="dbd-cancel-description mt-2">Yêu cầu hiện còn chờ xác nhận; nhà hàng chưa xác nhận giữ bàn.</p>
                         }
-                        else
-                        {
-                            <div class="dbd-note" role="status">
-                                <span class="dbd-note-label">
-                                    CHƯA ĐỦ THỜI GIAN CHỜ
-                                </span>
-
-                                <p class="dbd-note-text">Cần chờ đủ 30 phút kể từ giờ bắt đầu. Anh tải lại trang khi đã đủ thời gian.</p>
-                            </div>
-                        }
+                    }
+                    <a href="@Url.RouteUrl("DoraFoodManageBookingDetails", new { id = reservation.Id })"
+                       class="btn btn-outline-secondary rounded-pill px-4 mt-3">Cập nhật trạng thái</a>
+                </div>
+            </section>
+        }
+        else if (reservation.Status == "SEATED")
+        {
+            <section class="dbd-panel dbd-history" aria-labelledby="dbdServingTitle">
+                <div class="dbd-panel-head">
+                    <div class="dbd-panel-heading">
+                        <span aria-hidden="true"></span>
+                        <h2 id="dbdServingTitle">Khách đang dùng bữa</h2>
                     </div>
+                </div>
+                <div class="dbd-panel-body">
+                    <p class="dbd-cancel-description">Khách đã được nhận vào bàn nên không bị hủy theo hạn chờ 30 phút. Bàn được giữ đến khi quản lý hoàn tất lượt phục vụ.</p>
                 </div>
             </section>
         }
@@ -1089,7 +1090,7 @@
                         @foreach (var log in Model.History)
                         {
                             <li class="dbd-history-item">
-                                <div><time class="dbd-history-time">@log.CreatedAtUtc.AddHours(7).ToString("dd/MM/yyyy")<span>@log.CreatedAtUtc.AddHours(7).ToString("HH:mm:ss")</span></time><div class="dbd-history-actor">@(log.Actor != null ? log.Actor.UserName : "Không có thông tin tài khoản")</div></div>
+                                <div><time class="dbd-history-time">@log.CreatedAtUtc.AddHours(7).ToString("dd/MM/yyyy")<span>@log.CreatedAtUtc.AddHours(7).ToString("HH:mm:ss")</span></time><div class="dbd-history-actor">@(log.Actor != null ? log.Actor.UserName : !log.ActorId.HasValue ? "Hệ thống" : "Không có thông tin tài khoản")</div></div>
                                 <div><div class="dbd-history-action">@ActionText(log.Action)</div><p class="dbd-history-content">@(string.IsNullOrWhiteSpace(log.Summary) ? "—" : log.Summary)</p></div>
                             </li>
                         }

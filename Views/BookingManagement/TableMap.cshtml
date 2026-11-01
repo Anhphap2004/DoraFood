@@ -1,0 +1,311 @@
+﻿@using System
+@using System.Linq
+@model DoraFood.Controllers.BookingManagementController.TableMapViewModel
+
+@{
+    ViewData["Title"] = "Sơ đồ bàn";
+
+    var activeCount = Model.Tables.Count(t => t.IsActive);
+    var occupiedCount = Model.Tables.Count(t => t.IsOccupiedNow);
+
+    var availableCount = Model.Tables.Count(t =>
+        t.IsActive && !t.HasScheduleConflict && !t.IsOccupiedNow);
+
+    string StatusText(string status) => status switch
+    {
+        "PENDING" => "Chờ xác nhận",
+        "CONFIRMED" => "Đã xác nhận",
+        "SEATED" => "Khách đã vào bàn",
+        _ => status
+    };
+}
+
+<div class="container py-5">
+    <div class="d-flex flex-wrap justify-content-between
+        align-items-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 fw-bold mb-2"
+                style="font-family: 'Segoe UI', Arial, sans-serif;">
+                Sơ đồ bàn
+            </h1>
+
+            <p class="text-muted mb-0">
+                Kiểm tra các bàn được giữ theo ngày và buổi phục vụ, theo giờ Việt Nam.
+            </p>
+        </div>
+
+        <a href="@Url.RouteUrl("DoraFoodManageBookings")"
+           class="btn btn-outline-secondary rounded-pill px-4">
+            Danh sách đặt bàn
+        </a>
+    </div>
+
+    <!-- Bộ lọc -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <form action="@Url.RouteUrl("DoraFoodTableMap")"
+                  method="get"
+                  class="row g-3 align-items-end">
+
+                <div class="col-md-6 col-lg-3">
+                    <label asp-for="ServiceDate" class="form-label">Ngày phục vụ</label>
+                    <input asp-for="ServiceDate"
+                           asp-format="{0:yyyy-MM-dd}"
+                           type="date"
+                           class="form-control"
+                           required />
+                </div>
+
+                <div class="col-md-6 col-lg-3">
+                    <label for="table-map-session" class="form-label">Buổi phục vụ</label>
+                    <select id="table-map-session" name="session" class="form-select">
+                        <option value="LUNCH" selected="@(Model.Session == "LUNCH")">Buổi trưa · 10:00–14:00</option>
+                        <option value="DINNER" selected="@(Model.Session == "DINNER")">Buổi tối · 16:00–22:00</option>
+                    </select>
+                </div>
+
+                <div class="col-md-6 col-lg-3">
+                    <label for="table-map-area" class="form-label">
+                        Khu vực
+                    </label>
+
+                    <select id="table-map-area"
+                            name="areaId"
+                            class="form-select">
+                        <option value=""
+                                selected="@(!Model.AreaId.HasValue)">
+                            Tất cả khu vực
+                        </option>
+
+                        @foreach (var area in Model.Areas)
+                        {
+                            <option value="@area.Id"
+                                    selected="@(Model.AreaId == area.Id)">
+                                @area.Name@(area.IsActive ? "" : " (Ngừng hoạt động)")
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-md-6 col-lg-3">
+                    <button type="submit"
+                            class="btn btn-primary rounded-pill px-4">
+                        Xem sơ đồ
+                    </button>
+                </div>
+            </form>
+
+            <a href="@Url.RouteUrl("DoraFoodTableMap")"
+               class="d-inline-block small mt-3">
+                Về ngày hôm nay và buổi mặc định
+            </a>
+        </div>
+    </div>
+
+    <!-- Thống kê theo bộ lọc -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-lg-3">
+            <div class="border rounded-3 p-3 h-100">
+                <div class="text-muted small">Tổng số bàn</div>
+                <div class="h3 fw-bold mb-0">@Model.Tables.Count</div>
+            </div>
+        </div>
+
+        <div class="col-6 col-lg-3">
+            <div class="border rounded-3 p-3 h-100">
+                <div class="text-muted small">Đang hoạt động</div>
+                <div class="h3 fw-bold mb-0">@activeCount</div>
+            </div>
+        </div>
+
+        <div class="col-6 col-lg-3">
+            <div class="border rounded-3 p-3 h-100">
+                <div class="text-muted small">Đang có khách hiện tại</div>
+                <div class="h3 fw-bold text-danger mb-0">
+                    @occupiedCount
+                </div>
+            </div>
+        </div>
+
+        <div class="col-6 col-lg-3">
+            <div class="border rounded-3 p-3 h-100">
+                <div class="text-muted small">
+                    Đang hoạt động, chưa bị giữ
+                </div>
+                <div class="h3 fw-bold text-success mb-0">
+                    @availableCount
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="alert alert-light border small mb-4">
+        <strong>Đang xem:</strong>
+        @Model.ServiceDate.ToString("dd/MM/yyyy") · @Model.SessionLabel
+        (@Model.StartsAtLocal.ToString("HH:mm")–@Model.EndsAtLocal.ToString("HH:mm")).
+        <br />
+        Mỗi bàn chỉ có một lượt giữ còn hiệu lực trong cùng buổi.
+        Bàn đang có khách vẫn bị giữ đến khi hoàn tất lượt trước,
+        kể cả khi giờ hẹn của lượt đó thuộc buổi khác.
+        <br />
+        Chỉ tính yêu cầu đang chờ, đã xác nhận hoặc đang phục vụ;
+        yêu cầu đã hủy, hoàn tất hoặc không đến không giữ bàn.
+        Đây không phải bản ghi lại tình trạng bàn tại một thời điểm trong quá khứ.
+        Tải lại trang để cập nhật dữ liệu mới nhất.
+    </div>
+
+    @if (Model.Tables.Count == 0)
+    {
+        <div class="border rounded-4 text-center p-5">
+            <h2 class="h5">Chưa có bàn phù hợp</h2>
+            <p class="text-muted mb-0">
+                Anh kiểm tra dữ liệu bàn hoặc chọn khu vực khác.
+            </p>
+        </div>
+    }
+    else
+    {
+        @foreach (var area in Model.Tables.GroupBy(t => t.AreaId))
+        {
+            <section class="mb-5">
+                <h2 class="h5 fw-bold mb-3">
+                    @area.First().AreaName
+                    <span class="text-muted small fw-normal">
+                        · @area.Count() bàn
+                    </span>
+                </h2>
+
+                <div class="row g-3">
+                    @foreach (var table in area)
+                    {
+                        var borderClass = !table.IsActive
+                            ? "border-secondary"
+                            : table.IsOccupiedNow
+                                ? "border-danger"
+                                : table.HasScheduleConflict
+                                    ? "border-warning"
+                                    : "border-success";
+
+                        <div class="col-md-6 col-xl-4">
+                            <article class="card h-100 @borderClass">
+                                <div class="card-body p-4">
+                                    <div class="d-flex justify-content-between
+                                        align-items-center gap-2 mb-3">
+                                        <h3 class="h5 fw-bold mb-0">
+                                            @table.Code
+                                        </h3>
+
+                                        <span class="text-muted small">
+                                            @table.Capacity chỗ
+                                        </span>
+                                    </div>
+
+                                    <div class="d-flex flex-wrap gap-2 mb-3">
+                                        @if (!table.IsActive)
+                                        {
+                                            <span class="badge bg-secondary">
+                                                Bàn/khu vực ngừng phục vụ
+                                            </span>
+                                        }
+                                        else if (table.IsOccupiedNow)
+                                        {
+                                            <span class="badge bg-danger">Chưa thể phân bàn</span>
+                                        }
+                                        else if (table.HasScheduleConflict)
+                                        {
+                                            <span class="badge bg-warning text-dark">
+                                                Đã giữ trong buổi đã chọn
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-success">
+                                                Chưa có lượt giữ bàn
+                                            </span>
+                                        }
+
+                                        @if (table.IsOccupiedNow)
+                                        {
+                                            <span class="badge bg-danger">
+                                                Đang có khách hiện tại
+                                            </span>
+                                        }
+                                    </div>
+
+                                    @if (table.Reservations.Count == 0)
+                                    {
+                                        <p class="text-muted small mb-0">
+                                            Chưa có yêu cầu giữ bàn trong buổi đã chọn
+                                            và chưa ghi nhận khách đang ngồi.
+                                        </p>
+                                    }
+                                    else
+                                    {
+                                        <details>
+                                            <summary class="fw-semibold small"
+                                                     style="cursor: pointer;">
+                                                Xem @table.Reservations.Count
+                                                yêu cầu liên quan
+                                            </summary>
+
+                                            <div class="mt-3">
+                                                @foreach (var booking in table.Reservations)
+                                                {
+                                                    var arrivalLocal = booking.StartsAtUtc.AddHours(7);
+                                                    var deadlineLocal = arrivalLocal.AddMinutes(30);
+                                                    var belongsToSelectedSession = arrivalLocal >= Model.StartsAtLocal
+                                                        && arrivalLocal < Model.EndsAtLocal;
+
+                                                    <div class="border-top pt-3 mt-3">
+                                                        <div class="fw-semibold text-break">
+                                                            @booking.GuestName
+                                                        </div>
+
+                                                        <div class="small text-muted mb-2">
+                                                            @booking.PartySize khách
+                                                            · @StatusText(booking.Status)
+                                                        </div>
+
+                                                        <div class="small">
+                                                            Giờ hẹn: @arrivalLocal.ToString("dd/MM/yyyy HH:mm")
+                                                            @if (booking.Status != "SEATED")
+                                                            {
+                                                                <br />
+                                                                <span>Hạn khách đến: @deadlineLocal.ToString("dd/MM/yyyy HH:mm")</span>
+                                                            }
+                                                            else
+                                                            {
+                                                                <br />
+                                                                <span>Giữ bàn đến khi hoàn tất lượt phục vụ.</span>
+                                                            }
+                                                        </div>
+
+                                                        @if (!belongsToSelectedSession
+                                                            && booking.Status == "SEATED")
+                                                        {
+                                                            <p class="small text-danger mt-2">
+                                                                Lượt khách đang ngồi có giờ hẹn thuộc buổi khác.
+                                                                Bàn vẫn được giữ vì lượt này chưa hoàn tất.
+                                                            </p>
+                                                        }
+
+                                                        <a href="@Url.RouteUrl(
+                                                                     "DoraFoodManageBookingDetails",
+                                                                     new { id = booking.Id })"
+                                                           class="d-inline-block small mt-2 text-break">
+                                                            Chi tiết: @booking.Code
+                                                        </a>
+                                                    </div>
+                                                }
+                                            </div>
+                                        </details>
+                                    }
+                                </div>
+                            </article>
+                        </div>
+                    }
+                </div>
+            </section>
+        }
+    }
+</div>

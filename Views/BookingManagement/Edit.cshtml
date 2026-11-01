@@ -1,0 +1,199 @@
+﻿@using System
+@using System.Globalization
+@using System.Linq
+@model DoraFood.Controllers.BookingManagementController.EditBookingViewModel
+
+@{
+    var reservation = Model.Reservation;
+    ViewData["Title"] = $"Điều chỉnh đặt bàn {reservation.Code}";
+    var requiresTables = reservation.Status == "CONFIRMED";
+    var today = DateTime.UtcNow.AddHours(7).Date;
+    var minimumArrival = today.AddHours(10).ToString("yyyy-MM-ddTHH:mm", CultureInfo.InvariantCulture);
+    var maximumArrival = today.AddHours(22).AddMinutes(-1).ToString("yyyy-MM-ddTHH:mm", CultureInfo.InvariantCulture);
+    var detailsUrl = Url.RouteUrl("DoraFoodManageBookingDetails", new { id = Model.Id });
+}
+
+<div class="container py-5">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 fw-bold mb-2" style="font-family: 'Segoe UI', Arial, sans-serif;">Điều chỉnh đặt bàn</h1>
+            <p class="text-muted text-break mb-0">Mã yêu cầu: @reservation.Code</p>
+        </div>
+        <a href="@detailsUrl" class="btn btn-outline-secondary rounded-pill px-4">Về chi tiết</a>
+    </div>
+
+    @if (TempData["BookingManagementError"] is string error)
+    {
+        <div class="alert alert-danger" role="alert">@error</div>
+    }
+
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <h2 class="h5 mb-3">Thông tin khách hàng</h2>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="text-muted small">Khách hàng</div>
+                    <div class="fw-semibold text-break">@reservation.GuestName</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-muted small">Số điện thoại</div>
+                    <div class="fw-semibold text-break">@reservation.GuestPhone</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form action="@Url.RouteUrl("DoraFoodEditBooking", new { id = Model.Id })" method="post">
+        @Html.AntiForgeryToken()
+        <input asp-for="Version" type="hidden" />
+        <div asp-validation-summary="All" class="text-danger mb-3" role="alert"></div>
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+                <h2 class="h5 mb-3">Giờ đến và số khách</h2>
+                <p class="text-muted small">
+                    Chọn giờ đến trong ngày hôm nay, theo giờ Việt Nam:
+                    10:00–trước 14:00 hoặc 16:00–trước 22:00.
+                    Không cần nhập giờ kết thúc dùng bữa.
+                </p>
+
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="StartsAtLocal" class="form-label">Giờ đến dự kiến</label>
+                        <input asp-for="StartsAtLocal"
+                               asp-format="{0:yyyy-MM-ddTHH:mm}"
+                               type="datetime-local"
+                               class="form-control"
+                               min="@minimumArrival"
+                               max="@maximumArrival"
+                               step="60"
+                               required />
+                        <span asp-validation-for="StartsAtLocal" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label asp-for="PartySize" class="form-label">Số khách</label>
+                        <input asp-for="PartySize" type="number" min="1" max="32767" step="1" class="form-control" required />
+                        <span asp-validation-for="PartySize" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="edit-session-preview" class="form-label">Buổi phục vụ</label>
+                        <output id="edit-session-preview" for="StartsAtLocal" class="d-block border rounded-3 bg-light p-3">Tự xác định theo giờ đến</output>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="edit-deadline-preview" class="form-label">Hạn khách đến dự kiến</label>
+                        <output id="edit-deadline-preview" for="StartsAtLocal" class="d-block border rounded-3 bg-light p-3" aria-live="polite">Giờ đến + 30 phút</output>
+                    </div>
+                </div>
+
+                <div class="alert alert-light border small mt-3 mb-0">
+                    Thay đổi giờ đến sẽ tính lại hạn giữ bàn.
+                    Yêu cầu đang chờ hoặc đã xác nhận sẽ bị hủy nếu quá hạn mà chưa nhận khách.
+                    Mốc 18:00 chỉ ngừng nhận yêu cầu mới, không chặn quản lý điều chỉnh yêu cầu đã có.
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+                <h2 class="h5 mb-3">Chọn lại bàn</h2>
+                @if (requiresTables)
+                {
+                    <p class="text-muted small">Yêu cầu đã xác nhận phải có ít nhất một bàn và đủ chỗ cho số khách.</p>
+                }
+                else
+                {
+                    <p class="text-muted small">Yêu cầu đang chờ có thể chưa chọn bàn. Nếu chọn, các bàn phải đủ chỗ. Lưu điều chỉnh vẫn giữ trạng thái chờ xác nhận.</p>
+                }
+                <div class="alert alert-light border small">
+                    Hệ thống kiểm tra bàn trong cùng buổi khi lưu.
+                    Bàn đang có khách chỉ được sử dụng lại sau khi hoàn tất lượt trước.
+                    Danh sách bên dưới chỉ gồm bàn và khu vực đang hoạt động.
+                </div>
+                <span asp-validation-for="TableIds" class="text-danger d-block mb-3"></span>
+
+                @if (Model.Tables.Count == 0)
+                {
+                    <p class="text-muted mb-0">Chưa có bàn đang hoạt động.</p>
+                }
+                else
+                {
+                    @foreach (var area in Model.Tables.GroupBy(t => t.AreaId))
+                    {
+                        <fieldset class="mb-4">
+                            <legend class="h6 mb-3">@area.First().Area.Name</legend>
+                            <div class="row g-3">
+                                @foreach (var table in area)
+                                {
+                                    var isSelected = Model.TableIds.Contains(table.Id);
+                                    <div class="col-sm-6 col-lg-4">
+                                        <div class="border rounded-3 p-3 h-100">
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input"
+                                                       id="edit-table-@table.Id" name="TableIds"
+                                                       value="@table.Id" checked="@isSelected" />
+                                                <label class="form-check-label w-100" for="edit-table-@table.Id">
+                                                    <span class="fw-semibold">@table.Code</span>
+                                                    <span class="text-muted small d-block">@table.Capacity chỗ ngồi</span>
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            </div>
+                        </fieldset>
+                    }
+                }
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+                <label asp-for="Reason" class="form-label fw-semibold">Lý do điều chỉnh</label>
+                <textarea asp-for="Reason" class="form-control" rows="3" maxlength="300" required
+                          placeholder="Ví dụ: Khách đổi giờ đến và tăng số người..."></textarea>
+                <span asp-validation-for="Reason" class="text-danger small"></span>
+                <div class="form-text">Bắt buộc nhập, tối đa 300 ký tự. Lý do được lưu trong lịch sử thao tác.</div>
+            </div>
+        </div>
+
+        <div class="d-flex flex-wrap justify-content-end gap-3">
+            <a href="@detailsUrl" class="btn btn-outline-secondary rounded-pill px-4">Quay lại</a>
+            <button type="submit" class="btn btn-primary rounded-pill px-4">Lưu điều chỉnh</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    (() => {
+        const input = document.getElementById('StartsAtLocal');
+        const session = document.getElementById('edit-session-preview');
+        const deadline = document.getElementById('edit-deadline-preview');
+        if (!input || !session || !deadline) return;
+
+        const pad = value => String(value).padStart(2, '0');
+        function updatePreview() {
+            const parts = input.value.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})(?::\d{2}(?:\.\d+)?)?$/);
+            if (!parts) {
+                session.textContent = 'Vui lòng chọn giờ đến';
+                deadline.textContent = 'Giờ đến + 30 phút';
+                return;
+            }
+            const [, year, month, day, hour, minute] = parts.map(Number);
+            const minutes = hour * 60 + minute;
+            const isLunch = minutes >= 600 && minutes < 840;
+            const isDinner = minutes >= 960 && minutes < 1320;
+            if (!isLunch && !isDinner) {
+                session.textContent = 'Ngoài giờ phục vụ';
+                deadline.textContent = 'Vui lòng chọn lại giờ đến';
+                return;
+            }
+            session.textContent = isLunch ? 'Buổi trưa · 10:00–14:00' : 'Buổi tối · 16:00–22:00';
+            // Dùng các thành phần giờ để phép cộng không phụ thuộc múi giờ máy khách.
+            const value = new Date(Date.UTC(year, month - 1, day, hour, minute + 30));
+            deadline.textContent = `${pad(value.getUTCDate())}/${pad(value.getUTCMonth() + 1)}/${value.getUTCFullYear()} ${pad(value.getUTCHours())}:${pad(value.getUTCMinutes())}`;
+        }
+        input.addEventListener('input', updatePreview);
+        input.addEventListener('change', updatePreview);
+        updatePreview();
+    })();
+</script>
