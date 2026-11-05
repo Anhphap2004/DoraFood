@@ -6,6 +6,7 @@ using System.Threading.Tasks;
 using DoraFood.Data;
 using DoraFood.Models;
 using DoraFood.ViewModels;
+using Ganss.Xss;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -45,7 +46,10 @@ public class MenuController : Controller
             .OrderBy(c => c.SortOrder).ThenBy(c => c.Id)
             .Select(c => new MenuCategoryViewModel
             {
-                Id = c.Id, ParentId = c.ParentId, Name = c.Name, SortOrder = c.SortOrder
+                Id = c.Id,
+                ParentId = c.ParentId,
+                Name = c.Name,
+                SortOrder = c.SortOrder
             })
             .ToListAsync(cancellationToken);
 
@@ -124,8 +128,11 @@ public class MenuController : Controller
         var dishes = await ordered.Skip((page - 1) * pageSize).Take(pageSize)
             .Select(d => new MenuDishViewModel
             {
-                Id = d.Id, Name = d.Name, CategoryName = d.Category.Name,
-                Description = d.ShortDescription, AllergenNote = d.AllergenNote,
+                Id = d.Id,
+                Name = d.Name,
+                CategoryName = d.Category.Name,
+                Description = d.ShortDescription,
+                AllergenNote = d.AllergenNote,
                 IsFeatured = d.IsFeatured
             }).ToListAsync(cancellationToken);
 
@@ -148,13 +155,17 @@ public class MenuController : Controller
                     v.DishId,
                     Variant = new MenuVariantViewModel
                     {
-                        Id = v.Id, Name = v.Name, SellingUnit = v.SellingUnit, Price = v.Price
+                        Id = v.Id,
+                        Name = v.Name,
+                        SellingUnit = v.SellingUnit,
+                        Price = v.Price
                     }
                 }).ToListAsync(cancellationToken);
             var variantsByDish = variants.ToLookup(v => v.DishId, v => v.Variant);
 
             foreach (var dish in dishes)
             {
+                dish.ImageUrl = NormalizeImageUrl(null);
                 if (firstImages.TryGetValue(dish.Id, out var image))
                 {
                     dish.ImageUrl = NormalizeImageUrl(image.Url);
@@ -169,17 +180,97 @@ public class MenuController : Controller
 
         return View(new MenuPageViewModel
         {
-            Search = q, CategoryId = categoryId, Sort = sort, Page = page,
-            PageSize = pageSize, TotalItems = totalItems, TotalPages = totalPages,
+            Search = q,
+            CategoryId = categoryId,
+            Sort = sort,
+            Page = page,
+            PageSize = pageSize,
+            TotalItems = totalItems,
+            TotalPages = totalPages,
             SelectedCategoryName = categories.FirstOrDefault(c => c.Id == categoryId)?.Name
                 ?? "Tất cả món ăn",
-            Categories = navigationCategories, Dishes = dishes
+            Categories = navigationCategories,
+            Dishes = dishes
         });
+    }
+
+    // GET /thuc-don/123 — dùng Id để không phụ thuộc việc đổi tên/slug món.
+    [HttpGet("/thuc-don/{id:long}", Name = "DoraFoodDishDetails")]
+    [HttpGet("/Menu/Details/{id:long}")]
+    public async Task<IActionResult> Details(long id, CancellationToken cancellationToken = default)
+    {
+        if (id <= 0) return NotFound("Không tìm thấy món ăn.");
+
+        var dish = await _context.Set<Dish>().AsNoTracking()
+            .Where(d => d.Id == id && d.IsActive)
+            .Select(d => new MenuDishDetailsViewModel
+            {
+                Id = d.Id,
+                CategoryId = d.CategoryId,
+                Name = d.Name,
+                CategoryName = d.Category.Name,
+                ShortDescription = d.ShortDescription,
+                DescriptionHtml = d.DescriptionHtml,
+                AllergenNote = d.AllergenNote,
+                IsFeatured = d.IsFeatured
+            }).SingleOrDefaultAsync(cancellationToken);
+
+        if (dish == null) return NotFound("Không tìm thấy món ăn.");
+
+        // Cùng quy tắc với Index: danh mục và toàn bộ danh mục cha phải hoạt động.
+        var categories = await _context.Set<DishCategory>().AsNoTracking()
+            .Where(c => c.IsActive).Select(c => new { c.Id, c.ParentId })
+            .ToDictionaryAsync(c => c.Id, cancellationToken);
+        long? categoryId = dish.CategoryId;
+        var visited = new HashSet<long>();
+        while (categoryId.HasValue)
+        {
+            if (!visited.Add(categoryId.Value)
+                || !categories.TryGetValue(categoryId.Value, out var category))
+                return NotFound("Không tìm thấy món ăn.");
+            categoryId = category.ParentId;
+        }
+
+        dish.Variants = await _context.Set<DishVariant>().AsNoTracking()
+            .Where(v => v.DishId == id && v.IsAvailable)
+            .OrderBy(v => v.Price).ThenBy(v => v.Id)
+            .Select(v => new MenuVariantViewModel
+            {
+                Id = v.Id,
+                Name = v.Name,
+                SellingUnit = v.SellingUnit,
+                Price = v.Price
+            }).ToListAsync(cancellationToken);
+
+        dish.Images = await _context.Set<DishImage>().AsNoTracking()
+            .Where(i => i.DishId == id)
+            .OrderByDescending(i => i.IsPrimary).ThenBy(i => i.SortOrder).ThenBy(i => i.Id)
+            .Select(i => new MenuDishImageViewModel
+            {
+                Url = i.MediaFile.Url,
+                AltText = i.MediaFile.AltText
+            }).ToListAsync(cancellationToken);
+        foreach (var image in dish.Images) image.Url = NormalizeImageUrl(image.Url);
+        if (dish.Images.Count == 0)
+            dish.Images.Add(new MenuDishImageViewModel { Url = NormalizeImageUrl(null) });
+
+        // Chỉ cho phép định dạng văn bản trong mô tả; không nhận script/style/thuộc tính HTML.
+        var sanitizer = new HtmlSanitizer();
+        sanitizer.AllowedTags.Clear();
+        sanitizer.AllowedTags.UnionWith(new[]
+        {
+            "p", "br", "ul", "ol", "li", "strong", "em", "b", "i", "h2", "h3", "h4", "blockquote"
+        });
+        sanitizer.AllowedAttributes.Clear();
+        dish.DescriptionHtml = sanitizer.Sanitize(dish.DescriptionHtml ?? string.Empty);
+
+        ViewData["Title"] = dish.Name;
+        return View(dish);
     }
 
     private static string NormalizeImageUrl(string? value)
     {
-        const string fallback = "~/images/dish-placeholder.svg";
+        const string fallback = "~/assets/img/dish-placeholder.svg";
         if (string.IsNullOrWhiteSpace(value)) return fallback;
         value = value.Trim();
         if (value.StartsWith("~/", StringComparison.Ordinal) && !value.Contains('\\'))

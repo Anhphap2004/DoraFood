@@ -1,0 +1,187 @@
+﻿@using System.Globalization
+@using System.Linq
+@model DoraFood.Models.Order
+
+@{
+    ViewData["Title"] = $"Đơn gọi món {Model.Code}";
+
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+    var items = Model.OrderItems.OrderBy(item => item.Id).ToList();
+
+    var tableCodes = Model.OrderTables
+        .Where(link => link.ReleasedAtUtc == null)
+        .Select(link => link.Table.Code)
+        .OrderBy(code => code)
+        .ToList();
+
+    var subtotal = items
+        .Where(item => item.Status != "CANCELLED")
+        .Sum(item => item.Quantity * item.UnitPrice);
+
+    var orderStatus = Model.Status switch
+    {
+        "OPEN" => "Đang mở",
+        "IN_PROGRESS" => "Đang phục vụ",
+        "COMPLETED" => "Đã hoàn tất",
+        "CANCELLED" => "Đã hủy",
+        _ => Model.Status
+    };
+}
+
+<div class="container py-5">
+    @if (Model.ReservationId.HasValue)
+    {
+        <a href="@Url.RouteUrl(
+                     "DoraFoodManageBookingDetails",
+                     new { id = Model.ReservationId.Value })"
+           class="btn btn-outline-secondary rounded-pill mb-3">
+            Về chi tiết đặt bàn
+        </a>
+    }
+
+    <h1 class="h3 mb-2">Đơn gọi món @Model.Code</h1>
+
+    <p class="text-muted mb-4">
+        @orderStatus · Bàn hiện tại
+        @(tableCodes.Count > 0 ? string.Join(", ", tableCodes) : "—")
+    </p>
+
+    @if (TempData["BookingManagementSuccess"] is string message)
+    {
+        <div class="alert alert-success" role="status">@message</div>
+    }
+    @if (TempData["TableOrderError"] is string orderError)
+    {
+        <div class="alert alert-danger" role="alert">@orderError</div>
+    }
+
+    @if (ViewData["CanAddTableOrderItems"] is true)
+    {
+        var availableVariants =
+            ViewData["AvailableDishVariants"]
+            as System.Collections.Generic.List<DoraFood.Models.DishVariant>;
+
+        <section class="card border-0 shadow-sm mb-4"
+                 aria-labelledby="add-order-item-title">
+            <div class="card-body p-4">
+                <h2 id="add-order-item-title" class="h5 mb-3">Thêm món</h2>
+
+                @if (availableVariants is { Count: > 0 })
+                {
+                    <form action="@Url.RouteUrl(
+                                      "DoraFoodAddTableOrderItem",
+                                      new { orderId = Model.Id })"
+                          method="post"
+                          class="row g-3">
+                        @Html.AntiForgeryToken()
+
+                        <div class="col-md-9">
+                            <label for="order-variant" class="form-label">
+                                Món và lựa chọn
+                            </label>
+                            <select id="order-variant" name="variantId"
+                                    class="form-select" required>
+                                <option value="">Chọn món</option>
+                                @foreach (var variant in availableVariants)
+                                {
+                                    <option value="@variant.Id">
+                                        @variant.Dish.Name · @variant.Name
+                                        · @variant.Price.ToString("#,##0.##", culture) ₫
+                                        / @variant.SellingUnit
+                                    </option>
+                                }
+                            </select>
+                        </div>
+
+                        <div class="col-md-3">
+                            <label for="order-quantity" class="form-label">
+                                Số lượng
+                            </label>
+                            <input id="order-quantity" name="quantity"
+                                   class="form-control" type="number"
+                                   value="1" min="1" max="999" step="1" required />
+                        </div>
+
+                        <div class="col-12">
+                            <label for="order-note" class="form-label">Ghi chú</label>
+                            <textarea id="order-note" name="note"
+                                      class="form-control" rows="2" maxlength="500"
+                                      placeholder="Ví dụ: ít cay, để riêng nước chấm"></textarea>
+                        </div>
+
+                        <div class="col-12">
+                            <button type="submit"
+                                    class="btn btn-primary rounded-pill px-4">
+                                Thêm vào đơn
+                            </button>
+                        </div>
+                    </form>
+                }
+                else
+                {
+                    <p class="text-muted mb-0">Hiện chưa có món đang bán.</p>
+                }
+            </div>
+        </section>
+    }
+    <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+            <h2 class="h5 mb-3">Món đã gọi</h2>
+
+            @if (items.Count == 0)
+            {
+                <p class="text-muted">Đơn chưa có món.</p>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th scope="col">Món</th>
+                                <th scope="col" class="text-end">Số lượng</th>
+                                <th scope="col" class="text-end">Đơn giá</th>
+                                <th scope="col" class="text-end">Thành tiền</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in items)
+                            {
+                                <tr>
+                                    <td>
+                                        @item.NameSnapshot
+                                        @if (item.Status == "CANCELLED")
+                                        {
+                                            <span class="badge bg-secondary">Đã hủy</span>
+                                        }
+                                        @if (!string.IsNullOrWhiteSpace(item.Note))
+                                        {
+                                            <div class="small text-muted">@item.Note</div>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        @item.Quantity.ToString("0.###", culture)
+                                    </td>
+                                    <td class="text-end">
+                                        @item.UnitPrice.ToString("#,##0.##", culture) ₫
+                                    </td>
+                                    <td class="text-end">
+                                        @(item.Status == "CANCELLED"
+                                            ? "—"
+                                            : (item.Quantity * item.UnitPrice)
+                                                .ToString("#,##0.##", culture) + " ₫")
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+
+            <div class="border-top pt-3 d-flex justify-content-between gap-3">
+                <strong>Tiền món tạm tính</strong>
+                <strong>@subtotal.ToString("#,##0.##", culture) ₫</strong>
+            </div>
+        </div>
+    </div>
+</div>

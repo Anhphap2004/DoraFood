@@ -103,52 +103,44 @@ namespace DoraFood.Controllers
         {
             var localNow = GetRestaurantTime(DateTime.UtcNow);
 
+            // Gợi ý giờ đến sau hiện tại 15 phút.
+            var suggested = localNow.AddMinutes(15);
+
+            suggested = new DateTime(
+                suggested.Year,
+                suggested.Month,
+                suggested.Day,
+                suggested.Hour,
+                suggested.Minute,
+                0,
+                DateTimeKind.Unspecified);
+
+            var time = suggested.TimeOfDay;
+
+            if (time < TimeSpan.FromHours(10))
+            {
+                suggested = suggested.Date.AddHours(10);
+            }
+            else if (time >= TimeSpan.FromHours(14)
+                && time < TimeSpan.FromHours(16))
+            {
+                suggested = suggested.Date.AddHours(16);
+            }
+            else if (time >= TimeSpan.FromHours(22))
+            {
+                suggested = suggested.Date.AddDays(1).AddHours(10);
+            }
+
             var model = new BookingInput
             {
-                PartySize = 2
-            };
+                PartySize = 2,
+                StartsAtLocal = suggested,
 
-            if (localNow.TimeOfDay >= TimeSpan.FromHours(18))
-            {
-                ViewData["BookingClosedMessage"] =
-                    "Nhà hàng ngừng nhận yêu cầu đặt mới từ 18:00. "
-                    + "Các bàn đã đặt trước đó vẫn được giữ theo quy định.";
-            }
-            else
-            {
-                // Gợi ý giờ đến trong ngày và trong khung phục vụ.
-                var suggested = localNow.AddMinutes(15);
-
-                suggested = new DateTime(
-                    suggested.Year,
-                    suggested.Month,
-                    suggested.Day,
-                    suggested.Hour,
-                    suggested.Minute,
-                    0,
-                    DateTimeKind.Unspecified);
-
-                var lunchStart = localNow.Date.AddHours(10);
-                var lunchEnd = localNow.Date.AddHours(14);
-                var dinnerStart = localNow.Date.AddHours(16);
-
-                if (suggested < lunchStart)
-                {
-                    suggested = lunchStart;
-                }
-                else if (suggested >= lunchEnd
-                    && suggested < dinnerStart)
-                {
-                    suggested = dinnerStart;
-                }
-
-                model.StartsAtLocal = suggested;
-
-                model.EndsAtLocal = suggested.Date.AddHours(
+                EndsAtLocal = suggested.Date.AddHours(
                     suggested.TimeOfDay < TimeSpan.FromHours(14)
                         ? 14
-                        : 22);
-            }
+                        : 22)
+            };
 
             return View(model);
         }
@@ -254,47 +246,27 @@ namespace DoraFood.Controllers
 
         // Kiểm tra quy định và chuẩn bị thời gian để lưu SQL.
         private bool TryPrepareBooking(
-            BookingInput input,
-            DateTime utcNow,
-            out DateTime startsAtUtc,
-            out DateTime sessionEndsAtUtc)
+     BookingInput input,
+     DateTime utcNow,
+     out DateTime startsAtUtc,
+     out DateTime sessionEndsAtUtc)
         {
             startsAtUtc = default;
             sessionEndsAtUtc = default;
 
-            // Không dùng giờ kết thúc gửi từ form cũ.
             ModelState.Remove(nameof(BookingInput.EndsAtLocal));
             input.EndsAtLocal = null;
 
-            var localNow = GetRestaurantTime(utcNow);
-
-            if (localNow.TimeOfDay >= TimeSpan.FromHours(18))
-            {
-                const string message =
-                    "Nhà hàng ngừng nhận yêu cầu đặt mới từ 18:00. "
-                    + "Các bàn đã đặt trước đó vẫn được giữ theo quy định.";
-
-                ModelState.AddModelError(string.Empty, message);
-
-                ViewData["BookingClosedMessage"] = message;
-            }
-
             if (!input.StartsAtLocal.HasValue)
             {
-                // Trường bắt buộc đã được kiểm tra bằng Required.
                 return false;
             }
+
+            var localNow = GetRestaurantTime(utcNow);
 
             var arrival = DateTime.SpecifyKind(
                 input.StartsAtLocal.Value,
                 DateTimeKind.Unspecified);
-
-            if (arrival.Date != localNow.Date)
-            {
-                ModelState.AddModelError(
-                    nameof(BookingInput.StartsAtLocal),
-                    "Nhà hàng chỉ nhận đặt bàn cho ngày hiện tại.");
-            }
 
             if (arrival <= localNow)
             {
@@ -317,14 +289,14 @@ namespace DoraFood.Controllers
             {
                 ModelState.AddModelError(
                     nameof(BookingInput.StartsAtLocal),
-                    "Giờ đến phải trong khung phục vụ: "
-                    + "10:00 đến trước 14:00 hoặc "
-                    + "16:00 đến trước 22:00.");
+                    "Giờ đến phải từ 10:00 đến trước 14:00 "
+                    + "hoặc từ 16:00 đến trước 22:00.");
             }
             else
             {
-                input.EndsAtLocal = arrival.Date.AddHours(
-                    isLunch ? 14 : 22);
+                input.EndsAtLocal = DateTime.SpecifyKind(
+                    arrival.Date.AddHours(isLunch ? 14 : 22),
+                    DateTimeKind.Unspecified);
             }
 
             if (!ModelState.IsValid)

@@ -152,19 +152,23 @@
                     <div class="df-menu-grid">
                         @foreach (var dish in Model.Dishes)
                         {
+                            var detailsUrl = Url.RouteUrl("DoraFoodDishDetails", new { id = dish.Id });
                             <article class="df-menu-card">
                                 <div class="df-menu-card-media">
-                                    <img src="@Url.Content(dish.ImageUrl)" alt="@(dish.ImageAlt ?? dish.Name)"
-                                         loading="lazy" decoding="async" width="640" height="480"
-                                         data-menu-image data-fallback="@fallbackImage" />
+                                    <a href="@detailsUrl" aria-label="Xem chi tiết @dish.Name">
+                                        <img src="@Url.Content(dish.ImageUrl)" alt="@(dish.ImageAlt ?? dish.Name)"
+                                             loading="lazy" decoding="async" width="640" height="480"
+                                             data-menu-image data-fallback="@fallbackImage" />
+                                    </a>
                                     @if (dish.IsFeatured)
                                     {
                                         <span class="df-menu-featured"><span aria-hidden="true">✦</span> Món nổi bật</span>
                                     }
                                 </div>
                                 <div class="df-menu-card-body">
+                                    <a href="@detailsUrl" class="text-danger fw-semibold d-inline-block mb-3">Xem chi tiết →</a>
                                     <p class="df-menu-card-category">@dish.CategoryName</p>
-                                    <h3>@dish.Name</h3>
+                                    <h3><a href="@detailsUrl" style="color:inherit;text-decoration:none">@dish.Name</a></h3>
                                     @if (!string.IsNullOrWhiteSpace(dish.Description))
                                     {
                                         <p class="df-menu-card-description">@dish.Description</p>

@@ -7,9 +7,7 @@
     var reservation = Model.Reservation;
     ViewData["Title"] = $"Điều chỉnh đặt bàn {reservation.Code}";
     var requiresTables = reservation.Status == "CONFIRMED";
-    var today = DateTime.UtcNow.AddHours(7).Date;
-    var minimumArrival = today.AddHours(10).ToString("yyyy-MM-ddTHH:mm", CultureInfo.InvariantCulture);
-    var maximumArrival = today.AddHours(22).AddMinutes(-1).ToString("yyyy-MM-ddTHH:mm", CultureInfo.InvariantCulture);
+    var minimumArrival = DateTime.UtcNow.AddHours(7).ToString("yyyy-MM-ddTHH:mm", CultureInfo.InvariantCulture);
     var detailsUrl = Url.RouteUrl("DoraFoodManageBookingDetails", new { id = Model.Id });
 }
 
@@ -52,7 +50,7 @@
             <div class="card-body p-4">
                 <h2 class="h5 mb-3">Giờ đến và số khách</h2>
                 <p class="text-muted small">
-                    Chọn giờ đến trong ngày hôm nay, theo giờ Việt Nam:
+                    Chọn ngày và giờ đến ở tương lai, theo giờ Việt Nam:
                     10:00–trước 14:00 hoặc 16:00–trước 22:00.
                     Không cần nhập giờ kết thúc dùng bữa.
                 </p>
@@ -65,7 +63,6 @@
                                type="datetime-local"
                                class="form-control"
                                min="@minimumArrival"
-                               max="@maximumArrival"
                                step="60"
                                required />
                         <span asp-validation-for="StartsAtLocal" class="text-danger small"></span>
@@ -88,7 +85,7 @@
                 <div class="alert alert-light border small mt-3 mb-0">
                     Thay đổi giờ đến sẽ tính lại hạn giữ bàn.
                     Yêu cầu đang chờ hoặc đã xác nhận sẽ bị hủy nếu quá hạn mà chưa nhận khách.
-                    Mốc 18:00 chỉ ngừng nhận yêu cầu mới, không chặn quản lý điều chỉnh yêu cầu đã có.
+                    Có thể chọn hôm nay hoặc những ngày sau trong khung nhận khách của nhà hàng.
                 </div>
             </div>
         </div>
@@ -105,8 +102,8 @@
                     <p class="text-muted small">Yêu cầu đang chờ có thể chưa chọn bàn. Nếu chọn, các bàn phải đủ chỗ. Lưu điều chỉnh vẫn giữ trạng thái chờ xác nhận.</p>
                 }
                 <div class="alert alert-light border small">
-                    Hệ thống kiểm tra bàn trong cùng buổi khi lưu.
-                    Bàn đang có khách chỉ được sử dụng lại sau khi hoàn tất lượt trước.
+                    Hệ thống kiểm tra bàn theo đúng ngày và buổi đã chọn khi lưu.
+                    Khi nhận khách, bàn phải trống và lượt khách trước đã hoàn tất.
                     Danh sách bên dưới chỉ gồm bàn và khu vực đang hoạt động.
                 </div>
                 <span asp-validation-for="TableIds" class="text-danger d-block mb-3"></span>

@@ -15,25 +15,9 @@
         DateTime.UtcNow,
         restaurantTimeZone);
 
-    var closedMessage =
-        ViewData["BookingClosedMessage"] as string;
-
-    var bookingClosed =
-        localNow.TimeOfDay >= TimeSpan.FromHours(18)
-        || !string.IsNullOrWhiteSpace(closedMessage);
-
-    var minimumArrival = localNow.Date
-        .AddHours(10)
-        .ToString(
-            "yyyy-MM-ddTHH:mm",
-            CultureInfo.InvariantCulture);
-
-    var maximumArrival = localNow.Date
-        .AddHours(22)
-        .AddMinutes(-1)
-        .ToString(
-            "yyyy-MM-ddTHH:mm",
-            CultureInfo.InvariantCulture);
+    var minimumArrival = localNow.ToString(
+     "yyyy-MM-ddTHH:mm",
+     CultureInfo.InvariantCulture);
 }
 
 <!-- Tiêu đề -->
@@ -118,10 +102,9 @@
                     <h3 class="h5 fw-bold">Nhận đặt trong ngày</h3>
 
                     <p class="text-muted mb-0">
-                        Chỉ nhận đặt cho ngày hiện tại,
-                        gửi yêu cầu trước 18:00.
-                        Bạn vẫn có thể hẹn đến sau 18:00
-                        trong giờ phục vụ buổi tối.
+                        Bạn có thể gửi yêu cầu vào bất kỳ thời điểm nào
+                        và đặt trước cho những ngày sau.
+                        Chọn giờ đến trong khung phục vụ của nhà hàng.
                     </p>
                 </div>
 
@@ -156,8 +139,7 @@
                     </h2>
 
                     <p class="text-muted mb-4">
-                        Ngày đặt:
-                        <strong>@localNow.ToString("dd/MM/yyyy")</strong>.
+                        Chọn ngày và giờ đến phù hợp với lịch của bạn.
                         Các trường có dấu
                         <span class="text-danger">*</span>
                         là bắt buộc.
@@ -171,18 +153,7 @@
                         </div>
                     }
 
-                    @if (bookingClosed)
-                    {
-                        <div class="alert alert-warning" role="status">
-                            <strong>Đã hết thời gian nhận đặt mới hôm nay.</strong>
-
-                            <p class="mb-0 mt-2">
-                                Nhà hàng ngừng nhận yêu cầu mới từ 18:00.
-                                Các yêu cầu đã đặt trước đó vẫn được giữ
-                                theo quy định, không bị hủy vì mốc 18:00.
-                            </p>
-                        </div>
-                    }
+                   
 
                     <form action="@bookingUrl" method="post">
                         @Html.AntiForgeryToken()
@@ -261,7 +232,6 @@
                                        asp-format="{0:yyyy-MM-ddTHH:mm}"
                                        class="form-control rounded-3 py-3"
                                        min="@minimumArrival"
-                                       max="@maximumArrival"
                                        step="60"
                                        aria-describedby="booking-arrival-help"
                                        required />
@@ -273,11 +243,9 @@
                             <div class="col-12">
                                 <div id="booking-arrival-help"
                                      class="bg-light border rounded-3 p-3 small">
-                                    Chọn giờ đến trong ngày hôm nay và ở tương lai:
-                                    <strong>10:00–trước 14:00</strong>
-                                    hoặc
-                                    <strong>16:00–trước 22:00</strong>.
-                                    Không cần nhập giờ kết thúc dùng bữa.
+                                    Chọn ngày và giờ đến ở tương lai.
+                                    Nhà hàng nhận khách từ 10:00 đến trước 14:00
+                                    và từ 16:00 đến trước 22:00 mỗi ngày.
                                 </div>
                             </div>
 
@@ -304,11 +272,8 @@
                                 </p>
 
                                 <button type="submit"
-                                        class="btn btn-primary rounded-pill px-4 py-3"
-                                        disabled="@bookingClosed">
-                                    @(bookingClosed
-                                        ? "Đã ngừng nhận đặt mới"
-                                        : "Gửi yêu cầu đặt bàn")
+                                        class="btn btn-primary rounded-pill px-4 py-3">
+                                    Gửi yêu cầu đặt bàn
                                 </button>
                             </div>
 

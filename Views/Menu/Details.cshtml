@@ -1,0 +1,86 @@
+﻿@using System.Globalization
+@model DoraFood.ViewModels.MenuDishDetailsViewModel
+@{
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+    var fallbackImage = Url.Content("~/assets/img/dish-placeholder.svg");
+    var menuUrl = Url.RouteUrl("DoraFoodMenu");
+}
+@section Styles {
+    <link rel="stylesheet" href="~/assets/css/dorafood-dish-details.css" asp-append-version="true" />
+}
+<div class="df-dish-page">
+    <div class="container py-4 py-lg-5">
+        <nav aria-label="Đường dẫn" class="df-dish-breadcrumb mb-4">
+            <a href="@Url.Content("~/")">Trang chủ</a><span aria-hidden="true">/</span>
+            <a href="@menuUrl">Thực đơn</a><span aria-hidden="true">/</span>
+            <span aria-current="page">@Model.Name</span>
+        </nav>
+        <div class="row g-4 g-lg-5 align-items-start">
+            <div class="col-lg-6">
+                <section aria-label="Hình ảnh món ăn" class="df-dish-gallery">
+                    @for (var i = 0; i < Model.Images.Count; i++)
+                    {
+                        var image = Model.Images[i];
+                        <img src="@Url.Content(image.Url)" alt="@(image.AltText ?? Model.Name)"
+                             class="@(i == 0 ? "df-dish-cover" : "df-dish-extra")"
+                             loading="@(i == 0 ? "eager" : "lazy")" decoding="async"
+                             width="800" height="600" data-dish-image data-fallback="@fallbackImage" />
+                    }
+                </section>
+            </div>
+            <div class="col-lg-6">
+                <p class="df-dish-eyebrow">DORAFOOD · TRỌN VỊ TỪNG MÓN NGON</p>
+                <a class="df-dish-category" href="@Url.RouteUrl("DoraFoodMenu", new { categoryId = Model.CategoryId })">@Model.CategoryName</a>
+                <h1 class="df-dish-title mt-3">@Model.Name</h1>
+                @if (Model.IsFeatured)
+                {
+                    <span class="df-dish-badge">✦ Món nổi bật</span>
+                }
+                @if (!string.IsNullOrWhiteSpace(Model.ShortDescription))
+                {
+                    <p class="df-dish-intro mt-3">@Model.ShortDescription</p>
+                }
+                <section class="df-dish-panel mt-4" aria-labelledby="dish-price-title">
+                    <h2 id="dish-price-title">Khẩu phần &amp; giá</h2>
+                    @if (Model.Variants.Count == 0)
+                    {
+                        <p class="mb-0" role="status">Món hiện tạm ngừng phục vụ. Vui lòng chọn món khác trong thực đơn.</p>
+                    }
+                    else
+                    {
+                        <ul class="df-dish-variants">
+                            @foreach (var variant in Model.Variants)
+                            {
+                                <li>
+                                    <div><strong>@variant.Name</strong><small>Đơn vị: @variant.SellingUnit</small></div>
+                                    <span>@variant.Price.ToString("N0", culture) ₫</span>
+                                </li>
+                            }
+                        </ul>
+                    }
+                </section>
+                @if (!string.IsNullOrWhiteSpace(Model.AllergenNote))
+                {
+                    <aside class="df-dish-allergen mt-4" aria-label="Lưu ý dị ứng">
+                        <strong>Lưu ý về dị ứng</strong><p class="mb-0 mt-2">@Model.AllergenNote</p>
+                    </aside>
+                }
+                <a href="@menuUrl" class="btn btn-outline-danger rounded-pill px-4 mt-4">← Tiếp tục xem thực đơn</a>
+            </div>
+        </div>
+        <section class="df-dish-panel df-dish-description mt-5" aria-labelledby="dish-description-title">
+            <h2 id="dish-description-title">Về món ăn</h2>
+            @if (!string.IsNullOrWhiteSpace(Model.DescriptionHtml))
+            {
+                @Html.Raw(Model.DescriptionHtml)
+            }
+            else
+            {
+                <p class="mb-0">@(Model.ShortDescription ?? "Thông tin chi tiết món ăn đang được cập nhật.")</p>
+            }
+        </section>
+    </div>
+</div>
+@section Scripts {
+    <script src="~/assets/js/dorafood-dish-details.js" asp-append-version="true" defer></script>
+}
