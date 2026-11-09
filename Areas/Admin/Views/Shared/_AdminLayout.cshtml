@@ -1,0 +1,278 @@
+﻿@using System
+@{
+    var pageTitle = ViewData["Title"] as string ?? "Quản trị";
+    var currentArea = ViewContext.RouteData.Values["area"]?.ToString();
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var inAdmin = string.Equals(currentArea, "Admin", StringComparison.OrdinalIgnoreCase);
+    var dashboardActive = inAdmin &&
+        string.Equals(currentController, "Dashboard", StringComparison.OrdinalIgnoreCase);
+    var deliveryActive = inAdmin &&
+        string.Equals(currentController, "DeliveryOrders", StringComparison.OrdinalIgnoreCase);
+
+    var dashboardUrl = Url.Action("Index", "Dashboard", new { area = "Admin" });
+    var deliveryUrl = Url.Action("Index", "DeliveryOrders", new { area = "Admin" });
+    var customerUrl = Url.Action("Index", "Home", new { area = "" });
+    var userName = User.Identity?.Name ?? "Quản lý";
+}
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>@pageTitle · DoraFood Admin</title>
+
+    <script>
+        (() => {
+            'use strict';
+            const root = document.documentElement;
+
+            // Applications with their own theming opt out of AdminLTE's color mode
+            // entirely, here as well as in the bundle.
+            if (root.getAttribute('data-lte-color-mode') === 'off') {
+                return;
+            }
+
+            const STORAGE_KEY = 'lte-theme';
+            let stored = null;
+            try {
+                stored = localStorage.getItem(STORAGE_KEY);
+            } catch {
+                // localStorage may be unavailable (private mode, sandboxed iframe).
+            }
+            // Mirror the precedence in color-mode.ts: the visitor's stored choice
+            // wins, then a theme this page declared itself, then the OS preference.
+            const authored = root.getAttribute('data-bs-theme');
+            let resolved = 'light';
+            if (stored === 'dark' || stored === 'light') {
+                resolved = stored;
+            } else if (authored === 'dark' || authored === 'light') {
+                resolved = authored;
+            } else if (globalThis.matchMedia('(prefers-color-scheme: dark)').matches) {
+                resolved = 'dark';
+            }
+            root.setAttribute('data-bs-theme', resolved);
+            root.style.colorScheme = resolved;
+            // Flag values computed here, so the bundle does not mistake them for a
+            // theme the page declared and stop following the OS preference.
+            if (resolved !== authored) {
+                root.setAttribute('data-lte-theme-resolved', '');
+            }
+        })();
+    </script>
+
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/@@fontsource/source-sans-3@5.3.0/index.css"
+          integrity="sha256-5UwXtC6TaPHCAbVQ59waEAqOssHyhn/twyuLRRWszzo="
+          crossorigin="anonymous"
+          media="print"
+          onload="this.media = 'all'" />
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.16.0/styles/overlayscrollbars.min.css"
+          crossorigin="anonymous" />
+    <link rel="stylesheet"
+          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css"
+          crossorigin="anonymous" />
+    <link rel="stylesheet"
+          href="@Url.Content("~/admin/dist/css/adminlte.css")" />
+
+    @await RenderSectionAsync("Styles", required: false)
+</head>
+<body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
+    <div class="app-wrapper">
+        <nav class="app-header navbar navbar-expand bg-body"
+             aria-label="Thanh công cụ quản trị">
+            <div class="container-fluid">
+                <ul class="navbar-nav align-items-center">
+                    <li class="nav-item">
+                        <a class="nav-link"
+                           href="#"
+                           role="button"
+                           data-lte-toggle="sidebar"
+                           aria-label="Ẩn hoặc hiện menu quản trị">
+                            <i class="bi bi-list" aria-hidden="true"></i>
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a href="@customerUrl" class="nav-link">
+                            <i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i>
+                            <span>Trang khách hàng</span>
+                        </a>
+                    </li>
+                </ul>
+
+                <ul class="navbar-nav ms-auto align-items-center">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link"
+                           href="#"
+                           id="bd-theme"
+                           aria-label="Chọn giao diện"
+                           data-bs-toggle="dropdown"
+                           aria-expanded="false">
+                            <i class="bi bi-sun-fill" data-lte-theme-icon="light"></i>
+                            <i class="bi bi-moon-fill d-none" data-lte-theme-icon="dark"></i>
+                            <i class="bi bi-circle-half d-none" data-lte-theme-icon="auto"></i>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end"
+                            aria-labelledby="bd-theme"
+                            style="--bs-dropdown-min-width: 8rem">
+                            <li>
+                                <button type="button"
+                                        class="dropdown-item d-flex align-items-center"
+                                        data-bs-theme-value="light"
+                                        aria-pressed="false">
+                                    <i class="bi bi-sun-fill me-2"></i>
+                                    Sáng
+                                    <i class="bi bi-check-lg ms-auto d-none"></i>
+                                </button>
+                            </li>
+                            <li>
+                                <button type="button"
+                                        class="dropdown-item d-flex align-items-center"
+                                        data-bs-theme-value="dark"
+                                        aria-pressed="false">
+                                    <i class="bi bi-moon-fill me-2"></i>
+                                    Tối
+                                    <i class="bi bi-check-lg ms-auto d-none"></i>
+                                </button>
+                            </li>
+                            <li>
+                                <button type="button"
+                                        class="dropdown-item d-flex align-items-center active"
+                                        data-bs-theme-value="auto"
+                                        aria-pressed="true">
+                                    <i class="bi bi-circle-half me-2"></i>
+                                    Tự động
+                                    <i class="bi bi-check-lg ms-auto d-none"></i>
+                                </button>
+                            </li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <span class="navbar-text text-break">
+                            <i class="bi bi-person-circle me-1" aria-hidden="true"></i>
+                            @userName
+                        </span>
+                    </li>
+                </ul>
+            </div>
+        </nav>
+
+        <aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
+            <div class="sidebar-brand">
+                <a href="@dashboardUrl" class="brand-link">
+                    <img src="@Url.Content("~/admin/dist/assets/img/AdminLTELogo.png")"
+                         class="brand-image opacity-75 shadow"
+                         alt="" />
+                    <span class="brand-text fw-semibold">DoraFood Admin</span>
+                </a>
+            </div>
+
+            <div class="sidebar-wrapper">
+                <nav class="mt-2" aria-label="Menu quản trị">
+                    <ul class="nav sidebar-menu flex-column" id="navigation">
+                        <li class="nav-header">QUẢN TRỊ NHÀ HÀNG</li>
+                        <li class="nav-item">
+                            <a href="@dashboardUrl"
+                               class="nav-link @(dashboardActive ? "active" : "")"
+                               aria-current="@(dashboardActive ? "page" : null)">
+                                <i class="nav-icon bi bi-speedometer2" aria-hidden="true"></i>
+                                <p>Tổng quan</p>
+                            </a>
+                        </li>
+                        @if (!string.IsNullOrEmpty(deliveryUrl))
+                        {
+                            <li class="nav-item">
+                                <a href="@deliveryUrl"
+                                   class="nav-link @(deliveryActive ? "active" : "")"
+                                   aria-current="@(deliveryActive ? "page" : null)">
+                                    <i class="nav-icon bi bi-truck" aria-hidden="true"></i>
+                                    <p>Đơn giao hàng</p>
+                                </a>
+                            </li>
+                        }
+                        <li class="nav-item">
+    <a class="nav-link @(inAdmin && currentController == "BookingManagement" ? "active" : "")"
+       href="@Url.RouteUrl("DoraFoodAdminBookings")">
+        <i class="nav-icon bi bi-calendar-check" aria-hidden="true"></i>
+        <p>Đặt bàn</p>
+    </a>
+</li>
+<li class="nav-item">
+    <a class="nav-link @(inAdmin && currentController == "DishCategories" ? "active" : "")"
+       href="@Url.Action("Index", "DishCategories", new { area = "Admin" })">
+        <i class="nav-icon bi bi-list-ul" aria-hidden="true"></i>
+        <p>Danh mục món ăn</p>
+    </a>
+</li>
+          <li class="nav-item">
+    <a class="nav-link @(inAdmin && currentController == "Dishes" ? "active" : "")"
+       href="@Url.Action("Index", "Dishes", new { area = "Admin" })">
+        <i class="nav-icon bi bi-egg-fried" aria-hidden="true"></i>
+        <p>Món ăn</p>
+    </a>
+</li>
+         @if (TempData["DishSuccess"] is string success)
+{
+    <div class="alert alert-success" role="status">@success</div>
+}
+
+<div class="mb-3">
+    <a class="btn btn-primary"
+       href="@Url.Action("Create", "Dishes", new { area = "Admin" })">
+        + Thêm món ăn
+    </a>
+</div>
+                    </ul>
+                </nav>
+            </div>
+        </aside>
+
+        <main class="app-main" id="main-content">
+            <div class="app-content-header">
+                <div class="container-fluid">
+                    <h1 class="h3 mb-0">@pageTitle</h1>
+                </div>
+            </div>
+
+            <div class="app-content">
+                <div class="container-fluid">
+                    @RenderBody()
+                </div>
+            </div>
+        </main>
+
+        <footer class="app-footer">
+            <strong>DoraFood</strong> · Quản trị nhà hàng
+            <a href="https://adminlte.io" class="float-end text-decoration-none">AdminLTE</a>
+        </footer>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.16.0/browser/overlayscrollbars.browser.es6.min.js"
+            crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@@popperjs/core@2.11.8/dist/umd/popper.min.js"
+            crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.min.js"
+            crossorigin="anonymous"></script>
+    <script src="@Url.Content("~/admin/dist/js/adminlte.js")"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const sidebar = document.querySelector('.sidebar-wrapper');
+            const overlayScrollbars = globalThis.OverlayScrollbarsGlobal?.OverlayScrollbars;
+
+            if (sidebar && overlayScrollbars && window.innerWidth > 992) {
+                overlayScrollbars(sidebar, {
+                    scrollbars: {
+                        theme: 'os-theme-light',
+                        autoHide: 'leave',
+                        clickScroll: true
+                    }
+                });
+            }
+        });
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

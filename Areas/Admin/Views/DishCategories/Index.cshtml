@@ -1,0 +1,75 @@
+﻿@model System.Collections.Generic.IReadOnlyList<DoraFood.Areas.Admin.ViewModels.DishCategoryRow>
+
+@{
+    ViewData["Title"] = "Danh mục món ăn";
+}
+@if (TempData["DishCategorySuccess"] is string success)
+{
+    <div class="alert alert-success" role="status">@success</div>
+}
+
+<div class="mb-3">
+    <a class="btn btn-primary"
+       href="@Url.Action("Create", "DishCategories", new { area = "Admin" })">
+        + Tạo danh mục
+    </a>
+</div>
+<div class="card">
+    <div class="card-header">
+        <strong>Danh sách danh mục</strong>
+        <span class="text-body-secondary ms-2">@Model.Count danh mục</span>
+    </div>
+
+    @if (Model.Count == 0)
+    {
+        <div class="card-body text-body-secondary">
+            Chưa có danh mục món ăn.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th scope="col">Tên danh mục</th>
+                        <th scope="col">Danh mục cha</th>
+                        <th scope="col" class="text-end">Thứ tự</th>
+                        <th scope="col" class="text-end">Số món</th>
+                        <th scope="col">Trạng thái</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var category in Model)
+                    {
+                        <tr>
+                            <td>
+                                <a class="fw-semibold"
+                                   href="@Url.Action("Edit", "DishCategories",
+                                   new { area = "Admin", id = category.Id })">
+                                    @category.Name
+                                </a>
+                                <div class="small text-body-secondary">
+                                    @category.Slug
+                                </div>
+                            </td>
+                            <td>@(category.ParentName ?? "—")</td>
+                            <td class="text-end">@category.SortOrder</td>
+                            <td class="text-end">@category.DishCount</td>
+                            <td>
+                                @if (category.IsActive)
+                                {
+                                    <span class="badge text-bg-success">Đang bật</span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-secondary">Đã tắt</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

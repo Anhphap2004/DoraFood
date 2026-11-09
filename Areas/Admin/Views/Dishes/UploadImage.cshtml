@@ -1,0 +1,129 @@
+﻿@model DoraFood.Areas.Admin.ViewModels.DishImageInput
+
+@{
+    ViewData["Title"] = "Tải ảnh món ăn";
+}
+
+<div class="card">
+    <div class="card-header">
+        <strong>@Model.DishName</strong>
+    </div>
+
+    <form asp-area="Admin"
+          asp-controller="Dishes"
+          asp-action="UploadImage"
+          asp-route-id="@Model.DishId"
+          method="post"
+          enctype="multipart/form-data">
+
+        <div class="card-body">
+            <div asp-validation-summary="ModelOnly"
+                 class="text-danger mb-2"></div>
+
+            @if (!string.IsNullOrWhiteSpace(Model.CurrentImageUrl))
+            {
+                <div class="mb-3">
+                    <p class="form-label">Ảnh hiện tại</p>
+                    <img src="@Url.Content(Model.CurrentImageUrl)"
+                         alt="Ảnh hiện tại của @Model.DishName"
+                         width="160"
+                         height="120"
+                         class="rounded border object-fit-cover" />
+                </div>
+            }
+
+            <div class="mb-3">
+                <label asp-for="Image" class="form-label">Chọn ảnh từ máy</label>
+
+                <input asp-for="Image"
+                       id="dish-image-input"
+                       type="file"
+                       accept="image/jpeg,image/png"
+                       class="form-control"
+                       required />
+
+                <div class="form-text">JPG hoặc PNG, tối đa 5 MB.</div>
+                <span asp-validation-for="Image" class="text-danger small"></span>
+
+                <p id="dish-image-preview-error"
+                   class="text-danger small mt-2 mb-0"
+                   role="status"
+                   hidden></p>
+
+                <figure id="dish-image-preview" class="mt-3 mb-0" hidden>
+                    <figcaption class="form-label">Xem trước ảnh vừa chọn</figcaption>
+                    <img id="dish-image-preview-img"
+                         alt="Ảnh món ăn vừa chọn"
+                         class="img-fluid rounded border"
+                         style="max-height: 300px; object-fit: contain;" />
+                </figure>
+            </div>
+        </div>
+
+        <div class="card-footer d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Lưu ảnh chính</button>
+            <a class="btn btn-outline-secondary"
+               href="@Url.Action("Index", "Dishes", new { area = "Admin" })">
+                Về danh sách
+            </a>
+        </div>
+    </form>
+</div>
+@section Scripts {
+    <script>
+        (() => {
+            const input = document.getElementById("dish-image-input");
+            const preview = document.getElementById("dish-image-preview");
+            const image = document.getElementById("dish-image-preview-img");
+            const error = document.getElementById("dish-image-preview-error");
+            const maxBytes = 5 * 1024 * 1024;
+            let previewUrl = null;
+
+            function showError(message) {
+                preview.hidden = true;
+                error.textContent = message;
+                error.hidden = false;
+                input.setCustomValidity(message);
+            }
+
+            input.addEventListener("change", () => {
+                preview.hidden = true;
+                error.hidden = true;
+                error.textContent = "";
+                input.setCustomValidity("");
+                image.removeAttribute("src");
+
+                if (previewUrl !== null) {
+                    URL.revokeObjectURL(previewUrl);
+                    previewUrl = null;
+                }
+
+                const file = input.files[0];
+                if (!file) return;
+
+                if (file.size === 0 || file.size > maxBytes) {
+                    showError("Ảnh phải lớn hơn 0 và không quá 5 MB.");
+                    return;
+                }
+
+                if (file.type && !["image/jpeg", "image/png"].includes(file.type)) {
+                    showError("Anh chọn ảnh JPG hoặc PNG nhé.");
+                    return;
+                }
+
+                previewUrl = URL.createObjectURL(file);
+                image.src = previewUrl;
+            });
+
+            image.addEventListener("load", () => {
+                preview.hidden = false;
+            });
+
+            image.addEventListener("error", () => {
+                if (previewUrl !== null) {
+                    showError("Không đọc được ảnh này. Anh thử chọn ảnh khác.");
+                }
+            });
+        })();
+    </script>
+}

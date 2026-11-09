@@ -1,0 +1,129 @@
+﻿@using System.Globalization
+@model DoraFood.ViewModels.CartViewModel
+@{
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+    var fallbackImage = Url.Content("~/assets/img/dish-placeholder.svg");
+}
+@section Styles {
+    <link rel="stylesheet" href="~/assets/css/dorafood-cart.css" asp-append-version="true" />
+}
+<div class="df-cart-page">
+    <div class="container py-5">
+        <a href="@Url.RouteUrl("DoraFoodMenu")" class="df-cart-back">← Tiếp tục chọn món</a>
+        <div class="df-cart-heading my-4">
+            <div>
+                <p class="df-cart-eyebrow">DORAFOOD · MUA MANG VỀ</p>
+                <h1>Giỏ hàng của bạn</h1>
+                <p class="text-muted mb-0">@Model.Items.Count lựa chọn · @Model.TotalQuantity phần</p>
+            </div>
+            @if (Model.Items.Count > 0)
+            {
+                <form action="@Url.RouteUrl("DoraFoodClearCart")" method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="btn btn-outline-danger rounded-pill px-4">Xóa toàn bộ giỏ</button>
+                </form>
+            }
+        </div>
+        @if (TempData["CartSuccess"] is string success)
+        {
+            <div class="alert alert-success" role="status">@success</div>
+        }
+        @if (TempData["CartError"] is string error)
+        {
+            <div class="alert alert-danger" role="alert">@error</div>
+        }
+        @if (Model.Items.Count == 0)
+        {
+            <div class="df-cart-empty">
+                <span aria-hidden="true">✦</span>
+                <h2>Giỏ hàng đang trống</h2>
+                <p>Khám phá thực đơn và chọn món bạn yêu thích.</p>
+                <a href="@Url.RouteUrl("DoraFoodMenu")" class="btn btn-danger rounded-pill px-4">Xem thực đơn</a>
+            </div>
+        }
+        else
+        {
+            @if (Model.HasUnavailableItems)
+            {
+                <div class="alert alert-warning" role="alert">Có món không còn bán. Các món này không được tính vào tạm tính; anh có thể xóa khỏi giỏ.</div>
+            }
+            <div class="row g-4 align-items-start">
+                <div class="col-lg-8">
+                    <div class="df-cart-items">
+                        @foreach (var line in Model.Items)
+                        {
+                            <article class="df-cart-item">
+                                <img src="@Url.Content(line.ImageUrl)" alt="@(line.ImageAlt ?? line.DishName)"
+                                     width="120" height="120" loading="lazy" decoding="async"
+                                     data-dish-image data-fallback="@fallbackImage" />
+                                <div class="df-cart-item-info">
+                                    <h2>
+                                        @if (line.IsAvailable)
+                                        {
+                                            <a href="@Url.RouteUrl("DoraFoodDishDetails", new { id = line.DishId })">@line.DishName</a>
+                                        }
+                                        else
+                                        {
+                                            @line.DishName
+                                        }
+                                    </h2>
+                                    <p class="text-muted mb-2">@line.VariantName @(!string.IsNullOrWhiteSpace(line.SellingUnit) ? "· " + line.SellingUnit : "")</p>
+                                    @if (line.IsAvailable)
+                                    {
+                                        <p class="mb-3">Đơn giá: <strong>@(line.UnitPrice.GetValueOrDefault().ToString("N0", culture)) ₫</strong></p>
+                                        <form action="@Url.RouteUrl("DoraFoodUpdateCart")" method="post" class="df-cart-quantity">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="VariantId" value="@line.VariantId" />
+                                            <label for="cart-quantity-@line.VariantId">Số lượng</label>
+                                            <input type="number" id="cart-quantity-@line.VariantId" name="Quantity" value="@line.Quantity"
+                                                   min="1" max="99" step="1" required />
+                                            <button type="submit" class="btn btn-outline-secondary btn-sm">Cập nhật</button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <p class="text-danger mb-2">Tạm ngừng bán · Số lượng đã chọn: @line.Quantity</p>
+                                    }
+                                    <form action="@Url.RouteUrl("DoraFoodRemoveCartItem")" method="post" class="mt-3">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="variantId" value="@line.VariantId" />
+                                        <button type="submit" class="df-cart-remove" aria-label="Xóa @line.DishName khỏi giỏ">Xóa món</button>
+                                    </form>
+                                </div>
+                                <div class="df-cart-line-total">
+                                    @if (line.IsAvailable)
+                                    {
+                                        <strong>@(line.LineTotal.GetValueOrDefault().ToString("N0", culture)) ₫</strong>
+                                    }
+                                    else
+                                    {
+                                        <span>Không tính tiền</span>
+                                    }
+                                </div>
+                            </article>
+                        }
+                    </div>
+                </div>
+                <aside class="col-lg-4">
+                    <div class="df-cart-summary">
+                        <p class="df-cart-eyebrow">MÓN NGON BẠN ĐÃ CHỌN</p>
+                        <h2>Tổng giỏ hàng</h2>
+                        <div class="df-cart-summary-total"><span>Tạm tính món đang bán</span><strong>@Model.Subtotal.ToString("N0", culture) ₫</strong></div>
+                        <p class="text-muted small mb-4">Giá và tình trạng món được cập nhật khi bạn xem giỏ. Thêm vào giỏ chưa giữ món và chưa tạo đơn đặt mua.</p>
+                        @if (Model.Items.Count > 0 && !Model.HasUnavailableItems)
+                        {
+                            <a href="@Url.RouteUrl("DoraFoodCheckout")"
+                               class="btn btn-danger rounded-pill w-100 mb-3">
+                                Thanh toán
+                            </a>
+                        }
+                        <a href="@Url.RouteUrl("DoraFoodMenu")" class="btn btn-danger rounded-pill w-100">Chọn thêm món</a>
+                    </div>
+                </aside>
+            </div>
+        }
+    </div>
+</div>
+@section Scripts {
+    <script src="~/assets/js/dorafood-dish-details.js" asp-append-version="true" defer></script>
+}

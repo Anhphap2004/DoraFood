@@ -1,0 +1,66 @@
+﻿@model DoraFood.Areas.Admin.ViewModels.DishCategoryInput
+
+@{
+    ViewData["Title"] = "Sửa danh mục món ăn";
+}
+
+<div class="card">
+    <form asp-area="Admin"
+          asp-controller="DishCategories"
+          asp-action="Edit"
+          asp-route-id="@Model.Id"
+          method="post">
+
+        <div class="card-body">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label">Tên danh mục</label>
+                <input asp-for="Name" class="form-control" maxlength="150" required />
+                <span asp-validation-for="Name" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Slug" class="form-label">Slug</label>
+                <input asp-for="Slug" class="form-control"
+                       maxlength="200" placeholder="Ví dụ mon-nuong" />
+                <div class="form-text">Để trống để giữ slug hiện tại.</div>
+                <span asp-validation-for="Slug" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ParentId" class="form-label">Danh mục cha</label>
+                <select asp-for="ParentId"
+                        asp-items="Model.ParentOptions"
+                        class="form-select">
+                    <option value="">Danh mục cấp cao nhất</option>
+                </select>
+                <span asp-validation-for="ParentId" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="SortOrder" class="form-label">Thứ tự hiển thị</label>
+                <input asp-for="SortOrder" type="number" min="0" step="1"
+                       class="form-control" required />
+                <div class="form-text">Số nhỏ hơn được xếp trước.</div>
+                <span asp-validation-for="SortOrder" class="text-danger small"></span>
+            </div>
+
+            <div class="form-check">
+                <input asp-for="IsActive" class="form-check-input" />
+                <label asp-for="IsActive" class="form-check-label">
+                    Bật danh mục
+                </label>
+            </div>
+        </div>
+
+        <div class="card-footer d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Lưu danh mục</button>
+
+            <a class="btn btn-outline-secondary"
+               href="@Url.Action("Index", "DishCategories", new { area = "Admin" })">
+                Về danh sách
+            </a>
+        </div>
+    </form>
+</div>

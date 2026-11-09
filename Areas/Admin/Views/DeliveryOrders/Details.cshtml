@@ -1,0 +1,174 @@
+﻿@using System.Globalization
+@model DoraFood.Areas.Admin.ViewModels.DeliveryOrderDetailsViewModel
+
+@{
+    ViewData["Title"] = "Chi tiết đơn giao hàng";
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+
+    var statusLabel = Model.Status switch
+    {
+        "OPEN" => "Đơn mới",
+        "IN_PROGRESS" => "Đang xử lý",
+        "COMPLETED" => "Hoàn tất",
+        "CANCELLED" => "Đã hủy",
+        _ => Model.Status
+    };
+}
+
+<a class="btn btn-outline-secondary btn-sm mb-3"
+   href="@Url.Action("Index", "DeliveryOrders",
+       new { area = "Admin", page = Model.ReturnPage })">
+    ← Về danh sách
+</a>
+@if (TempData["DeliverySuccess"] is string success)
+{
+    <div class="alert alert-success" role="status">@success</div>
+}
+
+@if (TempData["DeliveryError"] is string error)
+{
+    <div class="alert alert-warning" role="alert">@error</div>
+}
+
+@if (Model.Status == "OPEN" && Model.PendingAmount > 0)
+{
+    <form method="post"
+          action="@Url.Action("Accept", "DeliveryOrders", new { area = "Admin" })"
+          class="mb-3">
+        @Html.AntiForgeryToken()
+
+        <input type="hidden" name="code" value="@Model.Code" />
+        <input type="hidden" name="page" value="@Model.ReturnPage" />
+
+        <button type="submit" class="btn btn-primary">
+            Tiếp nhận đơn
+        </button>
+
+    </form>
+}
+@if (Model.Status == "IN_PROGRESS" && Model.PendingAmount > 0)
+{
+    <div class="card mb-3">
+        <div class="card-body">
+            <p class="mb-2">
+                Số tiền cần thu
+                <strong>@Model.PendingAmount.ToString("N0", culture) ₫</strong>
+            </p>
+
+            <p class="small text-body-secondary">
+                Bấm xác nhận sau khi đã giao hàng và nhận đủ số tiền trên.
+            </p>
+
+            <form method="post"
+                  action="@Url.Action("CompleteCashDelivery", "DeliveryOrders",
+                      new { area = "Admin" })">
+                @Html.AntiForgeryToken()
+
+                <input type="hidden" name="code" value="@Model.Code" />
+                <input type="hidden" name="page" value="@Model.ReturnPage" />
+
+                <button type="submit" class="btn btn-success">
+                    Xác nhận đã thu
+                </button>
+            </form>
+        </div>
+    </div>
+}
+<div class="row g-3 mb-3">
+    <div class="col-lg-7">
+        <div class="card h-100">
+            <div class="card-header"><strong>Thông tin giao hàng</strong></div>
+            <div class="card-body">
+                <dl class="row mb-0">
+                    <dt class="col-sm-4">Mã đơn</dt>
+                    <dd class="col-sm-8 text-break">@Model.Code</dd>
+
+                    <dt class="col-sm-4">Trạng thái</dt>
+                    <dd class="col-sm-8">@statusLabel</dd>
+
+                    <dt class="col-sm-4">Giờ đặt</dt>
+                    <dd class="col-sm-8">
+                        @Model.OpenedAtUtc.AddHours(7).ToString("dd/MM/yyyy HH:mm")
+                    </dd>
+
+                    <dt class="col-sm-4">Người nhận</dt>
+                    <dd class="col-sm-8">@(Model.GuestName ?? "—")</dd>
+
+                    <dt class="col-sm-4">Điện thoại</dt>
+                    <dd class="col-sm-8">@(Model.GuestPhone ?? "—")</dd>
+
+                    <dt class="col-sm-4">Địa chỉ giao</dt>
+                    <dd class="col-sm-8 text-break">@(Model.DeliveryAddress ?? "—")</dd>
+
+                    <dt class="col-sm-4">Ghi chú</dt>
+                    <dd class="col-sm-8 text-break">@(Model.Note ?? "—")</dd>
+                </dl>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-lg-5">
+        <div class="card h-100">
+            <div class="card-header"><strong>Thanh toán</strong></div>
+            <div class="card-body">
+                <p>Tiền mặt khi nhận hàng</p>
+                <p class="mb-2">
+                    Chờ thu
+                    <strong>
+                        @(Model.Status == "CANCELLED"
+                            ? "—"
+                            : Model.PendingAmount.ToString("N0", culture) + " ₫")
+                    </strong>
+                </p>
+                <p class="mb-0">
+                    Đã thu <strong>@Model.ReceivedAmount.ToString("N0", culture) ₫</strong>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-header"><strong>Món trong đơn</strong></div>
+
+    @if (Model.Items.Count == 0)
+    {
+        <div class="card-body">Đơn này chưa có dòng món.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th scope="col">Món</th>
+                        <th scope="col" class="text-end">Số lượng</th>
+                        <th scope="col" class="text-end">Đơn giá</th>
+                        <th scope="col" class="text-end">Thành tiền</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model.Items)
+                    {
+                        <tr>
+                            <td>
+                                @item.Name
+                                @if (item.Status == "CANCELLED")
+                                {
+                                    <span class="badge text-bg-secondary">Đã hủy</span>
+                                }
+                            </td>
+                            <td class="text-end">@item.Quantity.ToString("0.###", culture)</td>
+                            <td class="text-end text-nowrap">
+                                @item.UnitPrice.ToString("N0", culture) ₫
+                            </td>
+                            <td class="text-end text-nowrap">
+                                @item.LineTotal.ToString("N0", culture) ₫
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

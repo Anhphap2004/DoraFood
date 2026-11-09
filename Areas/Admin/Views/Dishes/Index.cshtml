@@ -1,0 +1,131 @@
+﻿@using System.Globalization
+@model DoraFood.Areas.Admin.ViewModels.DishListViewModel
+
+@{
+    ViewData["Title"] = "Món ăn";
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+    var fallbackImage = Url.Content("~/assets/img/dish-placeholder.svg");
+}
+
+<div class="card">
+    <div class="card-header">
+        <strong>Danh sách món ăn</strong>
+        <span class="text-body-secondary ms-2">@Model.TotalDishes món</span>
+    </div>
+
+    @if (Model.Dishes.Count == 0)
+    {
+        <div class="card-body text-body-secondary">Chưa có món ăn.</div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th scope="col">Tên món</th>
+                        <th scope="col">Danh mục</th>
+                        <th scope="col" class="text-end">Số khẩu phần</th>
+                        <th scope="col" class="text-end">Giá thấp nhất</th>
+                        <th scope="col">Trạng thái món</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var dish in Model.Dishes)
+                    {
+                        <tr>
+                            <td>
+                                <div class="d-flex align-items-center gap-3">
+                                    <img src="@(string.IsNullOrWhiteSpace(dish.ImageUrl)
+                                                   ? fallbackImage
+                                                   : Url.Content(dish.ImageUrl.Trim()))"
+                                         alt=""
+                                         width="56"
+                                         height="56"
+                                         loading="lazy"
+                                         class="rounded border object-fit-cover flex-shrink-0"
+                                         data-dish-image
+                                         data-fallback="@fallbackImage" />
+
+                                    <div>
+                                                   <a class="fw-semibold"
+   href="@Url.Action("Edit", "Dishes",
+       new { area = "Admin", id = dish.Id })">
+    @dish.Name
+</a>
+                                        <div class="small text-body-secondary">@dish.Slug</div>
+                                                <a class="btn btn-outline-primary btn-sm mt-1"
+   href="@Url.Action("Variants", "Dishes",
+       new { area = "Admin", id = dish.Id })">
+    Quản lý khẩu phần
+</a>
+                                <a class="btn btn-outline-secondary btn-sm mt-1"
+   href="@Url.Action("UploadImage", "Dishes",
+       new { area = "Admin", id = dish.Id })">
+    Tải / đổi ảnh
+</a>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>@dish.CategoryName</td>
+                            <td class="text-end">@dish.VariantCount</td>
+                            <td class="text-end text-nowrap">
+                                @if (dish.LowestAvailablePrice is decimal price)
+                                {
+                                    <span>Từ @price.ToString("N0", culture) ₫</span>
+                                }
+                                else
+                                {
+                                    <span class="text-body-secondary">
+                                        @(dish.VariantCount == 0
+                                            ? "Chưa có khẩu phần"
+                                            : "Hết khẩu phần đang bán")
+                                    </span>
+                                }
+                            </td>
+                            <td>
+                                @if (dish.IsActive)
+                                {
+                                    <span class="badge text-bg-success">Đang bật</span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-secondary">Đã tắt</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (Model.TotalPages > 1)
+        {
+            <div class="card-footer d-flex align-items-center gap-2">
+                @if (Model.Page > 1)
+                {
+                    <a class="btn btn-outline-secondary btn-sm"
+                       href="@Url.Action("Index", "Dishes",
+                           new { area = "Admin", page = Model.Page - 1 })">
+                        Trang trước
+                    </a>
+                }
+
+                <span>Trang @Model.Page / @Model.TotalPages</span>
+
+                @if (Model.Page < Model.TotalPages)
+                {
+                    <a class="btn btn-outline-secondary btn-sm"
+                       href="@Url.Action("Index", "Dishes",
+                           new { area = "Admin", page = Model.Page + 1 })">
+                        Trang sau
+                    </a>
+                }
+            </div>
+        }
+    }
+</div>
+@section Scripts {
+    <script src="@Url.Content("~/assets/js/dorafood-dish-details.js")"
+            defer></script>
+}

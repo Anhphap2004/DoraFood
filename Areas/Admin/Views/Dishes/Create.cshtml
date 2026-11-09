@@ -1,0 +1,83 @@
+﻿@model DoraFood.Areas.Admin.ViewModels.DishInput
+
+@{
+    ViewData["Title"] = "Thêm món ăn";
+}
+
+<div class="card">
+    <form asp-area="Admin"
+          asp-controller="Dishes"
+          asp-action="Create"
+          method="post">
+
+        <div class="card-body">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label">Tên món</label>
+                <input asp-for="Name" class="form-control"
+                       maxlength="200" required />
+                <span asp-validation-for="Name" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Slug" class="form-label">Slug</label>
+                <input asp-for="Slug" class="form-control"
+                       maxlength="200" placeholder="ga-nuong-muoi-ot" required />
+                <span asp-validation-for="Slug" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="CategoryId" class="form-label">Danh mục</label>
+                <select asp-for="CategoryId"
+                        asp-items="Model.CategoryOptions"
+                        class="form-select" required>
+                    <option value="">Chọn danh mục</option>
+                </select>
+                <span asp-validation-for="CategoryId" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ShortDescription" class="form-label">
+                    Mô tả ngắn
+                </label>
+                <textarea asp-for="ShortDescription" class="form-control"
+                          rows="3" maxlength="500"></textarea>
+                <span asp-validation-for="ShortDescription"
+                      class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="AllergenNote" class="form-label">
+                    Lưu ý dị ứng
+                </label>
+                <textarea asp-for="AllergenNote" class="form-control"
+                          rows="2" maxlength="500"></textarea>
+                <span asp-validation-for="AllergenNote"
+                      class="text-danger small"></span>
+            </div>
+
+            <div class="form-check mb-2">
+                <input asp-for="IsFeatured" class="form-check-input" />
+                <label asp-for="IsFeatured" class="form-check-label">
+                    Món nổi bật
+                </label>
+            </div>
+
+            <div class="form-check">
+                <input asp-for="IsActive" class="form-check-input" />
+                <label asp-for="IsActive" class="form-check-label">
+                    Bật món
+                </label>
+            </div>
+        </div>
+
+        <div class="card-footer d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Lưu món ăn</button>
+            <a class="btn btn-outline-secondary"
+               href="@Url.Action("Index", "Dishes", new { area = "Admin" })">
+                Về danh sách
+            </a>
+        </div>
+    </form>
+</div>

@@ -4,6 +4,7 @@
     var culture = CultureInfo.GetCultureInfo("vi-VN");
     var fallbackImage = Url.Content("~/assets/img/dish-placeholder.svg");
     var menuUrl = Url.RouteUrl("DoraFoodMenu");
+    var reviewReturnUrl = (Url.RouteUrl("DoraFoodDishDetails", new { id = Model.Id }) ?? "/thuc-don") + "#dish-reviews";
 }
 @section Styles {
     <link rel="stylesheet" href="~/assets/css/dorafood-dish-details.css" asp-append-version="true" />
@@ -59,6 +60,41 @@
                         </ul>
                     }
                 </section>
+                <section id="dish-buy" class="df-dish-panel mt-4" aria-labelledby="dish-buy-title">
+                    <h2 id="dish-buy-title">Chọn món mua mang về</h2>
+                    @if (User.Identity?.IsAuthenticated != true)
+                    {
+                        <p>Vui lòng đăng nhập để thêm món vào giỏ hàng.</p>
+                        <a href="@Url.Action("Login", "Account", new { returnUrl = (Url.RouteUrl("DoraFoodDishDetails", new { id = Model.Id }) ?? "/thuc-don") + "#dish-buy" })"
+                           class="btn btn-danger rounded-pill px-4">Đăng nhập để thêm vào giỏ</a>
+                    }
+                    else if (Model.Variants.Count == 0)
+                    {
+                        <p class="text-muted mb-0">Món hiện tạm ngừng bán.</p>
+                    }
+                    else
+                    {
+                        <form action="@Url.RouteUrl("DoraFoodAddToCart")" method="post">
+                            @Html.AntiForgeryToken()
+                            <div class="mb-3">
+                                <label for="cart-variant" class="form-label fw-semibold">Khẩu phần</label>
+                                <select id="cart-variant" name="VariantId" class="form-select" required>
+                                    @foreach (var variant in Model.Variants)
+                                    {
+                                        <option value="@variant.Id">@variant.Name · @variant.SellingUnit · @variant.Price.ToString("N0", culture) ₫</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="cart-add-quantity" class="form-label fw-semibold">Số lượng</label>
+                                <input type="number" id="cart-add-quantity" name="Quantity" class="form-control"
+                                       min="1" max="99" step="1" value="1" required />
+                            </div>
+                            <button type="submit" class="btn btn-danger rounded-pill px-4">Thêm vào giỏ hàng</button>
+                        </form>
+                    }
+                    <a href="@Url.RouteUrl("DoraFoodCart")" class="d-inline-block mt-3 text-danger">Xem giỏ hàng →</a>
+                </section>
                 @if (!string.IsNullOrWhiteSpace(Model.AllergenNote))
                 {
                     <aside class="df-dish-allergen mt-4" aria-label="Lưu ý dị ứng">
@@ -77,6 +113,99 @@
             else
             {
                 <p class="mb-0">@(Model.ShortDescription ?? "Thông tin chi tiết món ăn đang được cập nhật.")</p>
+            }
+        </section>
+        <section id="dish-reviews" class="df-dish-panel mt-4" aria-labelledby="dish-reviews-title">
+            <div class="df-review-heading">
+                <div>
+                    <h2 id="dish-reviews-title">Đánh giá từ thực khách</h2>
+                    @if (Model.ReviewCount > 0)
+                    {
+                        <p><strong class="df-review-average">@Model.AverageRating.ToString("0.0", culture)/5</strong>
+                            <span class="df-review-stars" aria-hidden="true">★</span> · @Model.ReviewCount đánh giá</p>
+                    }
+                    else
+                    {
+                        <p class="text-muted">Chưa có đánh giá. Hãy chia sẻ cảm nhận đầu tiên về món ăn này.</p>
+                    }
+                </div>
+            </div>
+            @if (TempData["DishReviewSuccess"] is string success)
+            {
+                <div class="alert alert-success" role="status">@success</div>
+            }
+            @if (TempData["DishReviewError"] is string error)
+            {
+                <div class="alert alert-warning" role="alert">@error</div>
+            }
+            @if (Model.CanReview)
+            {
+                <form method="post" action="@Url.RouteUrl("DoraFoodSaveDishReview", new { id = Model.Id })" class="df-review-form">
+                    @Html.AntiForgeryToken()
+                    <h3>@(Model.HasOwnReview ? "Đánh giá của bạn" : "Viết đánh giá")</h3>
+                    <p class="small text-muted">Mỗi tài khoản có một đánh giá cho món này. Bạn có thể cập nhật; đánh giá hiển thị ngay sau khi lưu.</p>
+                    <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+                    <fieldset class="mb-3">
+                        <legend class="fs-6 fw-semibold">Mức độ hài lòng <span class="text-danger">*</span></legend>
+                        <div class="df-review-rating-options">
+                            @for (var star = 1; star <= 5; star++)
+                            {
+                                <label for="dish-rating-@star">
+                                    <input asp-for="ReviewInput.Rating" type="radio" id="dish-rating-@star" value="@star" required />
+                                    <span>@star <span class="df-review-stars" aria-hidden="true">★</span><span class="visually-hidden"> sao</span></span>
+                                </label>
+                            }
+                        </div>
+                        <span asp-validation-for="ReviewInput.Rating" class="text-danger small"></span>
+                    </fieldset>
+                    <label asp-for="ReviewInput.Body" class="form-label fw-semibold">Nhận xét của bạn</label>
+                    <textarea asp-for="ReviewInput.Body" class="form-control" rows="4" maxlength="2000"
+                              placeholder="Bạn thấy hương vị và khẩu phần thế nào?"></textarea>
+                    <span asp-validation-for="ReviewInput.Body" class="text-danger small"></span>
+                    <div class="form-text">Không bắt buộc. Tối đa 2000 ký tự.</div>
+                    <button type="submit" class="btn btn-danger rounded-pill px-4 mt-3">@(Model.HasOwnReview ? "Cập nhật đánh giá" : "Gửi đánh giá")</button>
+                </form>
+            }
+            else
+            {
+                <div class="df-review-form">
+                    <p>Đăng nhập bằng tài khoản đang hoạt động để đánh giá món ăn.</p>
+                    <a href="@Url.Action("Login", "Account", new { returnUrl = reviewReturnUrl })" class="btn btn-outline-danger rounded-pill px-4">Đăng nhập để đánh giá</a>
+                </div>
+            }
+            <div class="df-review-list mt-4">
+                @foreach (var review in Model.Reviews)
+                {
+                    <article class="df-review-item">
+                        <div class="d-flex flex-wrap justify-content-between gap-2">
+                            <strong class="text-break">@review.UserName</strong>
+                            <time datetime="@review.CreatedAtUtc.ToString("yyyy-MM-ddTHH:mm:ss'Z'", CultureInfo.InvariantCulture)">
+                                @review.CreatedAtUtc.AddHours(7).ToString("dd/MM/yyyy HH:mm", culture) · giờ Việt Nam
+                            </time>
+                        </div>
+                        <p class="df-review-stars my-2" aria-label="@review.Rating trên 5 sao">
+                            <span aria-hidden="true">@(new string('★', review.Rating))@(new string('☆', 5 - review.Rating))</span>
+                        </p>
+                        @if (!string.IsNullOrWhiteSpace(review.Body))
+                        {
+                            <p class="df-review-body mb-0">@review.Body</p>
+                        }
+                    </article>
+                }
+            </div>
+            @if (Model.TotalReviewPages > 1)
+            {
+                <nav class="d-flex align-items-center flex-wrap gap-3 mt-4" aria-label="Phân trang đánh giá">
+                    @if (Model.ReviewPage > 1)
+                    {
+                        <a href="@(Url.RouteUrl("DoraFoodDishDetails", new { id = Model.Id, reviewPage = Model.ReviewPage - 1 }) + "#dish-reviews")" class="btn btn-outline-secondary btn-sm">← Trước</a>
+                    }
+                    <span>Trang @Model.ReviewPage / @Model.TotalReviewPages</span>
+                    @if (Model.ReviewPage < Model.TotalReviewPages)
+                    {
+                        <a href="@(Url.RouteUrl("DoraFoodDishDetails", new { id = Model.Id, reviewPage = Model.ReviewPage + 1 }) + "#dish-reviews")" class="btn btn-outline-secondary btn-sm">Tiếp →</a>
+                    }
+                </nav>
             }
         </section>
     </div>

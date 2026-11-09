@@ -1,0 +1,64 @@
+﻿@model DoraFood.Areas.Admin.ViewModels.DishVariantInput
+
+@{
+    ViewData["Title"] = "Thêm khẩu phần";
+}
+
+<div class="card">
+    <div class="card-header">
+        <strong>@Model.DishName</strong>
+    </div>
+
+    <form asp-area="Admin"
+          asp-controller="Dishes"
+          asp-action="AddVariant"
+          asp-route-id="@Model.DishId"
+          method="post">
+        <div class="card-body">
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="mb-3">
+                <label asp-for="Sku" class="form-label">Mã khẩu phần (SKU)</label>
+                <input asp-for="Sku" class="form-control"
+                       placeholder="GA-NUONG-NUA" maxlength="60" required />
+                <span asp-validation-for="Sku" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Name" class="form-label">Tên khẩu phần</label>
+                <input asp-for="Name" class="form-control"
+                       placeholder="Nửa con" maxlength="100" required />
+                <span asp-validation-for="Name" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="SellingUnit" class="form-label">Đơn vị bán</label>
+                <input asp-for="SellingUnit" class="form-control"
+                       placeholder="Phần" maxlength="30" required />
+                <span asp-validation-for="SellingUnit" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Price" class="form-label">Giá bán (₫)</label>
+                <input asp-for="Price" type="number" min="1" step="1"
+                       class="form-control" placeholder="180000" required />
+                <span asp-validation-for="Price" class="text-danger small"></span>
+            </div>
+
+            <div class="form-check">
+                <input asp-for="IsAvailable" class="form-check-input" />
+                <label asp-for="IsAvailable" class="form-check-label">
+                    Đang bán khẩu phần này
+                </label>
+            </div>
+        </div>
+
+        <div class="card-footer d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Lưu khẩu phần</button>
+            <a class="btn btn-outline-secondary"
+               href="@Url.Action("Index", "Dishes", new { area = "Admin" })">
+                Về danh sách
+            </a>
+        </div>
+    </form>
+</div>

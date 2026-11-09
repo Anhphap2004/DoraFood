@@ -1,0 +1,171 @@
+﻿@using System.Globalization
+@model DoraFood.ViewModels.CheckoutViewModel
+
+@{
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+}
+
+<div class="container py-5">
+    <a href="@Url.RouteUrl("DoraFoodCart")"
+       class="text-decoration-none">
+        ← Về giỏ hàng
+    </a>
+
+    <h1 class="h3 mt-3 mb-4">Thanh toán đơn giao hàng</h1>
+
+    @if (!string.IsNullOrWhiteSpace(Model.ConfirmationToken))
+    {
+        <div class="card border-success mb-4">
+            <div class="card-body">
+                <h2 class="h5">Xác nhận đơn giao hàng</h2>
+
+                <p class="mb-1"><strong>Người nhận</strong> @Model.Input.ReceiverName</p>
+                <p class="mb-1"><strong>Điện thoại</strong> @Model.Input.PhoneNumber</p>
+                <p class="mb-1"><strong>Địa chỉ giao</strong> @Model.Input.DeliveryAddress</p>
+
+                @if (!string.IsNullOrWhiteSpace(Model.Input.Note))
+                {
+                    <p class="mb-1"><strong>Ghi chú</strong> @Model.Input.Note</p>
+                }
+
+                <p class="mb-3">
+                    <strong>Tiền mặt khi nhận hàng</strong>
+                    @Model.Cart.Subtotal.ToString("N0", culture) ₫
+                </p>
+
+                <form asp-route="DoraFoodPlaceCashOrder" method="post">
+                    <input type="hidden"
+                           name="confirmationToken"
+                           value="@Model.ConfirmationToken" />
+
+                    <button type="submit" class="btn btn-success rounded-pill px-4">
+                        Xác nhận đặt đơn
+                    </button>
+                </form>
+
+                <p class="small text-muted mt-3 mb-0">
+                    Nếu anh sửa thông tin ở form bên dưới, bấm Kiểm tra thông tin
+                    lại trước khi xác nhận.
+                </p>
+            </div>
+        </div>
+    }
+
+    <div class="row g-4">
+        <div class="col-lg-7">
+            <form asp-route="DoraFoodReviewCheckout"
+                  method="post"
+                  class="card shadow-sm">
+
+                <div class="card-body p-4">
+                    <h2 class="h5 mb-3">Thông tin giao hàng</h2>
+
+                    <div asp-validation-summary="ModelOnly"
+                         class="text-danger"></div>
+
+                    <div class="mb-3">
+                        <label asp-for="Input.ReceiverName"
+                               class="form-label">Tên người nhận</label>
+                        <input asp-for="Input.ReceiverName"
+                               class="form-control"
+                               autocomplete="name"
+                               maxlength="150"
+                               required />
+                        <span asp-validation-for="Input.ReceiverName"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Input.PhoneNumber"
+                               class="form-label">Số điện thoại</label>
+                        <input asp-for="Input.PhoneNumber"
+                               type="tel"
+                               class="form-control"
+                               autocomplete="tel"
+                               maxlength="20"
+                               required />
+                        <span asp-validation-for="Input.PhoneNumber"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Input.DeliveryAddress"
+                               class="form-label">Địa chỉ giao hàng</label>
+                        <textarea asp-for="Input.DeliveryAddress"
+                                  class="form-control"
+                                  autocomplete="street-address"
+                                  rows="2"
+                                  maxlength="500"
+                                  required></textarea>
+                        <span asp-validation-for="Input.DeliveryAddress"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="Input.Note"
+                               class="form-label">Ghi chú cho quán</label>
+                        <textarea asp-for="Input.Note"
+                                  class="form-control"
+                                  rows="2"
+                                  maxlength="1000"
+                                  placeholder="Ví dụ: Gọi trước khi đến"></textarea>
+                        <span asp-validation-for="Input.Note"
+                              class="text-danger"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <h3 class="h5 mb-2">Phương thức thanh toán</h3>
+
+                        <input type="hidden" name="Input.PaymentMethod" value="CASH" />
+
+                        <div class="alert alert-light border mb-0">
+                            <strong>Tiền mặt khi nhận hàng</strong>
+                            <p class="mb-0 mt-1">
+                                Quý khách thanh toán cho nhân viên giao hàng khi nhận món.
+                            </p>
+                        </div>
+                    </div>
+
+                    <button type="submit"
+                            class="btn btn-danger rounded-pill px-4">
+                        Kiểm tra thông tin
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <div class="col-lg-5">
+            <div class="card shadow-sm">
+                <div class="card-body p-4">
+                    <h2 class="h5 mb-3">Món đã chọn</h2>
+
+                    <ul class="list-group list-group-flush">
+                        @foreach (var item in Model.Cart.Items)
+                        {
+                            <li class="list-group-item px-0">
+                                <div class="d-flex flex-wrap justify-content-between gap-2">
+                                    <div>
+                                        <strong>@item.DishName</strong>
+                                        <div class="text-muted">
+                                            @item.VariantName × @item.Quantity
+                                        </div>
+                                    </div>
+                                    <strong>
+                                        @(item.LineTotal.GetValueOrDefault().ToString("N0", culture)) ₫
+                                    </strong>
+                                </div>
+                            </li>
+                        }
+                    </ul>
+
+                    <div class="d-flex justify-content-between border-top pt-3 mt-3">
+                        <span>Tạm tính tiền món</span>
+                        <strong class="text-danger">
+                            @Model.Cart.Subtotal.ToString("N0", culture) ₫
+                        </strong>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

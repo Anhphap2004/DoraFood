@@ -1,24 +1,32 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using DoraFood.Data;
 using DoraFood.Models;
 using DoraFood.ViewModels;
 using Ganss.Xss;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace DoraFood.Controllers;
 
 public class MenuController : Controller
 {
     private readonly DoraFoodContext _context;
+    private readonly ILogger<MenuController> _logger;
 
-    public MenuController(DoraFoodContext context)
+    public MenuController(DoraFoodContext context, ILogger<MenuController> logger)
     {
         _context = context;
+        _logger = logger;
     }
 
     [HttpGet("/thuc-don", Name = "DoraFoodMenu")]
@@ -46,10 +54,7 @@ public class MenuController : Controller
             .OrderBy(c => c.SortOrder).ThenBy(c => c.Id)
             .Select(c => new MenuCategoryViewModel
             {
-                Id = c.Id,
-                ParentId = c.ParentId,
-                Name = c.Name,
-                SortOrder = c.SortOrder
+                Id = c.Id, ParentId = c.ParentId, Name = c.Name, SortOrder = c.SortOrder
             })
             .ToListAsync(cancellationToken);
 
@@ -128,11 +133,8 @@ public class MenuController : Controller
         var dishes = await ordered.Skip((page - 1) * pageSize).Take(pageSize)
             .Select(d => new MenuDishViewModel
             {
-                Id = d.Id,
-                Name = d.Name,
-                CategoryName = d.Category.Name,
-                Description = d.ShortDescription,
-                AllergenNote = d.AllergenNote,
+                Id = d.Id, Name = d.Name, CategoryName = d.Category.Name,
+                Description = d.ShortDescription, AllergenNote = d.AllergenNote,
                 IsFeatured = d.IsFeatured
             }).ToListAsync(cancellationToken);
 
@@ -155,10 +157,7 @@ public class MenuController : Controller
                     v.DishId,
                     Variant = new MenuVariantViewModel
                     {
-                        Id = v.Id,
-                        Name = v.Name,
-                        SellingUnit = v.SellingUnit,
-                        Price = v.Price
+                        Id = v.Id, Name = v.Name, SellingUnit = v.SellingUnit, Price = v.Price
                     }
                 }).ToListAsync(cancellationToken);
             var variantsByDish = variants.ToLookup(v => v.DishId, v => v.Variant);
@@ -180,42 +179,116 @@ public class MenuController : Controller
 
         return View(new MenuPageViewModel
         {
-            Search = q,
-            CategoryId = categoryId,
-            Sort = sort,
-            Page = page,
-            PageSize = pageSize,
-            TotalItems = totalItems,
-            TotalPages = totalPages,
+            Search = q, CategoryId = categoryId, Sort = sort, Page = page,
+            PageSize = pageSize, TotalItems = totalItems, TotalPages = totalPages,
             SelectedCategoryName = categories.FirstOrDefault(c => c.Id == categoryId)?.Name
                 ?? "Tất cả món ăn",
-            Categories = navigationCategories,
-            Dishes = dishes
+            Categories = navigationCategories, Dishes = dishes
         });
     }
 
-    // GET /thuc-don/123 — dùng Id để không phụ thuộc việc đổi tên/slug món.
     [HttpGet("/thuc-don/{id:long}", Name = "DoraFoodDishDetails")]
     [HttpGet("/Menu/Details/{id:long}")]
-    public async Task<IActionResult> Details(long id, CancellationToken cancellationToken = default)
+    public async Task<IActionResult> Details(
+        long id, int reviewPage = 1, CancellationToken cancellationToken = default)
     {
+        if (!ModelState.IsValid) return BadRequest("Số trang đánh giá không hợp lệ.");
         if (id <= 0) return NotFound("Không tìm thấy món ăn.");
 
+        var userId = await GetReviewUserIdAsync(cancellationToken);
+        var model = await LoadDishDetailsAsync(id, reviewPage, userId, cancellationToken);
+        if (model == null) return NotFound("Không tìm thấy món ăn.");
+        return View(model);
+    }
+
+    [Authorize]
+    [HttpPost("/thuc-don/{id:long}/danh-gia", Name = "DoraFoodSaveDishReview")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SaveReview(
+        long id, [Bind(Prefix = "ReviewInput")] DishReviewInput input,
+        CancellationToken cancellationToken = default)
+    {
+        if (id <= 0) return NotFound("Không tìm thấy món ăn.");
+        var userId = await GetReviewUserIdAsync(cancellationToken);
+        if (!userId.HasValue)
+        {
+            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            return Challenge();
+        }
+
+        var model = await LoadDishDetailsAsync(id, 1, userId, cancellationToken);
+        if (model == null) return NotFound("Không tìm thấy món ăn.");
+        model.ReviewInput = input;
+        if (!ModelState.IsValid) return View("Details", model);
+
+        // Không nhận UserId, Status hoặc Id đánh giá từ trình duyệt.
+        var review = await _context.Set<DishReview>().AsTracking().SingleOrDefaultAsync(
+            r => r.DishId == id && r.UserId == userId.Value, cancellationToken);
+        var isNew = review == null;
+        if (review == null)
+        {
+            review = new DishReview
+            {
+                DishId = id, UserId = userId.Value, CreatedAtUtc = DateTime.UtcNow
+            };
+            _context.Set<DishReview>().Add(review);
+        }
+
+        review.Rating = input.Rating!.Value;
+        review.Body = string.IsNullOrWhiteSpace(input.Body) ? null : input.Body.Trim();
+        review.Status = "APPROVED"; // Hiển thị ngay, không qua bước duyệt.
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateException ex) when (
+            ex.InnerException is SqlException sql && (sql.Number == 2601 || sql.Number == 2627))
+        {
+            // Hai tab gửi lần đầu cùng lúc: unique (DishId, UserId) ngăn trùng.
+            TempData["DishReviewError"] =
+                "Tài khoản đã có đánh giá cho món này. Vui lòng kiểm tra rồi sửa đánh giá hiện có.";
+            return Redirect(Url.RouteUrl("DoraFoodDishDetails", new { id }) + "#dish-reviews");
+        }
+        catch (DbUpdateException ex)
+        {
+            _logger.LogError(ex, "Không lưu được đánh giá món {DishId} của tài khoản {UserId}", id, userId);
+            ModelState.AddModelError(string.Empty,
+                "Chưa lưu được đánh giá. Vui lòng thử lại.");
+            return View("Details", model);
+        }
+
+        TempData["DishReviewSuccess"] = isNew
+            ? "Đánh giá của bạn đã hiển thị." : "Đã cập nhật đánh giá của bạn.";
+        return Redirect(Url.RouteUrl("DoraFoodDishDetails", new { id }) + "#dish-reviews");
+    }
+
+    private async Task<long?> GetReviewUserIdAsync(CancellationToken cancellationToken)
+    {
+        if (User.Identity?.IsAuthenticated != true
+            || !long.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id)
+            || id <= 0
+            || !Guid.TryParse(User.FindFirstValue("SecurityStamp"), out var stamp))
+            return null;
+
+        var active = await _context.Set<DoraFood.Models.User>().AsNoTracking()
+            .AnyAsync(u => u.Id == id && u.IsActive && u.SecurityStamp == stamp, cancellationToken);
+        return active ? id : null;
+    }
+
+    private async Task<MenuDishDetailsViewModel?> LoadDishDetailsAsync(
+        long id, int reviewPage, long? userId, CancellationToken cancellationToken)
+    {
         var dish = await _context.Set<Dish>().AsNoTracking()
             .Where(d => d.Id == id && d.IsActive)
             .Select(d => new MenuDishDetailsViewModel
             {
-                Id = d.Id,
-                CategoryId = d.CategoryId,
-                Name = d.Name,
-                CategoryName = d.Category.Name,
-                ShortDescription = d.ShortDescription,
-                DescriptionHtml = d.DescriptionHtml,
-                AllergenNote = d.AllergenNote,
+                Id = d.Id, CategoryId = d.CategoryId, Name = d.Name,
+                CategoryName = d.Category.Name, ShortDescription = d.ShortDescription,
+                DescriptionHtml = d.DescriptionHtml, AllergenNote = d.AllergenNote,
                 IsFeatured = d.IsFeatured
             }).SingleOrDefaultAsync(cancellationToken);
 
-        if (dish == null) return NotFound("Không tìm thấy món ăn.");
+        if (dish == null) return null;
 
         // Cùng quy tắc với Index: danh mục và toàn bộ danh mục cha phải hoạt động.
         var categories = await _context.Set<DishCategory>().AsNoTracking()
@@ -227,7 +300,7 @@ public class MenuController : Controller
         {
             if (!visited.Add(categoryId.Value)
                 || !categories.TryGetValue(categoryId.Value, out var category))
-                return NotFound("Không tìm thấy món ăn.");
+                return null;
             categoryId = category.ParentId;
         }
 
@@ -236,10 +309,7 @@ public class MenuController : Controller
             .OrderBy(v => v.Price).ThenBy(v => v.Id)
             .Select(v => new MenuVariantViewModel
             {
-                Id = v.Id,
-                Name = v.Name,
-                SellingUnit = v.SellingUnit,
-                Price = v.Price
+                Id = v.Id, Name = v.Name, SellingUnit = v.SellingUnit, Price = v.Price
             }).ToListAsync(cancellationToken);
 
         dish.Images = await _context.Set<DishImage>().AsNoTracking()
@@ -247,8 +317,7 @@ public class MenuController : Controller
             .OrderByDescending(i => i.IsPrimary).ThenBy(i => i.SortOrder).ThenBy(i => i.Id)
             .Select(i => new MenuDishImageViewModel
             {
-                Url = i.MediaFile.Url,
-                AltText = i.MediaFile.AltText
+                Url = i.MediaFile.Url, AltText = i.MediaFile.AltText
             }).ToListAsync(cancellationToken);
         foreach (var image in dish.Images) image.Url = NormalizeImageUrl(image.Url);
         if (dish.Images.Count == 0)
@@ -264,8 +333,41 @@ public class MenuController : Controller
         sanitizer.AllowedAttributes.Clear();
         dish.DescriptionHtml = sanitizer.Sanitize(dish.DescriptionHtml ?? string.Empty);
 
+        await LoadDishReviewsAsync(dish, reviewPage, userId, cancellationToken);
         ViewData["Title"] = dish.Name;
-        return View(dish);
+        return dish;
+    }
+
+    private async Task LoadDishReviewsAsync(
+        MenuDishDetailsViewModel model, int page, long? userId,
+        CancellationToken cancellationToken)
+    {
+        const int pageSize = 5;
+        var query = _context.Set<DishReview>().AsNoTracking()
+            .Where(r => r.DishId == model.Id && r.Status == "APPROVED" && r.User.IsActive);
+        var summary = await query.GroupBy(r => r.DishId)
+            .Select(g => new { Count = g.Count(), Average = g.Average(r => (double)r.Rating) })
+            .SingleOrDefaultAsync(cancellationToken);
+        model.ReviewCount = summary?.Count ?? 0;
+        model.AverageRating = summary?.Average ?? 0;
+        model.TotalReviewPages = (int)Math.Ceiling(model.ReviewCount / (double)pageSize);
+        model.ReviewPage = Math.Clamp(page, 1, Math.Max(1, model.TotalReviewPages));
+        model.Reviews = await query.OrderByDescending(r => r.CreatedAtUtc).ThenByDescending(r => r.Id)
+            .Skip((model.ReviewPage - 1) * pageSize).Take(pageSize)
+            .Select(r => new DishReviewDisplayViewModel
+            {
+                UserName = r.User.UserName, Rating = r.Rating,
+                Body = r.Body, CreatedAtUtc = r.CreatedAtUtc
+            }).ToListAsync(cancellationToken);
+
+        model.CanReview = userId.HasValue;
+        if (!userId.HasValue) return;
+        var ownReview = await _context.Set<DishReview>().AsNoTracking()
+            .Where(r => r.DishId == model.Id && r.UserId == userId.Value)
+            .Select(r => new DishReviewInput { Rating = r.Rating, Body = r.Body })
+            .SingleOrDefaultAsync(cancellationToken);
+        model.HasOwnReview = ownReview != null;
+        model.ReviewInput = ownReview ?? new DishReviewInput();
     }
 
     private static string NormalizeImageUrl(string? value)

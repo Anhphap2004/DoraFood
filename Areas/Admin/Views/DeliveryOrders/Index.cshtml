@@ -1,0 +1,111 @@
+﻿@using System.Globalization
+@model DoraFood.Areas.Admin.ViewModels.DeliveryOrderListViewModel
+
+@{
+    ViewData["Title"] = "Đơn giao hàng";
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+}
+
+<div class="card">
+    <div class="card-header">
+        <strong>Đơn giao hàng thu tiền mặt</strong>
+        <span class="text-body-secondary ms-2">@Model.TotalOrders đơn</span>
+    </div>
+
+    @if (Model.Orders.Count == 0)
+    {
+        <div class="card-body text-body-secondary">
+            Chưa có đơn giao hàng thu tiền mặt.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th scope="col">Mã đơn</th>
+                        <th scope="col">Người nhận</th>
+                        <th scope="col">Địa chỉ giao</th>
+                        <th scope="col">Giờ đặt</th>
+                        <th scope="col">Trạng thái</th>
+                        <th scope="col" class="text-end">Chờ thu</th>
+                        <th scope="col" class="text-end">Đã thu</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var order in Model.Orders)
+                    {
+                        var statusLabel = order.Status switch
+                        {
+                            "OPEN" => "Đơn mới",
+                            "IN_PROGRESS" => "Đang xử lý",
+                            "COMPLETED" => "Hoàn tất",
+                            "CANCELLED" => "Đã hủy",
+                            _ => order.Status
+                        };
+
+                        <tr>
+                            <td class="text-break">
+                                <a class="fw-semibold"
+                                   href="@Url.Action("Details", "DeliveryOrders",
+                                       new { area = "Admin", code = order.Code, page = Model.Page })">
+                                    @order.Code
+                                </a>
+                            </td>
+                            <td>
+                                @order.GuestName
+                                <div class="small text-body-secondary">
+                                    @order.GuestPhone
+                                </div>
+                            </td>
+                            <td>@order.DeliveryAddress</td>
+                            <td class="text-nowrap">
+                                @order.OpenedAtUtc.AddHours(7).ToString("dd/MM/yyyy HH:mm")
+                            </td>
+                            <td>@statusLabel</td>
+                            <td class="text-end text-nowrap">
+                                @if (order.Status == "CANCELLED")
+                                {
+                                    <span>—</span>
+                                }
+                                else
+                                {
+                                    <span>@order.PendingAmount.ToString("N0", culture) ₫</span>
+                                }
+                            </td>
+                            <td class="text-end text-nowrap">
+                                @order.ReceivedAmount.ToString("N0", culture) ₫
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        @if (Model.TotalPages > 1)
+        {
+            <div class="card-footer d-flex align-items-center gap-2">
+                @if (Model.Page > 1)
+                {
+                    <a class="btn btn-outline-secondary btn-sm"
+                       href="@Url.Action("Index", "DeliveryOrders",
+                           new { area = "Admin", page = Model.Page - 1 })">
+                        Trang trước
+                    </a>
+                }
+
+                <span>Trang @Model.Page / @Model.TotalPages</span>
+
+                @if (Model.Page < Model.TotalPages)
+                {
+                    <a class="btn btn-outline-secondary btn-sm"
+                       href="@Url.Action("Index", "DeliveryOrders",
+                           new { area = "Admin", page = Model.Page + 1 })">
+                        Trang sau
+                    </a>
+                }
+            </div>
+        }
+    }
+</div>

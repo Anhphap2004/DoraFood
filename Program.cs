@@ -55,6 +55,7 @@ builder.Services
 builder.Services.AddAuthorization();
 // Tự động hủy yêu cầu đặt bàn quá hạn.
 builder.Services.AddHostedService<BookingExpiryService>();
+builder.Services.AddSingleton<DoraFood.Services.CartStore>();
 var app = builder.Build();
 
 // Xử lý lỗi ngoài môi trường Development.
@@ -65,6 +66,7 @@ if (!app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseStaticFiles();
 app.UseRouting();
 
 // Đọc cookie và xác định người dùng hiện tại.
@@ -75,9 +77,13 @@ app.UseAuthorization();
 
 app.MapStaticAssets();
 
+app.MapAreaControllerRoute(
+    name: "admin",
+    areaName: "Admin",
+    pattern: "Admin/{controller=Dashboard}/{action=Index}/{id?}");
+
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
-
 app.Run();
