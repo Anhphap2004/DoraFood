@@ -1,0 +1,71 @@
+﻿@model DoraFood.Areas.Admin.ViewModels.AboutPageInput
+
+@{
+    ViewData["Title"] = "Quản lý trang Giới thiệu";
+}
+
+@if (TempData["AboutPageSuccess"] is string success)
+{
+    <div class="alert alert-success" role="status">@success</div>
+}
+
+<div class="card">
+    <form asp-area="Admin"
+          asp-controller="AboutPage"
+          asp-action="Edit"
+          method="post">
+
+        <div class="card-body">
+            <div asp-validation-summary="ModelOnly"
+                 class="text-danger mb-2"></div>
+
+            <div class="mb-3">
+                <label asp-for="Title" class="form-label">Tiêu đề</label>
+                <input asp-for="Title" class="form-control"
+                       maxlength="200" required />
+                <span asp-validation-for="Title"
+                      class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ContentHtml" class="form-label">
+                    Nội dung giới thiệu
+                </label>
+                <textarea asp-for="ContentHtml"
+                          class="form-control font-monospace"
+                          rows="14" required></textarea>
+                <div class="form-text">
+                    Ô này hiển thị mã HTML. Anh có thể dùng thẻ
+                    <code>&lt;p&gt;</code> cho đoạn văn và
+                    <code>&lt;h2&gt;</code> cho tiêu đề.
+                </div>
+                <span asp-validation-for="ContentHtml"
+                      class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="MetaDescription" class="form-label">
+                    Mô tả SEO
+                </label>
+                <textarea asp-for="MetaDescription"
+                          class="form-control"
+                          rows="2" maxlength="300"></textarea>
+                <span asp-validation-for="MetaDescription"
+                      class="text-danger small"></span>
+            </div>
+
+            <div class="form-check">
+                <input asp-for="IsPublished" class="form-check-input" />
+                <label asp-for="IsPublished" class="form-check-label">
+                    Xuất bản trang Giới thiệu
+                </label>
+            </div>
+        </div>
+
+        <div class="card-footer">
+            <button type="submit" class="btn btn-primary">
+                Lưu thay đổi
+            </button>
+        </div>
+    </form>
+</div>
