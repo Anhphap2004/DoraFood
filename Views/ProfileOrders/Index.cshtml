@@ -1,0 +1,120 @@
+﻿@using System.Globalization
+@model DoraFood.ViewModels.MyOrdersViewModel
+
+@{
+    ViewData["Title"] = "Đơn hàng của tôi";
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+}
+
+<section class="py-5 bg-light">
+    <div class="container">
+        <a asp-route="DoraFood.MyProfile" class="text-decoration-none">
+            <i class="fas fa-arrow-left me-1" aria-hidden="true"></i>
+            Tài khoản của tôi
+        </a>
+
+        <div class="my-4">
+            <h1 class="h2 fw-bold mb-1">Đơn hàng của tôi</h1>
+            <p class="text-muted mb-0">@Model.TotalOrders đơn giao hàng</p>
+        </div>
+
+        @if (Model.Orders.Count == 0)
+        {
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-5 text-center">
+                    <i class="fas fa-receipt fa-2x text-primary mb-3"
+                       aria-hidden="true"></i>
+
+                    <h2 class="h5">Bạn chưa có đơn giao hàng</h2>
+
+                    <a asp-route="DoraFoodMenu"
+                       class="btn btn-primary rounded-pill mt-2 px-4">
+                        Xem thực đơn
+                    </a>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="card border-0 shadow-sm">
+                <div class="table-responsive">
+                    <table class="table align-middle mb-0">
+                        <thead class="table-light">
+                            <tr>
+                                <th scope="col" class="ps-3">Mã đơn</th>
+                                <th scope="col" class="text-nowrap">Ngày đặt</th>
+                                <th scope="col">Trạng thái</th>
+                                <th scope="col" class="text-end text-nowrap">Tổng tiền</th>
+                                <th scope="col" class="text-end pe-3">Thao tác</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var order in Model.Orders)
+                            {
+                                <tr>
+                                    <th scope="row" class="ps-3 text-nowrap">
+                                        @order.Code
+                                    </th>
+
+                                    <td class="text-nowrap">
+                                        @(order.OpenedAtUtc.AddHours(7)
+                                            .ToString("dd/MM/yyyy HH:mm", culture))
+                                    </td>
+
+                                    <td>
+                                        <span class="badge @order.StatusBadge">
+                                            @order.StatusLabel
+                                        </span>
+                                    </td>
+
+                                    <td class="text-end text-nowrap fw-semibold">
+                                        @order.Total.ToString("N0", culture) ₫
+                                    </td>
+
+                                    <td class="text-end pe-3">
+                                        <a asp-route="DoraFood.MyOrderDetails"
+                                           asp-route-id="@order.Id"
+                                           class="btn btn-sm btn-outline-primary text-nowrap">
+                                            Xem chi tiết
+                                        </a>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                @if (Model.TotalPages > 1)
+                {
+                    <nav class="card-footer bg-white d-flex flex-wrap
+                                justify-content-between align-items-center gap-2 p-3"
+                         aria-label="Phân trang đơn hàng">
+                        <span class="text-muted">
+                            Trang @Model.PageNumber / @Model.TotalPages
+                        </span>
+
+                        <div class="d-flex gap-2">
+                            @if (Model.PageNumber > 1)
+                            {
+                                <a asp-route="DoraFood.MyOrders"
+                                   asp-route-pageNumber="@(Model.PageNumber - 1)"
+                                   class="btn btn-sm btn-outline-secondary">
+                                    Trang trước
+                                </a>
+                            }
+
+                            @if (Model.PageNumber < Model.TotalPages)
+                            {
+                                <a asp-route="DoraFood.MyOrders"
+                                   asp-route-pageNumber="@(Model.PageNumber + 1)"
+                                   class="btn btn-sm btn-outline-secondary">
+                                    Trang sau
+                                </a>
+                            }
+                        </div>
+                    </nav>
+                }
+            </div>
+        }
+    </div>
+</section>
