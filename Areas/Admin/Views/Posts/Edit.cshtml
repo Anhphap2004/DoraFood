@@ -1,0 +1,257 @@
+﻿@model DoraFood.Areas.Admin.ViewModels.PostFormInput
+
+@{
+    ViewData["Title"] = "Sửa bài viết";
+
+    var contentHtml = Html.ValueFor(m => m.ContentHtml) ?? string.Empty;
+    var editorHtml = new Ganss.Xss.HtmlSanitizer().Sanitize(contentHtml);
+}
+
+<div class="container-fluid">
+    @if (TempData["PostSuccess"] is string successMessage)
+    {
+        <div class="alert alert-success" role="status">
+            @successMessage
+        </div>
+    }
+
+    @if (TempData["PostError"] is string errorMessage)
+    {
+        <div class="alert alert-danger" role="alert">
+            @errorMessage
+        </div>
+    }
+
+    <form asp-area="Admin"
+          asp-controller="Posts"
+          asp-action="Edit"
+          asp-route-id="@Model.Id"
+          asp-antiforgery="true"
+          method="post"
+          class="card border-0 shadow-sm">
+
+        <input asp-for="Version" type="hidden" />
+
+        <div class="card-body p-4">
+            <div asp-validation-summary="ModelOnly"
+                 class="text-danger"
+                 role="alert"></div>
+
+            <div class="row g-3 mb-3">
+                <div class="col-lg-8">
+                    <label asp-for="Title" class="form-label">Tiêu đề</label>
+                    <input asp-for="Title"
+                           class="form-control"
+                           maxlength="250" />
+                    <span asp-validation-for="Title" class="text-danger"></span>
+                </div>
+
+                <div class="col-lg-4">
+                    <label asp-for="CategoryId" class="form-label">Danh mục</label>
+                    <select asp-for="CategoryId"
+                            asp-items="Model.Categories"
+                            class="form-select">
+                        <option value="">Chọn danh mục</option>
+                    </select>
+                    <span asp-validation-for="CategoryId" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Slug" class="form-label">Slug</label>
+                <input asp-for="Slug"
+                       class="form-control"
+                       maxlength="250"
+                       placeholder="Để trống để tạo lại từ tiêu đề"
+                       aria-describedby="slug-help" />
+
+                <div id="slug-help" class="form-text">
+                    Giữ slug hiện tại để giữ đường dẫn. Xóa trắng ô này nếu muốn
+                    tạo lại slug từ tiêu đề khi lưu.
+                </div>
+
+                <span asp-validation-for="Slug" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Summary" class="form-label">Tóm tắt</label>
+                <textarea asp-for="Summary"
+                          class="form-control"
+                          rows="3"
+                          maxlength="1000"></textarea>
+                <span asp-validation-for="Summary" class="text-danger"></span>
+            </div>
+
+            <div id="post-content-editor">
+                <label asp-for="ContentHtml"
+                       id="post-content-label"
+                       class="form-label">
+                    Nội dung bài viết
+                </label>
+
+                <textarea asp-for="ContentHtml"
+                          class="form-control"
+                          rows="12"
+                          data-editor-html="@editorHtml"></textarea>
+
+                <span asp-validation-for="ContentHtml"
+                      class="text-danger d-block mt-2"></span>
+            </div>
+
+            <details class="border rounded p-3 mt-3">
+                <summary class="fw-semibold">Nhập mã HTML</summary>
+
+                <label for="post-html-source" class="form-label mt-3">
+                    Dán mã HTML của bài viết
+                </label>
+
+                <textarea id="post-html-source"
+                          class="form-control font-monospace"
+                          rows="7"
+                          maxlength="100000"
+                          spellcheck="false"></textarea>
+
+                <button type="button"
+                        id="post-import-html"
+                        data-url="@Url.Action("ImportHtml", "Posts", new { area = "Admin" })"
+                        class="btn btn-sm btn-outline-primary mt-2">
+                    Đưa vào bài viết
+                </button>
+
+                <div id="post-import-status" class="small mt-2" role="status"></div>
+            </details>
+        </div>
+
+        <div class="card-footer bg-transparent d-flex flex-wrap justify-content-end gap-2">
+            <a asp-area="Admin"
+               asp-controller="Posts"
+               asp-action="Index"
+               class="btn btn-outline-secondary">
+                Về danh sách
+            </a>
+
+            <button type="submit" class="btn btn-primary">
+                Lưu thay đổi
+            </button>
+        </div>
+    </form>
+
+    <form asp-area="Admin"
+          asp-controller="Posts"
+          asp-action="UploadCover"
+          asp-route-id="@Model.Id"
+          asp-antiforgery="true"
+          method="post"
+          enctype="multipart/form-data"
+          class="card border-0 shadow-sm mt-4">
+
+        <input type="hidden" name="version" value="@Model.Version" />
+
+        <div class="card-body p-4">
+            <h2 class="h5 mb-3">Ảnh bìa bài viết</h2>
+
+            <div class="row g-4">
+                <div class="col-lg-6">
+                    <div class="form-label">Ảnh hiện tại</div>
+
+                    @if (!string.IsNullOrWhiteSpace(Model.CoverUrl))
+                    {
+                        <img src="@Url.Content(Model.CoverUrl)"
+                             alt="Ảnh bìa hiện tại"
+                             class="img-fluid rounded border"
+                             style="max-height: 240px;" />
+                    }
+                    else
+                    {
+                        <div class="rounded border bg-body-tertiary
+                                    p-4 text-center text-body-secondary">
+                            <i class="bi bi-image fs-4 d-block mb-2" aria-hidden="true"></i>
+                            Bài viết chưa có ảnh bìa.
+                        </div>
+                    }
+                </div>
+
+                <div class="col-lg-6">
+                    <label for="cover-image" class="form-label">
+                        Chọn ảnh bìa mới
+                    </label>
+
+                    <input id="cover-image"
+                           name="coverImage"
+                           type="file"
+                           accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                           class="form-control"
+                           aria-describedby="cover-help"
+                           required />
+
+                    <div id="cover-help" class="form-text">
+                        JPG hoặc PNG, tối đa 5 MB. Nếu đang sửa nội dung,
+                        anh hãy bấm <strong>Lưu thay đổi</strong> trước khi lưu ảnh.
+                    </div>
+
+                    <div id="cover-preview-panel" class="mt-3" hidden>
+                        <div class="form-label">Xem trước ảnh mới</div>
+                        <img id="cover-preview"
+                             alt="Ảnh bìa mới đang xem trước"
+                             class="img-fluid rounded border"
+                             style="max-height: 240px;" />
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-footer bg-transparent text-end">
+            <button type="submit" class="btn btn-primary">
+                Lưu ảnh bìa
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Styles {
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.9.1/summernote-lite.min.css" />
+}
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.9.1/summernote-lite.min.js"></script>
+    <script src="~/admin/js/post-editor.js" asp-append-version="true"></script>
+
+    <script>
+        (() => {
+            const input = document.getElementById("cover-image");
+            const preview = document.getElementById("cover-preview");
+            const panel = document.getElementById("cover-preview-panel");
+            const maxFileSize = 5 * 1024 * 1024;
+            let previewUrl = null;
+
+            input.addEventListener("change", () => {
+                if (previewUrl) {
+                    URL.revokeObjectURL(previewUrl);
+                    previewUrl = null;
+                }
+
+                preview.removeAttribute("src");
+                panel.hidden = true;
+                input.setCustomValidity("");
+
+                const file = input.files[0];
+
+                if (!file) {
+                    return;
+                }
+
+                if (file.size > maxFileSize) {
+                    input.setCustomValidity("Anh hãy chọn ảnh tối đa 5 MB.");
+                    input.reportValidity();
+                    return;
+                }
+
+                previewUrl = URL.createObjectURL(file);
+                preview.src = previewUrl;
+                panel.hidden = false;
+            });
+        })();
+    </script>
+}

@@ -1,0 +1,286 @@
+﻿@model DoraFood.Areas.Admin.Controllers.PostsController.IndexViewModel
+
+@{
+    ViewData["Title"] = "Quản lý bài viết";
+    var nowUtc = System.DateTime.UtcNow;
+}
+
+<div class="container-fluid">
+    @if (TempData["PostSuccess"] is string successMessage)
+    {
+        <div class="alert alert-success" role="status">
+            @successMessage
+        </div>
+    }
+
+    @if (TempData["PostError"] is string errorMessage)
+    {
+        <div class="alert alert-danger" role="alert">
+            @errorMessage
+        </div>
+    }
+
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent d-flex flex-wrap
+                    align-items-center justify-content-between gap-2 py-3">
+
+            <strong>@Model.TotalPosts bài viết</strong>
+
+            <a asp-area="Admin"
+               asp-controller="Posts"
+               asp-action="Create"
+               class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-lg me-1" aria-hidden="true"></i>
+                Tạo bài viết
+            </a>
+        </div>
+
+        <div class="card-body">
+            <form asp-area="Admin"
+                  asp-controller="Posts"
+                  asp-action="Index"
+                  method="get"
+                  class="row g-3 align-items-end">
+
+                <div class="col-lg-4">
+                    <label for="keyword" class="form-label">Tìm bài viết</label>
+                    <input id="keyword"
+                           name="keyword"
+                           value="@Model.Keyword"
+                           maxlength="250"
+                           class="form-control"
+                           placeholder="Nhập tiêu đề hoặc slug" />
+                </div>
+
+                <div class="col-sm-6 col-lg-3">
+                    <label for="categoryId" class="form-label">Danh mục</label>
+                    <select id="categoryId" name="categoryId" class="form-select">
+                        <option value="">Tất cả danh mục</option>
+
+                        @foreach (var category in Model.Categories)
+                        {
+                            var categoryLabel = category.IsActive
+                                ? category.Name
+                                : category.Name + " (đã ẩn)";
+
+                            <option value="@category.Id"
+                                    selected="@(category.Id == Model.CategoryId)">
+                                @categoryLabel
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-sm-6 col-lg-3">
+                    <label for="status" class="form-label">Trạng thái</label>
+                    <select id="status" name="status" class="form-select">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="DRAFT" selected="@(Model.Status == "DRAFT")">
+                            Bản nháp
+                        </option>
+                        <option value="PUBLISHED" selected="@(Model.Status == "PUBLISHED")">
+                            Xuất bản
+                        </option>
+                        <option value="ARCHIVED" selected="@(Model.Status == "ARCHIVED")">
+                            Lưu trữ
+                        </option>
+                    </select>
+                </div>
+
+                <div class="col-lg-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Lọc</button>
+
+                    <a asp-area="Admin"
+                       asp-controller="Posts"
+                       asp-action="Index"
+                       class="btn btn-outline-secondary text-nowrap">
+                        Xóa lọc
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        @if (Model.Posts.Count == 0)
+        {
+            <div class="card-body border-top py-5 text-center text-body-secondary">
+                Không tìm thấy bài viết phù hợp.
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col" class="ps-3">Bài viết</th>
+                            <th scope="col">Danh mục</th>
+                            <th scope="col">Tác giả</th>
+                            <th scope="col">Trạng thái</th>
+                            <th scope="col" class="text-nowrap">Ngày đăng</th>
+                            <th scope="col" class="text-end pe-3">Thao tác</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var post in Model.Posts)
+                        {
+                            var isPublished = post.Status == "PUBLISHED";
+                            var version = System.Convert.ToBase64String(post.Version);
+
+                            var (statusLabel, badgeClass) = post.Status switch
+                            {
+                                "PUBLISHED" when post.PublishedAtUtc is { } scheduled
+                                    && scheduled > nowUtc => ("Hẹn đăng", "text-bg-info"),
+                                "PUBLISHED" => ("Đã xuất bản", "text-bg-success"),
+                                "ARCHIVED" => ("Lưu trữ", "text-bg-secondary"),
+                                _ => ("Bản nháp", "text-bg-warning")
+                            };
+
+                            var publishedDate = post.PublishedAtUtc?.AddHours(7)
+                                .ToString("dd/MM/yyyy HH:mm") ?? "—";
+
+                            <tr>
+                                <td class="ps-3">
+                                    <div class="d-flex align-items-center gap-3">
+                                        @if (!string.IsNullOrWhiteSpace(post.CoverUrl))
+                                        {
+                                            <img src="@Url.Content(post.CoverUrl)"
+                                                 alt=""
+                                                 width="64"
+                                                 height="48"
+                                                 loading="lazy"
+                                                 class="rounded object-fit-cover flex-shrink-0" />
+                                        }
+                                        else
+                                        {
+                                            <span class="d-inline-flex align-items-center
+                                                         justify-content-center rounded
+                                                         bg-body-tertiary text-body-secondary
+                                                         flex-shrink-0"
+                                                  style="width: 64px; height: 48px;">
+                                                <i class="bi bi-image" aria-hidden="true"></i>
+                                            </span>
+                                        }
+
+                                        <div class="text-break">
+                                            <div class="fw-semibold">@post.Title</div>
+                                            <small class="text-body-secondary">@post.Slug</small>
+                                        </div>
+                                    </div>
+                                </td>
+
+                                <td>@post.CategoryName</td>
+                                <td>@post.AuthorName</td>
+
+                                <td>
+                                    <span class="badge @badgeClass">@statusLabel</span>
+                                </td>
+
+                                <td class="text-nowrap">@publishedDate</td>
+
+                                <td class="text-end pe-3">
+                                    <div class="d-flex flex-wrap justify-content-end gap-2">
+                                        <a asp-area="Admin"
+                                           asp-controller="Posts"
+                                           asp-action="Edit"
+                                           asp-route-id="@post.Id"
+                                           class="btn btn-sm btn-outline-primary">
+                                            Sửa
+                                        </a>
+
+                                        <form asp-area="Admin"
+                                              asp-controller="Posts"
+                                              asp-action="SetPublication"
+                                              asp-route-id="@post.Id"
+                                              asp-antiforgery="true"
+                                              method="post">
+                                            <input type="hidden"
+                                                   name="version"
+                                                   value="@version" />
+                                            <input type="hidden"
+                                                   name="publish"
+                                                   value="@(isPublished ? "false" : "true")" />
+
+                                            @if (isPublished)
+                                            {
+                                                <button type="submit"
+                                                        class="btn btn-sm btn-outline-secondary text-nowrap">
+                                                    Về bản nháp
+                                                </button>
+                                            }
+                                            else
+                                            {
+                                                <button type="submit"
+                                                        class="btn btn-sm btn-outline-success text-nowrap">
+                                                    Xuất bản
+                                                </button>
+                                            }
+                                        </form>
+
+                                        <form asp-area="Admin"
+                                              asp-controller="Posts"
+                                              asp-action="Delete"
+                                              asp-route-id="@post.Id"
+                                              asp-antiforgery="true"
+                                              method="post"
+                                              onsubmit="return window.confirm('Xóa vĩnh viễn bài viết và toàn bộ bình luận của bài này?');">
+                                            <input type="hidden"
+                                                   name="version"
+                                                   value="@version" />
+
+                                            <button type="submit"
+                                                    class="btn btn-sm btn-outline-danger">
+                                                Xóa
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @if (Model.TotalPages > 1)
+        {
+            <nav class="card-footer bg-transparent d-flex flex-wrap
+                        align-items-center justify-content-between gap-2"
+                 aria-label="Phân trang bài viết">
+                <span class="small text-body-secondary">
+                    Trang @Model.PageNumber / @Model.TotalPages
+                </span>
+
+                <div class="d-flex gap-2">
+                    @if (Model.PageNumber > 1)
+                    {
+                        <a asp-area="Admin"
+                           asp-controller="Posts"
+                           asp-action="Index"
+                           asp-route-keyword="@Model.Keyword"
+                           asp-route-categoryId="@Model.CategoryId"
+                           asp-route-status="@Model.Status"
+                           asp-route-pageNumber="@(Model.PageNumber - 1)"
+                           class="btn btn-sm btn-outline-secondary">
+                            Trang trước
+                        </a>
+                    }
+
+                    @if (Model.PageNumber < Model.TotalPages)
+                    {
+                        <a asp-area="Admin"
+                           asp-controller="Posts"
+                           asp-action="Index"
+                           asp-route-keyword="@Model.Keyword"
+                           asp-route-categoryId="@Model.CategoryId"
+                           asp-route-status="@Model.Status"
+                           asp-route-pageNumber="@(Model.PageNumber + 1)"
+                           class="btn btn-sm btn-outline-secondary">
+                            Trang sau
+                        </a>
+                    }
+                </div>
+            </nav>
+        }
+    </div>
+</div>
