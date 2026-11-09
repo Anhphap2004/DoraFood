@@ -1,0 +1,99 @@
+﻿@model System.Collections.Generic.IReadOnlyList<DoraFood.Areas.Admin.ViewModels.NavigationItemRow>
+
+@{
+    ViewData["Title"] = "Mục điều hướng";
+}
+@if (TempData["NavigationSuccess"] is string success)
+{
+    <div class="alert alert-success" role="status">@success</div>
+}
+@if (TempData["NavigationError"] is string error)
+{
+    <div class="alert alert-warning" role="alert">@error</div>
+}
+<div class="mb-3">
+    <a class="btn btn-primary"
+       href="@Url.Action("Create", "NavigationItems", new { area = "Admin" })">
+        + Tạo mục điều hướng
+    </a>
+</div>
+<div class="card">
+    <div class="card-header">
+        <strong>Danh sách mục điều hướng</strong>
+        <span class="text-body-secondary ms-2">@Model.Count mục</span>
+    </div>
+
+    @if (Model.Count == 0)
+    {
+        <div class="card-body text-body-secondary">
+            Chưa có mục điều hướng nào.
+        </div>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th scope="col">Menu</th>
+                        <th scope="col">Tên hiển thị</th>
+                        <th scope="col">Mục cha</th>
+                        <th scope="col">Đường dẫn</th>
+                        <th scope="col" class="text-end">Thứ tự</th>
+                        <th scope="col">Trạng thái</th>
+                        <th scope="col" class="text-end">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var item in Model)
+                    {
+                        <tr>
+                            <td>
+                                @item.MenuName
+                                <div class="small text-body-secondary">
+                                    @item.MenuCode
+                                </div>
+                            </td>
+                            <td>
+                                <a class="fw-semibold"
+                                   href="@Url.Action("Edit", "NavigationItems",
+                                       new { area = "Admin", id = item.Id })">
+                                    @item.Label
+                                </a>
+                            </td>
+                            <td>@(item.ParentLabel ?? "—")</td>
+                            <td><code class="text-break">@item.Url</code></td>
+                            <td class="text-end">@item.SortOrder</td>
+                            <td>
+                                @if (item.IsVisible)
+                                {
+                                    <span class="badge text-bg-success">Đang bật</span>
+                                }
+                                else
+                                {
+                                    <span class="badge text-bg-secondary">Đã ẩn</span>
+                                }
+                            </td>
+                            <td class="text-end">
+                                <form asp-area="Admin"
+                                      asp-controller="NavigationItems"
+                                      asp-action="Delete"
+                                      asp-route-id="@item.Id"
+                                      method="post"
+                                      class="d-inline"
+                                      onsubmit="return confirm('Anh chắc chắn muốn xóa mục điều hướng này?');">
+
+                                    <button type="submit"
+                                            class="btn btn-outline-danger btn-sm"
+                                            aria-label="Xóa mục @item.Label">
+                                        Xóa
+                                    </button>
+                                </form>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+</div>

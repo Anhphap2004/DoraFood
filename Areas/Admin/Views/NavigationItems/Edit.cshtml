@@ -1,0 +1,59 @@
+﻿@model DoraFood.Areas.Admin.ViewModels.NavigationItemEditInput
+
+@{
+    ViewData["Title"] = "Sửa mục điều hướng";
+}
+
+<div class="card">
+    <form asp-area="Admin"
+          asp-controller="NavigationItems"
+          asp-action="Edit"
+          asp-route-id="@Model.Id"
+          method="post">
+
+        <div class="card-body">
+            <div asp-validation-summary="ModelOnly"
+                 class="text-danger mb-2"></div>
+
+            <div class="mb-3">
+                <label asp-for="Label" class="form-label">Tên hiển thị</label>
+                <input asp-for="Label" class="form-control"
+                       maxlength="100" required />
+                <span asp-validation-for="Label" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Url" class="form-label">Đường dẫn</label>
+                <input asp-for="Url" type="text" class="form-control"
+                       maxlength="1000" placeholder="~/thuc-don" required />
+                <span asp-validation-for="Url" class="text-danger small"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="SortOrder" class="form-label">
+                    Thứ tự hiển thị
+                </label>
+                <input asp-for="SortOrder" type="number" step="1"
+                       class="form-control" required />
+                <div class="form-text">Số nhỏ hơn được xếp trước.</div>
+                <span asp-validation-for="SortOrder"
+                      class="text-danger small"></span>
+            </div>
+
+            <div class="form-check">
+                <input asp-for="IsVisible" class="form-check-input" />
+                <label asp-for="IsVisible" class="form-check-label">
+                    Hiện trên thanh điều hướng
+                </label>
+            </div>
+        </div>
+
+        <div class="card-footer d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Lưu thay đổi</button>
+            <a class="btn btn-outline-secondary"
+               href="@Url.Action("Index", "NavigationItems", new { area = "Admin" })">
+                Về danh sách
+            </a>
+        </div>
+    </form>
+</div>

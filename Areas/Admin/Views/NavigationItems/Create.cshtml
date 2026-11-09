@@ -1,0 +1,122 @@
+﻿@using System.Globalization
+@model DoraFood.Areas.Admin.ViewModels.NavigationItemCreateInput
+
+@{
+    ViewData["Title"] = "Tạo mục điều hướng";
+    var invariant = CultureInfo.InvariantCulture;
+}
+
+<div class="card">
+    <form asp-area="Admin"
+          asp-controller="NavigationItems"
+          asp-action="Create"
+          method="post">
+
+        <div class="card-body">
+            <div asp-validation-summary="ModelOnly"
+                 class="text-danger mb-2"></div>
+
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label asp-for="MenuId" class="form-label">Nhóm menu</label>
+                    <select asp-for="MenuId"
+                            asp-items="Model.MenuOptions"
+                            class="form-select" required>
+                        <option value="">Chọn nhóm menu</option>
+                    </select>
+                    <span asp-validation-for="MenuId"
+                          class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="ParentId" class="form-label">Mục cha</label>
+                    <select asp-for="ParentId" class="form-select">
+                        <option value="">Mục cấp chính</option>
+
+                        @foreach (var parent in Model.ParentOptions)
+                        {
+                            <option value="@parent.Id.ToString(invariant)"
+                                    data-menu-id="@parent.MenuId.ToString(invariant)">
+                                @parent.Label
+                            </option>
+                        }
+                    </select>
+                    <span asp-validation-for="ParentId"
+                          class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="Item.Label" class="form-label">
+                        Tên hiển thị
+                    </label>
+                    <input asp-for="Item.Label" class="form-control"
+                           maxlength="100" required />
+                    <span asp-validation-for="Item.Label"
+                          class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="Item.Url" class="form-label">Đường dẫn</label>
+                    <input asp-for="Item.Url" type="text" class="form-control"
+                           maxlength="1000" placeholder="~/thuc-don" required />
+                    <span asp-validation-for="Item.Url"
+                          class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="Item.SortOrder" class="form-label">
+                        Thứ tự hiển thị
+                    </label>
+                    <input asp-for="Item.SortOrder" type="number" step="1"
+                           class="form-control" required />
+                    <div class="form-text">Số nhỏ hơn được xếp trước.</div>
+                    <span asp-validation-for="Item.SortOrder"
+                          class="text-danger small"></span>
+                </div>
+
+                <div class="col-12">
+                    <div class="form-check">
+                        <input asp-for="Item.IsVisible" class="form-check-input" />
+                        <label asp-for="Item.IsVisible" class="form-check-label">
+                            Hiện trên thanh điều hướng
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-footer d-flex gap-2">
+            <button type="submit" class="btn btn-primary">Lưu mục</button>
+            <a class="btn btn-outline-secondary"
+               href="@Url.Action("Index", "NavigationItems", new { area = "Admin" })">
+                Về danh sách
+            </a>
+        </div>
+    </form>
+</div>
+
+@section Scripts {
+    <script>
+        (() => {
+            const menu = document.getElementById("MenuId");
+            const parent = document.getElementById("ParentId");
+
+            function filterParents() {
+                for (const option of parent.options) {
+                    if (option.value === "") continue;
+
+                    const matches = option.dataset.menuId === menu.value;
+                    option.hidden = !matches;
+                    option.disabled = !matches;
+                }
+
+                if (parent.selectedOptions[0]?.disabled) {
+                    parent.value = "";
+                }
+            }
+
+            menu.addEventListener("change", filterParents);
+            filterParents();
+        })();
+    </script>
+}

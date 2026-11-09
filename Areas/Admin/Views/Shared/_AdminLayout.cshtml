@@ -223,6 +223,13 @@
         + Thêm món ăn
     </a>
 </div>
+         <li class="nav-item">
+    <a class="nav-link @(inAdmin && currentController == "NavigationItems" ? "active" : "")"
+       href="@Url.Action("Index", "NavigationItems", new { area = "Admin" })">
+        <i class="nav-icon bi bi-signpost-split" aria-hidden="true"></i>
+        <p>Mục điều hướng</p>
+    </a>
+</li>
                     </ul>
                 </nav>
             </div>
