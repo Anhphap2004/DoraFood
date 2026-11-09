@@ -1,0 +1,46 @@
+﻿@model DoraFood.ViewModels.UserAddressInput
+
+<div asp-validation-summary="ModelOnly"
+     class="text-danger mb-3"
+     role="alert"></div>
+
+<div class="row g-3">
+    <div class="col-md-6">
+        <label asp-for="RecipientName" class="form-label">Tên người nhận</label>
+
+        <input asp-for="RecipientName"
+               class="form-control"
+               maxlength="150"
+               autocomplete="shipping name"
+               required />
+
+        <span asp-validation-for="RecipientName" class="text-danger"></span>
+    </div>
+
+    <div class="col-md-6">
+        <label asp-for="PhoneNumber" class="form-label">Số điện thoại</label>
+
+        <input asp-for="PhoneNumber"
+               type="tel"
+               class="form-control"
+               maxlength="20"
+               autocomplete="shipping tel"
+               required />
+
+        <span asp-validation-for="PhoneNumber" class="text-danger"></span>
+    </div>
+
+    <div class="col-12">
+        <label asp-for="AddressLine" class="form-label">Địa chỉ giao hàng</label>
+
+        <textarea asp-for="AddressLine"
+                  class="form-control"
+                  rows="3"
+                  maxlength="500"
+                  autocomplete="shipping street-address"
+                  placeholder="Số nhà, tên đường, phường/xã, tỉnh/thành phố"
+                  required></textarea>
+
+        <span asp-validation-for="AddressLine" class="text-danger"></span>
+    </div>
+</div>

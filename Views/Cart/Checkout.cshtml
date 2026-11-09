@@ -19,13 +19,21 @@
             <div class="card-body">
                 <h2 class="h5">Xác nhận đơn giao hàng</h2>
 
-                <p class="mb-1"><strong>Người nhận</strong> @Model.Input.ReceiverName</p>
-                <p class="mb-1"><strong>Điện thoại</strong> @Model.Input.PhoneNumber</p>
-                <p class="mb-1"><strong>Địa chỉ giao</strong> @Model.Input.DeliveryAddress</p>
+                <p class="mb-1">
+                    <strong>Người nhận</strong> @Model.Input.ReceiverName
+                </p>
+                <p class="mb-1">
+                    <strong>Điện thoại</strong> @Model.Input.PhoneNumber
+                </p>
+                <p class="mb-1">
+                    <strong>Địa chỉ giao</strong> @Model.Input.DeliveryAddress
+                </p>
 
                 @if (!string.IsNullOrWhiteSpace(Model.Input.Note))
                 {
-                    <p class="mb-1"><strong>Ghi chú</strong> @Model.Input.Note</p>
+                    <p class="mb-1">
+                        <strong>Ghi chú</strong> @Model.Input.Note
+                    </p>
                 }
 
                 <p class="mb-3">
@@ -62,6 +70,8 @@
 
                     <div asp-validation-summary="ModelOnly"
                          class="text-danger"></div>
+
+                    @await Component.InvokeAsync("CheckoutAddresses")
 
                     <div class="mb-3">
                         <label asp-for="Input.ReceiverName"
@@ -116,7 +126,9 @@
                     <div class="mb-4">
                         <h3 class="h5 mb-2">Phương thức thanh toán</h3>
 
-                        <input type="hidden" name="Input.PaymentMethod" value="CASH" />
+                        <input type="hidden"
+                               name="Input.PaymentMethod"
+                               value="CASH" />
 
                         <div class="alert alert-light border mb-0">
                             <strong>Tiền mặt khi nhận hàng</strong>

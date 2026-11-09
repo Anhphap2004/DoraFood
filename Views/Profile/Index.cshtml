@@ -1,0 +1,171 @@
+﻿@model DoraFood.ViewModels.UserProfileViewModel
+
+@{
+    ViewData["Title"] = "Tài khoản của tôi";
+
+    var avatarUrl = Url.IsLocalUrl(Model.AvatarUrl)
+        ? Url.Content(Model.AvatarUrl)
+        : null;
+
+    var initial = System.Globalization.StringInfo
+        .GetNextTextElement(Model.DisplayName)
+        .ToUpperInvariant();
+
+    var gender = Model.Gender?.Trim().ToUpperInvariant() switch
+    {
+        "MALE" => "Nam",
+        "FEMALE" => "Nữ",
+        "OTHER" => "Khác",
+        _ => Model.Gender
+    };
+
+    string ShowValue(string? value) =>
+        string.IsNullOrWhiteSpace(value) ? "Chưa cập nhật" : value;
+}
+
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="mb-4">
+            <h1 class="h2 fw-bold mb-2">Tài khoản của tôi</h1>
+            <p class="text-muted mb-0">
+                Xem thông tin tài khoản và hồ sơ cá nhân của anh tại DoraFood.
+            </p>
+        </div>
+
+        <div class="row g-4">
+            <aside class="col-lg-4">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4 text-center">
+                        @if (!string.IsNullOrEmpty(avatarUrl))
+                        {
+                            <img src="@avatarUrl"
+                                 alt="Ảnh đại diện của @Model.DisplayName"
+                                 width="88"
+                                 height="88"
+                                 class="rounded-circle mb-3"
+                                 style="object-fit: cover;" />
+                        }
+                        else
+                        {
+                            <div class="d-inline-flex align-items-center
+                                        justify-content-center rounded-circle
+                                        bg-primary text-white fs-2 fw-bold mb-3"
+                                 style="width: 88px; height: 88px;"
+                                 aria-hidden="true">
+                                @initial
+                            </div>
+                        }
+
+                        <h2 class="h5 fw-bold text-break mb-1">
+                            @Model.DisplayName
+                        </h2>
+
+                        <p class="text-muted text-break mb-0">
+                            @Model.UserName
+                        </p>
+                    </div>
+                </div>
+            </aside>
+
+            <div class="col-lg-8">
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <h2 class="h5 fw-bold mb-4">Thông tin cá nhân</h2>
+                                  @if (TempData["ProfileSuccess"] is string message)
+{
+    <div class="alert alert-success" role="status">
+        @message
+    </div>
+}
+                        <dl class="row g-4 mb-0">
+                            <div class="col-md-6">
+                                <dt class="text-muted small fw-normal mb-1">Họ và tên</dt>
+                                <dd class="fw-semibold text-break mb-0">
+                                    @ShowValue(Model.FullName)
+                                </dd>
+                            </div>
+
+                            <div class="col-md-6">
+                                <dt class="text-muted small fw-normal mb-1">Tên đăng nhập</dt>
+                                <a asp-route="DoraFood.EditMyProfile"
+   class="btn btn-outline-primary mt-3">
+    <i class="far fa-edit me-1" aria-hidden="true"></i>
+    Chỉnh sửa hồ sơ
+</a>
+<a asp-route="DoraFood.ChangeMyAvatar"
+   class="btn btn-outline-secondary mt-3">
+    <i class="fas fa-camera me-1" aria-hidden="true"></i>
+    Đổi ảnh đại diện
+</a>
+<a asp-route="DoraFood.MyAddresses"
+   class="btn btn-outline-secondary mt-3">
+    <i class="fas fa-map-marker-alt me-1" aria-hidden="true"></i>
+    Địa chỉ giao hàng
+</a>
+@if (TempData["ProfileError"] is string profileError)
+{
+    <div class="alert alert-warning" role="alert">
+        @profileError
+    </div>
+}
+                                <dd class="fw-semibold text-break mb-0">
+                                    @Model.UserName
+                                </dd>
+                            </div>
+
+                            <div class="col-md-6">
+                                <dt class="text-muted small fw-normal mb-1">Email</dt>
+                                <dd class="fw-semibold text-break mb-0">
+                                    @ShowValue(Model.Email)
+
+                                    @if (!string.IsNullOrWhiteSpace(Model.Email))
+                                    {
+                                        var emailLabel = Model.EmailConfirmed
+                                            ? "Đã xác thực"
+                                            : "Chưa xác thực";
+
+                                        var emailClass = Model.EmailConfirmed
+                                            ? "bg-success"
+                                            : "bg-secondary";
+
+                                        <span class="badge @emailClass ms-1">
+                                            @emailLabel
+                                        </span>
+                                    }
+                                </dd>
+                            </div>
+
+                            <div class="col-md-6">
+                                <dt class="text-muted small fw-normal mb-1">Số điện thoại</dt>
+                                <dd class="fw-semibold mb-0">
+                                    @ShowValue(Model.PhoneNumber)
+                                </dd>
+                            </div>
+
+                            <div class="col-md-6">
+                                <dt class="text-muted small fw-normal mb-1">Ngày sinh</dt>
+                                <dd class="fw-semibold mb-0">
+                                    @ShowValue(Model.DateOfBirth)
+                                </dd>
+                            </div>
+
+                            <div class="col-md-6">
+                                <dt class="text-muted small fw-normal mb-1">Giới tính</dt>
+                                <dd class="fw-semibold mb-0">
+                                    @ShowValue(gender)
+                                </dd>
+                            </div>
+
+                            <div class="col-md-6">
+                                <dt class="text-muted small fw-normal mb-1">Ngày tạo tài khoản</dt>
+                                <dd class="fw-semibold mb-0">
+                                    @(Model.CreatedAtUtc.AddHours(7).ToString("dd/MM/yyyy"))
+                                </dd>
+                            </div>
+                        </dl>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>

@@ -1,0 +1,155 @@
+﻿@model string
+
+@{
+    ViewData["Title"] = "Đổi ảnh đại diện";
+
+    var currentAvatarUrl = Url.IsLocalUrl(Model)
+        ? Url.Content(Model)
+        : null;
+}
+
+<section class="py-5 bg-light">
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-lg-7">
+                <div class="mb-4">
+                    <a asp-route="DoraFood.MyProfile"
+                       class="text-decoration-none">
+                        <i class="fas fa-arrow-left me-1" aria-hidden="true"></i>
+                        Tài khoản của tôi
+                    </a>
+
+                    <h1 class="h2 fw-bold mt-3 mb-2">Đổi ảnh đại diện</h1>
+                    <p class="text-muted mb-0">
+                        Chọn ảnh từ máy và xem trước trước khi lưu.
+                    </p>
+                </div>
+
+                <form asp-controller="Profile"
+                      asp-action="Avatar"
+                      asp-antiforgery="true"
+                      method="post"
+                      enctype="multipart/form-data"
+                      class="card border-0 shadow-sm">
+
+                    <div class="card-body p-4">
+                        <div asp-validation-summary="All"
+                             class="text-danger mb-3"
+                             role="alert"></div>
+
+                        <div class="d-flex flex-wrap gap-4 mb-4">
+                            <div>
+                                <div class="small text-muted mb-2">Ảnh hiện tại</div>
+
+                                @if (!string.IsNullOrEmpty(currentAvatarUrl))
+                                {
+                                    <img src="@currentAvatarUrl"
+                                         alt="Ảnh đại diện hiện tại"
+                                         width="112"
+                                         height="112"
+                                         class="rounded-circle border"
+                                         style="object-fit: cover;" />
+                                }
+                                else
+                                {
+                                    <div class="d-inline-flex align-items-center
+                                                justify-content-center rounded-circle
+                                                bg-light border text-muted"
+                                         style="width: 112px; height: 112px;">
+                                        <i class="far fa-user fa-2x" aria-hidden="true"></i>
+                                        <span class="visually-hidden">Chưa có ảnh đại diện</span>
+                                    </div>
+                                }
+                            </div>
+
+                            <div id="avatar-preview-panel" hidden>
+                                <div class="small text-muted mb-2">Ảnh mới</div>
+
+                                <img id="avatar-preview"
+                                     alt="Xem trước ảnh đại diện mới"
+                                     width="112"
+                                     height="112"
+                                     class="rounded-circle border"
+                                     style="object-fit: cover;" />
+                            </div>
+                        </div>
+
+                        <label for="avatar-file" class="form-label fw-semibold">
+                            Chọn ảnh
+                        </label>
+
+                        <input id="avatar-file"
+                               name="avatar"
+                               type="file"
+                               class="form-control"
+                               accept=".jpg,.jpeg,.png,image/jpeg,image/png"
+                               aria-describedby="avatar-help"
+                               required />
+
+                        <div id="avatar-help" class="form-text">
+                            Định dạng JPG hoặc PNG, tối đa 2 MB.
+                        </div>
+
+                        <div id="avatar-feedback"
+                             class="small text-danger mt-2"
+                             role="status"></div>
+                    </div>
+
+                    <div class="card-footer bg-white d-flex flex-wrap
+                                justify-content-end gap-2 p-3">
+                        <a asp-route="DoraFood.MyProfile"
+                           class="btn btn-outline-secondary">
+                            Hủy
+                        </a>
+
+                        <button type="submit" class="btn btn-primary">
+                            Lưu ảnh
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script>
+        (() => {
+            const input = document.getElementById("avatar-file");
+            const preview = document.getElementById("avatar-preview");
+            const panel = document.getElementById("avatar-preview-panel");
+            const feedback = document.getElementById("avatar-feedback");
+            const maxBytes = 2 * 1024 * 1024;
+            let previewUrl = null;
+
+            input.addEventListener("change", () => {
+                if (previewUrl) {
+                    URL.revokeObjectURL(previewUrl);
+                    previewUrl = null;
+                }
+
+                panel.hidden = true;
+                preview.removeAttribute("src");
+                input.setCustomValidity("");
+                feedback.textContent = "";
+
+                const file = input.files[0];
+
+                if (!file) {
+                    return;
+                }
+
+                if (file.size > maxBytes) {
+                    const message = "Anh hãy chọn ảnh tối đa 2 MB.";
+                    input.setCustomValidity(message);
+                    feedback.textContent = message;
+                    return;
+                }
+
+                previewUrl = URL.createObjectURL(file);
+                preview.src = previewUrl;
+                panel.hidden = false;
+            });
+        })();
+    </script>
+}

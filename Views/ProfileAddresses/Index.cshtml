@@ -1,0 +1,115 @@
+﻿@model System.Collections.Generic.IReadOnlyList<DoraFood.Models.UserAddress>
+
+@{
+    ViewData["Title"] = "Địa chỉ giao hàng";
+}
+
+<section class="py-5 bg-light">
+    <div class="container">
+        <a asp-route="DoraFood.MyProfile" class="text-decoration-none">
+            <i class="fas fa-arrow-left me-1" aria-hidden="true"></i>
+            Tài khoản của tôi
+        </a>
+
+        <div class="d-flex flex-wrap align-items-center
+                    justify-content-between gap-3 my-4">
+            <div>
+                <h1 class="h2 fw-bold mb-1">Địa chỉ giao hàng</h1>
+                <p class="text-muted mb-0">
+                    Quản lý thông tin người nhận và nơi giao hàng.
+                </p>
+            </div>
+
+            <a asp-controller="ProfileAddresses"
+               asp-action="Create"
+               class="btn btn-primary">
+                <i class="fas fa-plus me-1" aria-hidden="true"></i>
+                Thêm địa chỉ
+            </a>
+        </div>
+
+        @if (TempData["AddressSuccess"] is string message)
+        {
+            <div class="alert alert-success" role="status">
+                @message
+            </div>
+        }
+
+        @if (Model.Count == 0)
+        {
+            <div class="card border-0 shadow-sm">
+                <div class="card-body py-5 text-center">
+                    <i class="fas fa-map-marker-alt fa-2x text-primary mb-3"
+                       aria-hidden="true"></i>
+                    <h2 class="h5">Chưa có địa chỉ giao hàng</h2>
+                    <p class="text-muted mb-0">
+                        Bấm Thêm địa chỉ để lưu thông tin người nhận đầu tiên.
+                    </p>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="row g-3">
+                @foreach (var address in Model)
+                {
+                    <div class="col-md-6">
+                        <article class="card h-100 border-0 shadow-sm">
+                            <div class="card-body p-4">
+                                <div class="d-flex flex-wrap align-items-center
+                                            justify-content-between gap-2 mb-2">
+                                    <h2 class="h5 text-break mb-0">
+                                        @address.RecipientName
+                                    </h2>
+
+                                    @if (address.IsDefault)
+                                    {
+                                        <span class="badge bg-success">Mặc định</span>
+                                    }
+                                </div>
+
+                                <p class="text-muted mb-2">@address.PhoneNumber</p>
+                                <p class="text-break mb-0">@address.AddressLine</p>
+                            </div>
+
+                            <div class="card-footer bg-white d-flex flex-wrap gap-2">
+                                <a asp-controller="ProfileAddresses"
+                                   asp-action="Edit"
+                                   asp-route-id="@address.Id"
+                                   class="btn btn-sm btn-outline-primary">
+                                    Sửa
+                                </a>
+
+                                @if (!address.IsDefault)
+                                {
+                                    <form asp-controller="ProfileAddresses"
+                                          asp-action="SetDefault"
+                                          asp-route-id="@address.Id"
+                                          asp-antiforgery="true"
+                                          method="post">
+                                        <button type="submit"
+                                                class="btn btn-sm btn-outline-secondary">
+                                            Đặt mặc định
+                                        </button>
+                                    </form>
+                                }
+
+                                <form asp-controller="ProfileAddresses"
+                                      asp-action="Delete"
+                                      asp-route-id="@address.Id"
+                                      asp-antiforgery="true"
+                                      method="post"
+                                      onsubmit="return confirm('Xóa địa chỉ giao hàng này?');">
+                                    <button type="submit"
+                                            class="btn btn-sm btn-outline-danger">
+                                        Xóa
+                                    </button>
+                                </form>
+                            </div>
+                        </article>
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</section>

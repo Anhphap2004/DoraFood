@@ -1,0 +1,84 @@
+﻿@model System.Collections.Generic.IReadOnlyList<DoraFood.ViewComponents.CheckoutAddressesViewComponent.AddressOption>
+
+@{
+    var applyDefault = Microsoft.AspNetCore.Http.HttpMethods.IsGet(
+        Context.Request.Method);
+}
+
+<div id="checkout-address-picker-panel" class="mb-3" hidden>
+    <label for="checkout-address-picker" class="form-label fw-semibold">
+        Chọn địa chỉ giao hàng đã lưu
+    </label>
+
+    <select id="checkout-address-picker"
+            class="form-select"
+            data-apply-default="@(applyDefault ? "true" : "false")"
+            aria-describedby="checkout-address-picker-help">
+
+        <option value="">Nhập địa chỉ khác</option>
+
+        @foreach (var address in Model)
+        {
+            var label = address.IsDefault
+                ? $"{address.RecipientName} — {address.AddressLine} (mặc định)"
+                : $"{address.RecipientName} — {address.AddressLine}";
+
+            <option value="@address.Id"
+                    data-recipient="@address.RecipientName"
+                    data-phone="@address.PhoneNumber"
+                    data-address="@address.AddressLine"
+                    data-default="@(address.IsDefault ? "true" : "false")">
+                @label
+            </option>
+        }
+    </select>
+
+    <div id="checkout-address-picker-help" class="form-text">
+        Anh có thể sửa thông tin bên dưới cho riêng đơn hàng này.
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const panel = document.getElementById("checkout-address-picker-panel");
+        const picker = document.getElementById("checkout-address-picker");
+        const form = picker?.closest("form");
+
+        if (!panel || !form) {
+            return;
+        }
+
+        const recipient = form.elements.namedItem("Input.ReceiverName");
+        const phone = form.elements.namedItem("Input.PhoneNumber");
+        const address = form.elements.namedItem("Input.DeliveryAddress");
+
+        if (!recipient || !phone || !address) {
+            return;
+        }
+
+        function applySelection() {
+            const data = picker.selectedOptions[0]?.dataset;
+
+            recipient.value = data?.recipient ?? "";
+            phone.value = data?.phone ?? "";
+            address.value = data?.address ?? "";
+        }
+
+        picker.addEventListener("change", applySelection);
+
+        for (const field of [recipient, phone, address]) {
+            field.addEventListener("input", () => {
+                picker.value = "";
+            });
+        }
+
+        const defaultOption = picker.querySelector('option[data-default="true"]');
+
+        if (picker.dataset.applyDefault === "true" && defaultOption) {
+            picker.value = defaultOption.value;
+            applySelection();
+        }
+
+        panel.hidden = false;
+    });
+</script>
