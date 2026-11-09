@@ -27,20 +27,26 @@
                       class="text-danger small"></span>
             </div>
 
-            <div class="mb-3">
-                <label asp-for="ContentHtml" class="form-label">
+            @{
+                var contentHtml = Html.ValueFor(m => m.ContentHtml) ?? string.Empty;
+                var editorHtml = new Ganss.Xss.HtmlSanitizer().Sanitize(contentHtml);
+            }
+
+            <div class="mb-3" id="about-content-editor">
+                <label asp-for="ContentHtml"
+                       id="about-content-label"
+                       class="form-label fw-semibold">
                     Nội dung giới thiệu
                 </label>
+
                 <textarea asp-for="ContentHtml"
-                          class="form-control font-monospace"
-                          rows="14" required></textarea>
-                <div class="form-text">
-                    Ô này hiển thị mã HTML. Anh có thể dùng thẻ
-                    <code>&lt;p&gt;</code> cho đoạn văn và
-                    <code>&lt;h2&gt;</code> cho tiêu đề.
-                </div>
+                          class="form-control"
+                          rows="12"
+                          data-editor-html="@editorHtml"
+                          data-upload-url="@Url.Action("UploadImage", "AboutPage", new { area = "Admin" })"></textarea>
+
                 <span asp-validation-for="ContentHtml"
-                      class="text-danger small"></span>
+                      class="text-danger d-block mt-2"></span>
             </div>
 
             <div class="mb-3">
@@ -69,3 +75,142 @@
         </div>
     </form>
 </div>
+@section Styles {
+    <link rel="stylesheet"
+          href="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.9.1/summernote-lite.min.css" />
+}
+
+@section Scripts {
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.9.1/summernote-lite.min.js"></script>
+
+    <script>
+        (() => {
+            const field = document.getElementById("ContentHtml");
+            const $ = window.jQuery;
+
+            if (!field?.form || !$?.fn?.summernote) {
+                return;
+            }
+
+            field.value = field.dataset.editorHtml;
+
+            const $editor = $(field);
+            let isUploadingImage = false;
+            $editor.summernote({
+                height: 360,
+                placeholder: "Nhập nội dung giới thiệu về DoraFood...",
+                disableDragAndDrop: true,
+                styleWithCSS: true,
+
+                styleTags: ["p", "h2", "h3", "h4", "blockquote"],
+                fontNames: ["Arial", "Calibri", "Segoe UI", "Times New Roman", "Verdana"],
+                addDefaultFonts: false,
+                fontSizes: ["12", "14", "16", "18", "20", "24", "28", "32"],
+                lineHeights: ["1.0", "1.2", "1.5", "1.8", "2.0"],
+
+                toolbar: [
+                    ["history", ["undo", "redo"]],
+                    ["style", ["style"]],
+                    ["fontname", ["fontname"]],
+                    ["fontsize", ["fontsize"]],
+                    ["font", ["bold", "italic", "underline", "strikethrough"]],
+                    ["script", ["superscript", "subscript", "clear"]],
+                    ["color", ["color"]],
+                    ["paragraph", ["ul", "ol", "paragraph", "height"]],
+                    ["insert", ["link", "picture", "table", "hr"]],
+                    ["view", ["fullscreen", "help"]]
+                ],
+
+                callbacks: {
+                    async onImageUpload(files) {
+                        if (isUploadingImage) {
+                            return;
+                        }
+
+                        if (files.length !== 1) {
+                            window.alert("Anh hãy chọn một ảnh mỗi lần.");
+                            return;
+                        }
+
+                        const token = field.form.querySelector(
+                            'input[name="__RequestVerificationToken"]'
+                        );
+
+                        if (!token) {
+                            window.alert("Không tìm thấy mã xác thực của form. Anh hãy tải lại trang.");
+                            return;
+                        }
+
+                        const formData = new FormData();
+                        formData.append("file", files[0]);
+                        formData.append(token.name, token.value);
+
+                        isUploadingImage = true;
+
+                        try {
+                            const response = await fetch(field.dataset.uploadUrl, {
+                                method: "POST",
+                                body: formData
+                            });
+
+                            if (response.status === 413) {
+                                window.alert("Ảnh vượt quá dung lượng cho phép. Anh hãy chọn ảnh tối đa 5 MB.");
+                                return;
+                            }
+
+                            const result = await response.json();
+
+                            if (!response.ok || !result.url) {
+                                window.alert(result.message || "Tải ảnh lên thất bại.");
+                                return;
+                            }
+
+                            const image = document.createElement("img");
+                            image.src = result.url;
+                            image.alt = "";
+                            image.style.maxWidth = "100%";
+                            image.style.height = "auto";
+
+                            $editor.summernote("insertNode", image);
+                        } catch {
+                            window.alert("Không tải được ảnh. Anh hãy tải lại trang rồi thử lại.");
+                        } finally {
+                            isUploadingImage = false;
+                        }
+                    }
+                }
+            });
+
+            const editable = document.querySelector(
+                "#about-content-editor .note-editable"
+            );
+
+            editable.setAttribute("aria-labelledby", "about-content-label");
+
+            // Dán văn bản thường để tránh đưa HTML lạ vào vùng soạn thảo.
+            editable.addEventListener("paste", event => {
+                event.preventDefault();
+                event.stopImmediatePropagation();
+
+                const text = event.clipboardData?.getData("text/plain");
+
+                if (text) {
+                    $editor.summernote("insertText", text);
+                }
+            }, true);
+
+            field.form.addEventListener("submit", event => {
+                if (isUploadingImage) {
+                    event.preventDefault();
+                    window.alert("Ảnh đang tải lên. Anh đợi ảnh xuất hiện rồi bấm lưu.");
+                    return;
+                }
+
+                field.value = $editor.summernote("isEmpty")
+                    ? ""
+                    : $editor.summernote("code");
+            }, true);
+        })();
+    </script>
+}

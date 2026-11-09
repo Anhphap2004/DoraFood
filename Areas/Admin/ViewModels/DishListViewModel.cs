@@ -10,9 +10,20 @@ public sealed record DishListRow(
     int VariantCount,
     decimal? LowestAvailablePrice,
     bool IsActive,
-    string? ImageUrl);
+    string? ImageUrl,
+    bool HasOtherLinks)
+{
+    public bool CanDelete => VariantCount == 0 && !HasOtherLinks;
+}
+
+public sealed record DishCategoryFilterOption(long Id, string Name);
+
 public sealed record DishListViewModel(
     IReadOnlyList<DishListRow> Dishes,
+    IReadOnlyList<DishCategoryFilterOption> CategoryOptions,
+    string Keyword,
+    long? CategoryId,
+    string Status,
     int Page,
     int TotalPages,
     int TotalDishes);

@@ -9,7 +9,12 @@ public sealed record DishVariantAdminRow(
     string SellingUnit,
     decimal Price,
     bool IsAvailable,
-    string Version);
+    string Version,
+    bool HasOrders,
+    bool HasRecipe)
+{
+    public bool CanDelete => !HasOrders && !HasRecipe;
+}
 
 public sealed record DishVariantsViewModel(
     long DishId,

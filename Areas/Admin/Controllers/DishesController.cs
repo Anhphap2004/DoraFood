@@ -30,12 +30,58 @@ public class DishesController : Controller
 
     [HttpGet]
     public async Task<IActionResult> Index(
-        int page = 1,
-        CancellationToken cancellationToken = default)
+    string? keyword,
+    long? categoryId,
+    string? status,
+    int page = 1,
+    CancellationToken cancellationToken = default)
     {
         const int pageSize = 20;
+        var search = keyword?.Trim() ?? string.Empty;
+
+        if (search.Length > 200)
+        {
+            return BadRequest("Từ khóa tối đa 200 ký tự.");
+        }
+
+        var selectedStatus = status is "active" or "inactive" ? status : "all";
+
+        var categoryOptions = await _context.Set<DishCategory>()
+            .AsNoTracking()
+            .OrderBy(category => category.SortOrder)
+            .ThenBy(category => category.Name)
+            .ThenBy(category => category.Id)
+            .Select(category => new DishCategoryFilterOption(
+                category.Id, category.Name))
+            .ToListAsync(cancellationToken);
+
+        if (categoryId.HasValue
+            && !categoryOptions.Any(category => category.Id == categoryId.Value))
+        {
+            categoryId = null;
+        }
 
         var query = _context.Set<Dish>().AsNoTracking();
+
+        if (search.Length > 0)
+        {
+            query = query.Where(dish =>
+                dish.Name.Contains(search) || dish.Slug.Contains(search));
+        }
+
+        if (categoryId is long selectedCategoryId)
+        {
+            query = query.Where(dish => dish.CategoryId == selectedCategoryId);
+        }
+
+        if (selectedStatus == "active")
+        {
+            query = query.Where(dish => dish.IsActive);
+        }
+        else if (selectedStatus == "inactive")
+        {
+            query = query.Where(dish => !dish.IsActive);
+        }
 
         var totalDishes = await query.CountAsync(cancellationToken);
         var totalPages = Math.Max(
@@ -67,11 +113,67 @@ public class DishesController : Controller
                     .ThenBy(image => image.SortOrder)
                     .ThenBy(image => image.Id)
                     .Select(image => image.MediaFile.Url)
-                    .FirstOrDefault()))
+                    .FirstOrDefault(),
+                images.Any(image => image.DishId == dish.Id)
+                    || dish.DishReviews.Any()
+                    || dish.AddOns.Any()))
             .ToListAsync(cancellationToken);
 
         return View(new DishListViewModel(
-            dishes, page, totalPages, totalDishes));
+            dishes, categoryOptions, search, categoryId,
+            selectedStatus, page, totalPages, totalDishes));
+    }
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Delete(
+    [FromRoute] long id,
+    [FromForm] string? keyword,
+    [FromForm] long? categoryId,
+    [FromForm] string? status,
+    [FromForm] int page = 1,
+    CancellationToken cancellationToken = default)
+    {
+        if (id <= 0)
+        {
+            return BadRequest("Mã món không hợp lệ.");
+        }
+
+        var dishes = _context.Set<Dish>();
+        var images = _context.Set<DishImage>();
+
+        try
+        {
+            var deletedRows = await dishes
+                .Where(dish => dish.Id == id
+                    && !dish.DishVariants.Any()
+                    && !images.Any(image => image.DishId == dish.Id)
+                    && !dish.DishReviews.Any()
+                    && !dish.AddOns.Any())
+                .ExecuteDeleteAsync(cancellationToken);
+
+            if (deletedRows == 1)
+            {
+                TempData["DishSuccess"] = "Đã xóa món ăn.";
+            }
+            else if (await dishes.AnyAsync(dish => dish.Id == id, cancellationToken))
+            {
+                TempData["DishError"] =
+                    "Món còn khẩu phần, ảnh, đánh giá hoặc món thêm. "
+                    + "Nếu muốn ẩn món, anh vào Sửa và bỏ chọn Bật món.";
+            }
+            else
+            {
+                TempData["DishError"] = "Món không còn trong danh sách.";
+            }
+        }
+        catch (SqlException ex) when (ex.Number == 547)
+        {
+            TempData["DishError"] =
+                "Món đang được dữ liệu khác sử dụng. Anh tải lại danh sách để kiểm tra.";
+        }
+
+        return RedirectToAction(nameof(Index),
+            new { area = "Admin", keyword, categoryId, status, page });
     }
     [HttpGet]
     public async Task<IActionResult> Create(
@@ -682,23 +784,106 @@ CancellationToken cancellationToken = default)
                 variant.SellingUnit,
                 variant.Price,
                 variant.IsAvailable,
-                variant.Version
+                variant.Version,
+                HasOrders = variant.OrderItems.Any(),
+                HasRecipe = variant.Recipe != null
             })
             .ToListAsync(cancellationToken);
 
         var variants = records.Select(variant => new DishVariantAdminRow(
-            variant.Id,
-            variant.Sku,
-            variant.Name,
-            variant.SellingUnit,
-            variant.Price,
-            variant.IsAvailable,
-            Convert.ToBase64String(variant.Version)))
-            .ToList();
+     variant.Id,
+     variant.Sku,
+     variant.Name,
+     variant.SellingUnit,
+     variant.Price,
+     variant.IsAvailable,
+     Convert.ToBase64String(variant.Version),
+     variant.HasOrders,
+     variant.HasRecipe))
+     .ToList();
 
         return View(new DishVariantsViewModel(id, dishName, variants));
     }
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteVariant(
+[FromRoute] long id,
+[FromForm] long variantId,
+[FromForm] string? version,
+CancellationToken cancellationToken = default)
+    {
+        if (!ModelState.IsValid || id <= 0 || variantId <= 0)
+        {
+            return BadRequest("Thông tin khẩu phần không hợp lệ.");
+        }
 
+        IActionResult BackWithError(string message)
+        {
+            TempData["VariantError"] = message;
+            return RedirectToAction(nameof(Variants), new { area = "Admin", id });
+        }
+
+        var expectedVersion = new byte[8];
+
+        if (version == null || version.Length != 12
+            || !Convert.TryFromBase64String(version, expectedVersion, out var bytesWritten)
+            || bytesWritten != expectedVersion.Length)
+        {
+            return BackWithError("Phiên chỉnh sửa không hợp lệ. Anh tải lại trang.");
+        }
+
+        var variants = _context.Set<DishVariant>();
+
+        var result = await variants.AsTracking()
+            .Where(variant => variant.Id == variantId && variant.DishId == id)
+            .Select(variant => new
+            {
+                Variant = variant,
+                HasOrders = variant.OrderItems.Any(),
+                HasRecipe = variant.Recipe != null
+            })
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (result == null)
+        {
+            return BackWithError("Khẩu phần không còn trong danh sách của món này.");
+        }
+
+        if (!result.Variant.Version.SequenceEqual(expectedVersion))
+        {
+            return BackWithError(
+                "Khẩu phần đã được cập nhật. Anh kiểm tra lại trước khi xóa.");
+        }
+
+        if (result.HasOrders || result.HasRecipe)
+        {
+            return BackWithError(
+                "Khẩu phần đã có trong đơn hàng hoặc gắn công thức. "
+                + "Anh có thể chuyển sang Tạm ngừng bán.");
+        }
+
+        variants.Remove(result.Variant);
+
+        try
+        {
+            await _context.SaveChangesAsync(cancellationToken);
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return BackWithError(
+                "Khẩu phần vừa được thay đổi hoặc xóa. Anh kiểm tra lại danh sách.");
+        }
+        catch (DbUpdateException ex) when (
+            ex.InnerException is SqlException sql && sql.Number == 547)
+        {
+            return BackWithError(
+                "Khẩu phần vừa được dữ liệu khác sử dụng nên không thể xóa.");
+        }
+
+        TempData["VariantSuccess"] = $"Đã xóa khẩu phần {result.Variant.Name}.";
+
+        return RedirectToAction(nameof(Variants), new { area = "Admin", id });
+    }
     [HttpPost]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> UpdateVariant(

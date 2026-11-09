@@ -104,5 +104,65 @@
                 </div>
             </div>
         </form>
+        <div class="card-footer d-flex flex-wrap justify-content-between
+            align-items-center gap-2">
+
+            @if (variant.CanDelete)
+            {
+                <span class="small text-body-secondary">
+                    Khẩu phần chưa có đơn hàng hoặc công thức.
+                </span>
+
+                <form asp-area="Admin"
+                      asp-controller="Dishes"
+                      asp-action="DeleteVariant"
+                      asp-route-id="@Model.DishId"
+                      method="post"
+                      data-delete-variant="@variant.Name">
+
+                    <input type="hidden" name="variantId" value="@variant.Id" />
+                    <input type="hidden" name="version" value="@variant.Version" />
+
+                    <button type="submit" class="btn btn-outline-danger btn-sm">
+                        Xóa khẩu phần
+                    </button>
+                </form>
+            }
+            else
+            {
+                <span class="small text-body-secondary">
+                    @if (variant.HasOrders && variant.HasRecipe)
+                    {
+                        <text>Đã có trong đơn hàng và gắn công thức.</text>
+                    }
+                    else if (variant.HasOrders)
+                    {
+                        <text>Đã có trong đơn hàng.</text>
+                    }
+                    else
+                    {
+                        <text>Đang gắn công thức.</text>
+                    }
+                    Có thể chọn Tạm ngừng bán.
+                </span>
+
+                <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
+                    Xóa khẩu phần
+                </button>
+            }
+        </div>
     </div>
+}
+@section Scripts {
+    <script>
+        document.querySelectorAll("form[data-delete-variant]").forEach(form => {
+            form.addEventListener("submit", event => {
+                const name = form.dataset.deleteVariant;
+
+                if (!window.confirm(`Xóa khẩu phần «${name}»?`)) {
+                    event.preventDefault();
+                }
+            });
+        });
+    </script>
 }

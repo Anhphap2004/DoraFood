@@ -5,17 +5,94 @@
     ViewData["Title"] = "Món ăn";
     var culture = CultureInfo.GetCultureInfo("vi-VN");
     var fallbackImage = Url.Content("~/assets/img/dish-placeholder.svg");
+    var hasFilters = Model.Keyword.Length > 0
+        || Model.CategoryId.HasValue
+        || Model.Status != "all";
+    var indexUrl = Url.Action("Index", "Dishes", new { area = "Admin" });
+}
+
+@if (TempData["DishSuccess"] is string success)
+{
+    <div class="alert alert-success" role="status">@success</div>
+}
+
+@if (TempData["DishError"] is string error)
+{
+    <div class="alert alert-warning" role="alert">@error</div>
 }
 
 <div class="card">
-    <div class="card-header">
-        <strong>Danh sách món ăn</strong>
-        <span class="text-body-secondary ms-2">@Model.TotalDishes món</span>
+    <div class="card-header d-flex flex-wrap justify-content-between
+        align-items-center gap-2">
+        <div>
+            <strong>Danh sách món ăn</strong>
+            <div class="small text-body-secondary">@Model.TotalDishes kết quả</div>
+        </div>
+
+        <a class="btn btn-primary"
+           href="@Url.Action("Create", "Dishes", new { area = "Admin" })">
+            + Thêm món ăn
+        </a>
+    </div>
+
+    <div class="card-body border-bottom">
+        <form method="get" action="@indexUrl" class="row g-2 align-items-end">
+            <div class="col-lg-4">
+                <label for="dish-keyword" class="form-label">Tìm món</label>
+                <input id="dish-keyword" name="keyword" type="search"
+                       value="@Model.Keyword" maxlength="200"
+                       placeholder="Nhập tên hoặc slug"
+                       class="form-control" />
+            </div>
+
+            <div class="col-sm-6 col-lg-3">
+                <label for="dish-category" class="form-label">Danh mục</label>
+                <select id="dish-category" name="categoryId" class="form-select">
+                    <option value="">Tất cả danh mục</option>
+                    @foreach (var category in Model.CategoryOptions)
+                    {
+                        <option value="@category.Id"
+                                selected="@(Model.CategoryId == category.Id)">
+                            @category.Name
+                        </option>
+                    }
+                </select>
+            </div>
+
+            <div class="col-sm-6 col-lg-2">
+                <label for="dish-status" class="form-label">Trạng thái</label>
+                <select id="dish-status" name="status" class="form-select">
+                    <option value="all" selected="@(Model.Status == "all")">
+                        Tất cả
+                    </option>
+                    <option value="active" selected="@(Model.Status == "active")">
+                        Đang bật
+                    </option>
+                    <option value="inactive" selected="@(Model.Status == "inactive")">
+                        Đã tắt
+                    </option>
+                </select>
+            </div>
+
+            <div class="col-lg-auto d-flex gap-2">
+                <button type="submit" class="btn btn-outline-primary">Lọc</button>
+                @if (hasFilters)
+                {
+                    <a href="@indexUrl" class="btn btn-outline-secondary">
+                        Xóa bộ lọc
+                    </a>
+                }
+            </div>
+        </form>
     </div>
 
     @if (Model.Dishes.Count == 0)
     {
-        <div class="card-body text-body-secondary">Chưa có món ăn.</div>
+        <div class="card-body text-body-secondary">
+            @(hasFilters
+                ? "Không tìm thấy món phù hợp với bộ lọc."
+                : "Chưa có món ăn. Anh có thể thêm món đầu tiên.")
+        </div>
     }
     else
     {
@@ -23,74 +100,120 @@
             <table class="table table-hover align-middle mb-0">
                 <thead>
                     <tr>
-                        <th scope="col">Tên món</th>
+                        <th scope="col">Món ăn</th>
                         <th scope="col">Danh mục</th>
-                        <th scope="col" class="text-end">Số khẩu phần</th>
-                        <th scope="col" class="text-end">Giá thấp nhất</th>
-                        <th scope="col">Trạng thái món</th>
+                        <th scope="col" class="text-end">Khẩu phần</th>
+                        <th scope="col" class="text-end">Giá đang bán</th>
+                        <th scope="col">Trạng thái</th>
+                        <th scope="col" class="text-end">Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var dish in Model.Dishes)
                     {
+                        var imageUrl = string.IsNullOrWhiteSpace(dish.ImageUrl)
+                            ? fallbackImage
+                            : Url.Content(dish.ImageUrl.Trim());
+
                         <tr>
                             <td>
                                 <div class="d-flex align-items-center gap-3">
-                                    <img src="@(string.IsNullOrWhiteSpace(dish.ImageUrl)
-                                                   ? fallbackImage
-                                                   : Url.Content(dish.ImageUrl.Trim()))"
-                                         alt=""
-                                         width="56"
-                                         height="56"
-                                         loading="lazy"
+                                    <img src="@imageUrl" alt=""
+                                         width="56" height="56" loading="lazy"
                                          class="rounded border object-fit-cover flex-shrink-0"
                                          data-dish-image
                                          data-fallback="@fallbackImage" />
-
-                                    <div>
-                                                   <a class="fw-semibold"
-   href="@Url.Action("Edit", "Dishes",
-       new { area = "Admin", id = dish.Id })">
-    @dish.Name
-</a>
+                                    <div class="text-break">
+                                        <strong>@dish.Name</strong>
                                         <div class="small text-body-secondary">@dish.Slug</div>
-                                                <a class="btn btn-outline-primary btn-sm mt-1"
-   href="@Url.Action("Variants", "Dishes",
-       new { area = "Admin", id = dish.Id })">
-    Quản lý khẩu phần
-</a>
-                                <a class="btn btn-outline-secondary btn-sm mt-1"
-   href="@Url.Action("UploadImage", "Dishes",
-       new { area = "Admin", id = dish.Id })">
-    Tải / đổi ảnh
-</a>
                                     </div>
                                 </div>
                             </td>
+
                             <td>@dish.CategoryName</td>
                             <td class="text-end">@dish.VariantCount</td>
-                            <td class="text-end text-nowrap">
+
+                            <td class="text-end">
                                 @if (dish.LowestAvailablePrice is decimal price)
                                 {
-                                    <span>Từ @price.ToString("N0", culture) ₫</span>
+                                    <span class="text-nowrap">
+                                        Từ @price.ToString("#,0.##", culture) ₫
+                                    </span>
                                 }
                                 else
                                 {
-                                    <span class="text-body-secondary">
+                                    <span class="small text-body-secondary">
                                         @(dish.VariantCount == 0
                                             ? "Chưa có khẩu phần"
-                                            : "Hết khẩu phần đang bán")
+                                            : "Mọi khẩu phần đã ngừng bán")
                                     </span>
                                 }
                             </td>
+
                             <td>
-                                @if (dish.IsActive)
+                                <span class="badge @(dish.IsActive
+                                              ? "text-bg-success"
+                                              : "text-bg-secondary")">
+                                    @(dish.IsActive ? "Đang bật" : "Đã tắt")
+                                </span>
+                            </td>
+
+                            <td class="text-end">
+                                <div class="d-flex flex-wrap justify-content-end gap-2">
+                                    <a class="btn btn-outline-primary btn-sm"
+                                       href="@Url.Action("Edit", "Dishes",
+                                           new { area = "Admin", id = dish.Id })">
+                                        Sửa
+                                    </a>
+
+                                    <a class="btn btn-outline-secondary btn-sm"
+                                       href="@Url.Action("Variants", "Dishes",
+                                           new { area = "Admin", id = dish.Id })">
+                                        Khẩu phần
+                                    </a>
+
+                                    <a class="btn btn-outline-secondary btn-sm"
+                                       href="@Url.Action("UploadImage", "Dishes",
+                                           new { area = "Admin", id = dish.Id })">
+                                        Ảnh
+                                    </a>
+
+                                    @if (dish.CanDelete)
+                                    {
+                                        <form asp-area="Admin"
+                                              asp-controller="Dishes"
+                                              asp-action="Delete"
+                                              asp-route-id="@dish.Id"
+                                              method="post"
+                                              data-delete-name="@dish.Name">
+                                            <input type="hidden" name="keyword" value="@Model.Keyword" />
+                                            <input type="hidden" name="categoryId" value="@Model.CategoryId" />
+                                            <input type="hidden" name="status" value="@Model.Status" />
+                                            <input type="hidden" name="page" value="@Model.Page" />
+
+                                            <button type="submit"
+                                                    class="btn btn-outline-danger btn-sm">
+                                                Xóa
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <button type="button"
+                                                class="btn btn-outline-secondary btn-sm"
+                                                disabled>
+                                            Xóa
+                                        </button>
+                                    }
+                                </div>
+
+                                @if (!dish.CanDelete)
                                 {
-                                    <span class="badge text-bg-success">Đang bật</span>
-                                }
-                                else
-                                {
-                                    <span class="badge text-bg-secondary">Đã tắt</span>
+                                    <div class="small text-body-secondary mt-1">
+                                        @(dish.VariantCount > 0
+                                            ? "Còn khẩu phần"
+                                            : "Còn ảnh, đánh giá hoặc món thêm")
+                                    </div>
                                 }
                             </td>
                         </tr>
@@ -101,12 +224,18 @@
 
         @if (Model.TotalPages > 1)
         {
-            <div class="card-footer d-flex align-items-center gap-2">
+            <div class="card-footer d-flex flex-wrap align-items-center gap-2">
                 @if (Model.Page > 1)
                 {
                     <a class="btn btn-outline-secondary btn-sm"
-                       href="@Url.Action("Index", "Dishes",
-                           new { area = "Admin", page = Model.Page - 1 })">
+                       href="@Url.Action("Index", "Dishes", new
+                       {
+                           area = "Admin",
+                           page = Model.Page - 1,
+                           keyword = Model.Keyword,
+                           categoryId = Model.CategoryId,
+                           status = Model.Status
+                       })">
                         Trang trước
                     </a>
                 }
@@ -116,8 +245,14 @@
                 @if (Model.Page < Model.TotalPages)
                 {
                     <a class="btn btn-outline-secondary btn-sm"
-                       href="@Url.Action("Index", "Dishes",
-                           new { area = "Admin", page = Model.Page + 1 })">
+                       href="@Url.Action("Index", "Dishes", new
+                       {
+                           area = "Admin",
+                           page = Model.Page + 1,
+                           keyword = Model.Keyword,
+                           categoryId = Model.CategoryId,
+                           status = Model.Status
+                       })">
                         Trang sau
                     </a>
                 }
@@ -125,7 +260,17 @@
         }
     }
 </div>
+
 @section Scripts {
-    <script src="@Url.Content("~/assets/js/dorafood-dish-details.js")"
-            defer></script>
+    <script src="@Url.Content("~/assets/js/dorafood-dish-details.js")" defer></script>
+
+    <script>
+        document.querySelectorAll("form[data-delete-name]").forEach(form => {
+            form.addEventListener("submit", event => {
+                if (!window.confirm(`Xóa món «${form.dataset.deleteName}»?`)) {
+                    event.preventDefault();
+                }
+            });
+        });
+    </script>
 }
