@@ -73,8 +73,8 @@ public sealed class ProfileOrdersController : Controller
 
     [HttpGet("{id:long}", Name = "DoraFood.MyOrderDetails")]
     public async Task<IActionResult> Details(
-        [FromRoute] long id,
-        CancellationToken cancellationToken)
+    [FromRoute] long id,
+    CancellationToken cancellationToken)
     {
         if (await GetActiveUserIdAsync(cancellationToken) is not long userId)
         {
@@ -122,6 +122,23 @@ public sealed class ProfileOrdersController : Controller
                 item.Status))
             .ToListAsync(cancellationToken);
 
+        var history = await (
+            from entry in _context.Set<OrderStatusHistory>().AsNoTracking()
+            join ownedOrder in orders on entry.OrderId equals ownedOrder.Id
+            where ownedOrder.Id == id
+                && (entry.FromStatus != null || entry.ToStatus != "OPEN")
+            orderby entry.ChangedAtUtc, entry.Id
+            select new MyOrderHistoryRow(
+                entry.ToStatus,
+                entry.ChangedAtUtc,
+                false))
+            .ToListAsync(cancellationToken);
+
+        history.Insert(0, new MyOrderHistoryRow(
+            "OPEN",
+            order.OpenedAtUtc,
+            true));
+
         var summary = new MyOrderRow(
             order.Id,
             order.Code,
@@ -129,13 +146,18 @@ public sealed class ProfileOrdersController : Controller
             order.Status,
             order.PaymentAmount ?? items.Sum(item => item.LineTotal));
 
-        return View(new MyOrderDetailsViewModel(
+        var model = new MyOrderDetailsViewModel(
             summary,
             order.GuestName,
             order.GuestPhone,
             order.DeliveryAddress,
             order.Note,
-            items));
+            items)
+        {
+            History = history
+        };
+
+        return View(model);
     }
     [HttpPost("{id:long}/huy", Name = "DoraFood.CancelMyOrder")]
     [ValidateAntiForgeryToken]

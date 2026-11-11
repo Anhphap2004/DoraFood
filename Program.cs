@@ -2,6 +2,8 @@ using DoraFood.Data;
 using DoraFood.Models;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Identity;
+using System.Security.Claims;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using DoraFood.Services;
 
@@ -56,6 +58,58 @@ builder.Services.AddAuthorization();
 // Tự động hủy yêu cầu đặt bàn quá hạn.
 builder.Services.AddHostedService<BookingExpiryService>();
 builder.Services.AddSingleton<DoraFood.Services.CartStore>();
+
+builder.Services.PostConfigure<CookieAuthenticationOptions>(
+    CookieAuthenticationDefaults.AuthenticationScheme,
+    options =>
+    {
+        var previousValidation = options.Events.OnValidatePrincipal;
+
+        options.Events.OnValidatePrincipal = async context =>
+        {
+            await previousValidation(context);
+
+            if (context.Principal?.Identity?.IsAuthenticated != true)
+            {
+                return;
+            }
+
+            var userIdClaim = context.Principal.FindFirstValue(
+                ClaimTypes.NameIdentifier);
+
+            var stampClaim = context.Principal.FindFirstValue("SecurityStamp");
+
+            long userId = 0;
+            Guid stamp = Guid.Empty;
+
+            var hasValidClaims =
+                long.TryParse(userIdClaim, out userId)
+                && Guid.TryParse(stampClaim, out stamp);
+
+            if (hasValidClaims)
+            {
+                var db = context.HttpContext.RequestServices
+                    .GetRequiredService<DoraFoodContext>();
+
+                var isValidSession = await db.Set<DoraFood.Models.User>()
+                    .AsNoTracking()
+                    .AnyAsync(
+                        user => user.Id == userId
+                            && user.IsActive
+                            && user.SecurityStamp == stamp,
+                        context.HttpContext.RequestAborted);
+
+                if (isValidSession)
+                {
+                    return;
+                }
+            }
+
+            context.RejectPrincipal();
+
+            await context.HttpContext.SignOutAsync(context.Scheme.Name);
+        };
+    });
 var app = builder.Build();
 
 // Xử lý lỗi ngoài môi trường Development.

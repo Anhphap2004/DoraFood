@@ -46,7 +46,12 @@
                             @successMessage
                         </div>
                     }
-
+                    @if (TempData["PasswordSuccess"] is string passwordMessage)
+                    {
+                        <div class="alert alert-success" role="status">
+                            @passwordMessage
+                        </div>
+                    }
                     <form action="@Url.Action("Login", "Account")"
                           method="post">
 

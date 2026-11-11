@@ -50,4 +50,25 @@ public sealed record MyOrderDetailsViewModel(
     string? PhoneNumber,
     string? DeliveryAddress,
     string? Note,
-    IReadOnlyList<MyOrderItemRow> Items);
+    IReadOnlyList<MyOrderItemRow> Items)
+{
+    public IReadOnlyList<MyOrderHistoryRow> History { get; init; }
+        = Array.Empty<MyOrderHistoryRow>();
+}
+
+public sealed record MyOrderHistoryRow(
+    string Status,
+    DateTime ChangedAtUtc,
+    bool IsInitial)
+{
+    public string Title => IsInitial
+        ? "Đã đặt đơn"
+        : Status switch
+        {
+            "OPEN" => "Chuyển về chờ tiếp nhận",
+            "IN_PROGRESS" => "Quán đang xử lý đơn",
+            "COMPLETED" => "Đơn đã hoàn tất",
+            "CANCELLED" => "Đơn đã hủy",
+            _ => "Cập nhật trạng thái"
+        };
+}

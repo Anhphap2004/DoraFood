@@ -1,16 +1,17 @@
-﻿@model DoraFood.ViewModels.UserProfileViewModel
-
+﻿@using System
+@using System.Linq
+@using System.Globalization
+@model DoraFood.ViewModels.UserProfileViewModel
 @{
     ViewData["Title"] = "Tài khoản của tôi";
-
-    var avatarUrl = Url.IsLocalUrl(Model.AvatarUrl)
-        ? Url.Content(Model.AvatarUrl)
+    var displayName = !string.IsNullOrWhiteSpace(Model.DisplayName)
+        ? Model.DisplayName.Trim()
+        : (!string.IsNullOrWhiteSpace(Model.UserName) ? Model.UserName.Trim() : "Bạn");
+    var requestedAvatar = Model.AvatarUrl?.Trim();
+    var avatarUrl = !string.IsNullOrWhiteSpace(requestedAvatar) && Url.IsLocalUrl(requestedAvatar)
+        ? Url.Content(requestedAvatar)
         : null;
-
-    var initial = System.Globalization.StringInfo
-        .GetNextTextElement(Model.DisplayName)
-        .ToUpperInvariant();
-
+    var initial = StringInfo.GetNextTextElement(displayName).ToUpperInvariant();
     var gender = Model.Gender?.Trim().ToUpperInvariant() switch
     {
         "MALE" => "Nam",
@@ -18,159 +19,1249 @@
         "OTHER" => "Khác",
         _ => Model.Gender
     };
-
-    string ShowValue(string? value) =>
-        string.IsNullOrWhiteSpace(value) ? "Chưa cập nhật" : value;
+    var joinedAt = Model.CreatedAtUtc.AddHours(7);
+    var hasEmail = !string.IsNullOrWhiteSpace(Model.Email);
+    var emailVerified = hasEmail && Model.EmailConfirmed;
+    var emailStatus = !hasEmail ? "Chưa thêm email" : (emailVerified ? "Email đã xác thực" : "Email chưa xác thực");
+    var profileFields = new[]
+    {
+        new { Label = "Họ và tên", Filled = !string.IsNullOrWhiteSpace(Model.FullName) },
+        new { Label = "Email", Filled = hasEmail },
+        new { Label = "Số điện thoại", Filled = !string.IsNullOrWhiteSpace(Model.PhoneNumber) },
+        new { Label = "Ngày sinh", Filled = !string.IsNullOrWhiteSpace(Model.DateOfBirth) },
+        new { Label = "Giới tính", Filled = !string.IsNullOrWhiteSpace(Model.Gender) },
+        new { Label = "Ảnh đại diện", Filled = !string.IsNullOrEmpty(avatarUrl) }
+    };
+    var filledFields = profileFields.Count(field => field.Filled);
+    var totalFields = profileFields.Length;
+    var missingFields = profileFields.Where(field => !field.Filled).Select(field => field.Label).ToArray();
+    var completionPercent = (int)Math.Round(filledFields * 100.0 / totalFields, MidpointRounding.AwayFromZero);
+    string ShowValue(string? value) => string.IsNullOrWhiteSpace(value) ? "Chưa cập nhật" : value;
 }
 
-<section class="py-5 bg-light">
-    <div class="container">
-        <div class="mb-4">
-            <h1 class="h2 fw-bold mb-2">Tài khoản của tôi</h1>
-            <p class="text-muted mb-0">
-                Xem thông tin tài khoản và hồ sơ cá nhân của anh tại DoraFood.
-            </p>
-        </div>
+<style>
+    /* Chỉ áp dụng cho trang hồ sơ này, không đổi navbar hoặc trang khác. */
+    .dpf {
+        --pf-red: #a71930;
+        --pf-red-deep: #7d1428;
+        --pf-ink: #30252b;
+        --pf-muted: #80737b;
+        --pf-line: #eee4e8;
+        --pf-soft: #fcf7f8;
+        --pf-gold: #af8d5d;
+        padding: 32px 0 52px;
+        background: radial-gradient(ellipse at 95% 0%,#f5e6ea80,transparent 40%),#faf8f9;
+        color: var(--pf-ink);
+        font-family: "Open Sans","Segoe UI",Arial,sans-serif;
+        font-size: 14px;
+        line-height: 1.75
+    }
 
-        <div class="row g-4">
-            <aside class="col-lg-4">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-body p-4 text-center">
-                        @if (!string.IsNullOrEmpty(avatarUrl))
-                        {
-                            <img src="@avatarUrl"
-                                 alt="Ảnh đại diện của @Model.DisplayName"
-                                 width="88"
-                                 height="88"
-                                 class="rounded-circle mb-3"
-                                 style="object-fit: cover;" />
-                        }
-                        else
-                        {
-                            <div class="d-inline-flex align-items-center
-                                        justify-content-center rounded-circle
-                                        bg-primary text-white fs-2 fw-bold mb-3"
-                                 style="width: 88px; height: 88px;"
-                                 aria-hidden="true">
-                                @initial
-                            </div>
-                        }
+        .dpf * {
+            box-sizing: border-box
+        }
 
-                        <h2 class="h5 fw-bold text-break mb-1">
-                            @Model.DisplayName
-                        </h2>
+        .dpf .dpf-container {
+            width: calc(100% - 48px);
+            max-width: 1290px;
+            margin: 0 auto
+        }
 
-                        <p class="text-muted text-break mb-0">
-                            @Model.UserName
-                        </p>
-                    </div>
+        .dpf :is(h1,h2,h3,p,dl,dd) {
+            margin: 0
+        }
+
+        .dpf .dpf-page-title, .dpf .dpf-name, .dpf .dpf-card-title {
+            font-family: "Open Sans","Segoe UI",Arial,sans-serif !important;
+            letter-spacing: -.6px;
+            font-weight: 700 !important;
+            color: var(--pf-ink)
+        }
+
+        .dpf a {
+            text-decoration: none
+        }
+
+            .dpf a:focus-visible {
+                outline: 3px solid #ba3851;
+                outline-offset: 4px
+            }
+
+        .dpf .dpf-icon {
+            display: block;
+            width: 20px;
+            height: 20px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 1.7;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex-shrink: 0
+        }
+
+        .dpf .dpf-symbols {
+            position: absolute;
+            width: 0;
+            height: 0;
+            overflow: hidden;
+            pointer-events: none
+        }
+
+        .dpf .dpf-breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            margin-bottom: 16px;
+            color: #9b8992;
+            font-size: 11px
+        }
+
+            .dpf .dpf-breadcrumb a {
+                color: #88737e
+            }
+
+                .dpf .dpf-breadcrumb a:hover {
+                    color: var(--pf-red)
+                }
+
+            .dpf .dpf-breadcrumb > span:last-child {
+                color: #67545e
+            }
+
+        .dpf .dpf-page-heading {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            margin-bottom: 24px
+        }
+
+        .dpf .dpf-page-title {
+            font-size: clamp(26px,2.7vw,33px);
+            line-height: 1.4;
+            margin-bottom: 7px
+        }
+
+        .dpf .dpf-page-description {
+            color: var(--pf-muted);
+            font-size: 14px;
+            line-height: 1.8
+        }
+
+        .dpf .dpf-page-signature {
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            flex-shrink: 0;
+            color: #9d7f62;
+            font-size: 9px;
+            font-weight: 600;
+            letter-spacing: 1.6px
+        }
+
+            .dpf .dpf-page-signature > span {
+                font-size: 17px;
+                font-weight: 400;
+                letter-spacing: 0
+            }
+        /* Thông báo nằm ngoài các trường dữ liệu. */
+        .dpf .dpf-alert {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 14px 18px;
+            margin-bottom: 19px;
+            border: 1px solid;
+            border-radius: 12px;
+            font-size: 13px;
+            overflow-wrap: anywhere
+        }
+
+            .dpf .dpf-alert .dpf-icon {
+                width: 18px;
+                height: 18px;
+                margin-top: 3px
+            }
+
+        .dpf .dpf-alert-success {
+            border-color: #d5e7dd;
+            background: #f0f8f3;
+            color: #2d7352
+        }
+
+        .dpf .dpf-alert-warning {
+            border-color: #f0dfc3;
+            background: #fff8ec;
+            color: #8a621f
+        }
+        /* Thẻ nhận diện chạy ngang. */
+        .dpf .dpf-hero {
+            position: relative;
+            overflow: hidden;
+            background: #fff;
+            border: 1px solid #e9dbe1;
+            border-radius: 20px;
+            box-shadow: 0 8px 30px #54213305;
+            margin-bottom: 22px
+        }
+
+            .dpf .dpf-hero::before {
+                position: absolute;
+                inset: 0 0 auto;
+                height: 4px;
+                background: linear-gradient(90deg,#97172e 0%,#ba3b50 50%,#c4a176 100%);
+                content: ""
+            }
+
+        .dpf .dpf-hero-main {
+            display: flex;
+            align-items: center;
+            gap: 23px;
+            padding: 27px 30px 23px;
+            background: radial-gradient(ellipse at 100% 0%,#fbf1f4,transparent 53%)
+        }
+
+        .dpf .dpf-avatar-link {
+            display: grid;
+            justify-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+            color: var(--pf-red);
+            font-size: 11px;
+            font-weight: 600
+        }
+
+        .dpf .dpf-avatar-shell {
+            position: relative;
+            display: block;
+            width: 94px;
+            height: 94px;
+            padding: 5px;
+            border: 1px solid #e7ccd5;
+            border-radius: 50%;
+            background: #fff
+        }
+
+        .dpf .dpf-avatar {
+            position: relative;
+            display: grid;
+            place-items: center;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: linear-gradient(135deg,#b42a43,#7b1329);
+            color: #fff
+        }
+
+        .dpf .dpf-avatar-letter {
+            font-size: 30px;
+            font-weight: 600;
+            line-height: 1
+        }
+
+        .dpf .dpf-avatar-image {
+            position: absolute;
+            inset: 0;
+            display: block;
+            width: 100%;
+            height: 100%;
+            object-fit: cover
+        }
+
+            .dpf .dpf-avatar-image[hidden] {
+                display: none !important
+            }
+
+        .dpf .dpf-avatar-camera {
+            position: absolute;
+            right: -1px;
+            bottom: 0;
+            display: grid;
+            place-items: center;
+            width: 28px;
+            height: 28px;
+            border: 3px solid #fff;
+            border-radius: 50%;
+            background: var(--pf-red);
+            color: #fff
+        }
+
+            .dpf .dpf-avatar-camera .dpf-icon {
+                width: 13px;
+                height: 13px
+            }
+
+        .dpf .dpf-identity {
+            min-width: 0;
+            flex: 1
+        }
+
+        .dpf .dpf-eyebrow {
+            display: block;
+            color: #a17c86;
+            font-size: 9px;
+            line-height: 1.7;
+            font-weight: 600;
+            letter-spacing: 1.7px;
+            margin-bottom: 7px
+        }
+
+        .dpf .dpf-name {
+            font-size: clamp(20px,2.1vw,27px);
+            line-height: 1.4;
+            overflow-wrap: anywhere;
+            margin-bottom: 4px
+        }
+
+        .dpf .dpf-handle {
+            font-size: 12px;
+            color: var(--pf-muted);
+            overflow-wrap: anywhere
+        }
+
+        .dpf .dpf-identity-note {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #937d87;
+            line-height: 1.8
+        }
+
+        .dpf .dpf-hero-actions {
+            display: grid;
+            justify-items: end;
+            gap: 10px;
+            flex-shrink: 0;
+            max-width: 250px
+        }
+
+        .dpf .dpf-primary-button {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            min-height: 44px;
+            padding: 11px 19px;
+            border: 1px solid var(--pf-red);
+            border-radius: 9px;
+            background: var(--pf-red);
+            color: #fff;
+            font-size: 13px;
+            font-weight: 600;
+            line-height: 1.6;
+            transition: background .2s ease,box-shadow .2s ease
+        }
+
+            .dpf .dpf-primary-button .dpf-icon {
+                width: 17px;
+                height: 17px
+            }
+
+            .dpf .dpf-primary-button:hover {
+                background: var(--pf-red-deep);
+                border-color: var(--pf-red-deep);
+                color: #fff;
+                box-shadow: 0 5px 16px #a7193015
+            }
+
+        .dpf .dpf-hero-action-note {
+            font-size: 10px;
+            color: #a18b95;
+            text-align: right
+        }
+        /* Dữ liệu tóm tắt có sẵn trong model. */
+        .dpf .dpf-summary {
+            display: grid;
+            grid-template-columns: repeat(3,minmax(0,1fr));
+            padding: 18px 30px;
+            border-top: 1px solid #f1e5e9;
+            background: #fffcfd;
+            gap: 23px
+        }
+
+        .dpf .dpf-summary-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            min-width: 0
+        }
+
+            .dpf .dpf-summary-item + .dpf-summary-item {
+                border-left: 1px solid var(--pf-line);
+                padding-left: 23px
+            }
+
+        .dpf .dpf-summary-icon {
+            display: grid;
+            place-items: center;
+            flex-shrink: 0;
+            width: 35px;
+            height: 35px;
+            border: 1px solid #efdee4;
+            border-radius: 10px;
+            background: #fff;
+            color: #a77d8a
+        }
+
+            .dpf .dpf-summary-icon .dpf-icon {
+                width: 17px;
+                height: 17px
+            }
+
+        .dpf .dpf-summary-item > div {
+            min-width: 0
+        }
+
+        .dpf .dpf-summary-label {
+            display: block;
+            color: #8a747f;
+            font-size: 11px;
+            margin-bottom: 2px
+        }
+
+        .dpf .dpf-summary-value {
+            display: block;
+            color: #60434f;
+            font-size: 13px;
+            font-weight: 600;
+            line-height: 1.7;
+            overflow-wrap: anywhere
+        }
+
+            .dpf .dpf-summary-value.is-verified {
+                color: #377b5d
+            }
+        /* Hai cột cân đối trên desktop. */
+        .dpf .dpf-content-grid {
+            display: grid;
+            grid-template-columns: minmax(0,1.45fr) minmax(0,1fr);
+            gap: 22px;
+            align-items: stretch
+        }
+
+        .dpf .dpf-card {
+            min-width: 0;
+            border: 1px solid var(--pf-line);
+            border-radius: 17px;
+            background: #fff;
+            box-shadow: 0 4px 18px #41202d03
+        }
+
+        .dpf .dpf-card-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 18px;
+            padding: 22px 25px 19px;
+            border-bottom: 1px solid #f3ebee
+        }
+
+        .dpf .dpf-card-title {
+            font-size: 16px;
+            line-height: 1.6
+        }
+
+        .dpf .dpf-card-subtitle {
+            font-size: 12px;
+            color: #97838d;
+            line-height: 1.8;
+            margin-top: 3px
+        }
+
+        .dpf .dpf-card-symbol {
+            display: grid;
+            place-items: center;
+            flex-shrink: 0;
+            width: 35px;
+            height: 35px;
+            border: 1px solid #f0e1e6;
+            border-radius: 10px;
+            color: var(--pf-red);
+            background: #fff9fb
+        }
+
+            .dpf .dpf-card-symbol .dpf-icon {
+                width: 17px;
+                height: 17px
+            }
+
+        .dpf .dpf-info-body {
+            padding: 4px 25px 22px
+        }
+
+        .dpf .dpf-info-grid {
+            display: grid;
+            grid-template-columns: repeat(2,minmax(0,1fr));
+            column-gap: 26px
+        }
+
+        .dpf .dpf-info-field {
+            min-width: 0;
+            padding: 18px 0 17px;
+            border-bottom: 1px solid #f2e9ed
+        }
+
+            .dpf .dpf-info-field dt {
+                color: #8a747f;
+                font-size: 12px;
+                font-weight: 400;
+                line-height: 1.7;
+                margin-bottom: 6px
+            }
+
+            .dpf .dpf-info-field dd {
+                color: #49353f;
+                font-size: 15px;
+                font-weight: 600;
+                line-height: 1.8;
+                overflow-wrap: anywhere
+            }
+
+                .dpf .dpf-info-field dd.is-empty {
+                    color: #a18b96;
+                    font-size: 13px;
+                    font-weight: 400
+                }
+
+        .dpf .dpf-info-field-wide {
+            grid-column: 1/-1
+        }
+
+        .dpf .dpf-email-value {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 7px 10px
+        }
+
+        .dpf .dpf-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 3px 8px;
+            border: 1px solid;
+            border-radius: 20px;
+            font-size: 9px;
+            font-weight: 600;
+            line-height: 1.7;
+            letter-spacing: 0;
+            vertical-align: middle
+        }
+
+            .dpf .dpf-badge .dpf-icon {
+                width: 11px;
+                height: 11px
+            }
+
+        .dpf .dpf-badge-verified {
+            background: #f1f8f4;
+            border-color: #d5e8dd;
+            color: #377b5d
+        }
+
+        .dpf .dpf-badge-pending {
+            background: #fff8ed;
+            border-color: #eddfc7;
+            color: #916b2e
+        }
+
+        .dpf .dpf-info-footer {
+            display: flex;
+            align-items: flex-start;
+            gap: 9px;
+            margin-top: 21px;
+            padding: 13px 14px;
+            border-radius: 10px;
+            background: #fcf7f8;
+            color: #8b707d;
+            font-size: 12px;
+            line-height: 1.8
+        }
+
+            .dpf .dpf-info-footer .dpf-icon {
+                width: 15px;
+                height: 15px;
+                margin-top: 2px;
+                color: #b58997
+            }
+        /* Các nút được gom về cùng một cột, không chèn trong dữ liệu. */
+        .dpf .dpf-side {
+            display: grid;
+            gap: 18px;
+            align-content: start;
+            min-width: 0
+        }
+
+        .dpf .dpf-shortcuts {
+            padding: 5px 20px 10px
+        }
+
+        .dpf .dpf-shortcut {
+            display: flex;
+            align-items: center;
+            gap: 13px;
+            padding: 15px 0;
+            color: inherit;
+            min-height: 72px
+        }
+
+            .dpf .dpf-shortcut + .dpf-shortcut {
+                border-top: 1px solid #f2e9ed
+            }
+
+        .dpf .dpf-shortcut-icon {
+            display: grid;
+            place-items: center;
+            width: 37px;
+            height: 37px;
+            flex-shrink: 0;
+            border: 1px solid #eedee4;
+            border-radius: 11px;
+            background: #fff8fa;
+            color: var(--pf-red)
+        }
+
+            .dpf .dpf-shortcut-icon .dpf-icon {
+                width: 18px;
+                height: 18px
+            }
+
+        .dpf .dpf-shortcut-copy {
+            display: block;
+            min-width: 0;
+            flex: 1
+        }
+
+        .dpf .dpf-shortcut-title {
+            display: block;
+            color: #59404c;
+            font-size: 14px;
+            font-weight: 600;
+            line-height: 1.7
+        }
+
+        .dpf .dpf-shortcut-description {
+            display: block;
+            font-size: 12px;
+            color: #9b8691;
+            line-height: 1.7;
+            margin-top: 2px
+        }
+
+        .dpf .dpf-shortcut-arrow {
+            color: #b49ba6;
+            font-size: 20px;
+            line-height: 1;
+            transition: transform .2s ease
+        }
+
+        .dpf .dpf-shortcut:hover .dpf-shortcut-title {
+            color: var(--pf-red)
+        }
+
+        .dpf .dpf-shortcut:hover .dpf-shortcut-arrow {
+            color: var(--pf-red);
+            transform: translateX(3px)
+        }
+        /* Hoàn thiện hồ sơ: tính từ 6 thông tin hiện có, không có điểm thưởng giả. */
+        .dpf .dpf-completion {
+            position: relative;
+            padding: 20px 23px;
+            border-color: #ead4dc;
+            background: linear-gradient(115deg,#fffafa,#fdf3f6);
+            overflow: hidden
+        }
+
+        .dpf .dpf-completion-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 14px;
+            margin-bottom: 11px
+        }
+
+            .dpf .dpf-completion-heading h2 {
+                font-family: "Open Sans","Segoe UI",Arial,sans-serif !important;
+                font-size: 13px;
+                font-weight: 700 !important;
+                color: #6e3247;
+                line-height: 1.6;
+                letter-spacing: -.1px
+            }
+
+            .dpf .dpf-completion-heading strong {
+                font-size: 17px;
+                font-weight: 700;
+                color: var(--pf-red)
+            }
+
+        .dpf .dpf-progress {
+            display: block;
+            width: 100%;
+            height: 6px;
+            border: 0;
+            border-radius: 10px;
+            overflow: hidden;
+            background: #efdee4;
+            color: var(--pf-red);
+            appearance: none
+        }
+
+            .dpf .dpf-progress::-webkit-progress-bar {
+                background: #efdee4;
+                border-radius: 10px
+            }
+
+            .dpf .dpf-progress::-webkit-progress-value {
+                background: linear-gradient(90deg,#a71930,#c85d76);
+                border-radius: 10px
+            }
+
+            .dpf .dpf-progress::-moz-progress-bar {
+                background: #a71930;
+                border-radius: 10px
+            }
+
+        .dpf .dpf-completion-text {
+            margin-top: 10px;
+            color: #8e6675;
+            font-size: 11px;
+            line-height: 1.8
+        }
+
+        .dpf .dpf-missing-fields {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            list-style: none;
+            padding: 0;
+            margin: 10px 0 0
+        }
+
+            .dpf .dpf-missing-fields li {
+                padding: 3px 8px;
+                border: 1px solid #ecd7df;
+                border-radius: 6px;
+                background: #ffffffb3;
+                font-size: 10px;
+                color: #906575
+            }
+
+        .dpf .dpf-page-footnote {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+            margin-top: 21px;
+            color: #ac939e;
+            font-size: 10px;
+            line-height: 1.8
+        }
+
+            .dpf .dpf-page-footnote strong {
+                color: #b18c5d;
+                font-size: 9px;
+                letter-spacing: 1.1px;
+                font-weight: 600
+            }
+
+    @@media(max-width:1050px) {
+        .dpf .dpf-content-grid {
+            grid-template-columns: minmax(0,1.15fr) minmax(0,1fr);
+            gap: 18px
+        }
+
+        .dpf .dpf-hero-main {
+            padding: 25px;
+            gap: 19px
+        }
+
+        .dpf .dpf-hero-actions {
+            max-width: 210px
+        }
+
+        .dpf .dpf-summary {
+            padding-inline: 25px;
+            gap: 16px
+        }
+
+        .dpf .dpf-summary-item + .dpf-summary-item {
+            padding-left: 16px
+        }
+
+        .dpf .dpf-summary-value {
+            font-size: 12px
+        }
+
+        .dpf .dpf-card-head {
+            padding-inline: 21px
+        }
+
+        .dpf .dpf-info-body {
+            padding-inline: 21px
+        }
+
+        .dpf .dpf-info-grid {
+            column-gap: 20px
+        }
+
+        .dpf .dpf-info-field dd {
+            font-size: 13px
+        }
+
+        .dpf .dpf-hero-action-note {
+            font-size: 9px
+        }
+    }
+
+    @@media(max-width:820px) {
+        .dpf .dpf-container {
+            width: calc(100% - 36px)
+        }
+
+        .dpf .dpf-page-signature {
+            display: none
+        }
+
+        .dpf .dpf-hero-main {
+            flex-wrap: wrap;
+            gap: 17px;
+            padding: 24px
+        }
+
+        .dpf .dpf-identity {
+            flex-basis: calc(100% - 117px)
+        }
+
+        .dpf .dpf-hero-actions {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            max-width: none;
+            flex-basis: 100%;
+            padding-top: 17px;
+            border-top: 1px solid #f0e3e8
+        }
+
+        .dpf .dpf-hero-action-note {
+            text-align: left;
+            font-size: 10px
+        }
+
+        .dpf .dpf-content-grid {
+            grid-template-columns: 1fr;
+            gap: 18px
+        }
+
+        .dpf .dpf-side {
+            grid-template-columns: 1.1fr 1fr;
+            align-items: start;
+            gap: 18px
+        }
+
+        .dpf .dpf-completion {
+            padding: 20px
+        }
+
+        .dpf .dpf-summary {
+            padding-inline: 24px;
+            gap: 13px
+        }
+
+        .dpf .dpf-summary-item {
+            gap: 9px
+        }
+
+            .dpf .dpf-summary-item + .dpf-summary-item {
+                padding-left: 13px
+            }
+
+        .dpf .dpf-summary-icon {
+            width: 30px;
+            height: 32px
+        }
+
+        .dpf .dpf-shortcut {
+            padding: 13px 0
+        }
+
+        .dpf .dpf-shortcuts {
+            padding-inline: 18px
+        }
+
+        .dpf .dpf-info-field-wide {
+            grid-column: auto
+        }
+
+        .dpf .dpf-card-subtitle {
+            font-size: 11px
+        }
+    }
+
+    @@media(max-width:575.98px) {
+        .dpf {
+            padding: 23px 0 35px
+        }
+
+            .dpf .dpf-container {
+                width: calc(100% - 28px)
+            }
+
+            .dpf .dpf-page-heading {
+                margin-bottom: 19px
+            }
+
+            .dpf .dpf-page-title {
+                font-size: 25px
+            }
+
+            .dpf .dpf-page-description {
+                font-size: 12px
+            }
+
+            .dpf .dpf-breadcrumb {
+                font-size: 10px;
+                margin-bottom: 12px
+            }
+
+            .dpf .dpf-hero {
+                border-radius: 15px;
+                margin-bottom: 17px
+            }
+
+            .dpf .dpf-hero-main {
+                padding: 22px 19px 18px;
+                gap: 16px
+            }
+
+            .dpf .dpf-avatar-shell {
+                width: 76px;
+                height: 76px;
+                padding: 4px
+            }
+
+            .dpf .dpf-avatar-letter {
+                font-size: 25px
+            }
+
+            .dpf .dpf-avatar-camera {
+                width: 25px;
+                height: 25px;
+                border-width: 2px
+            }
+
+            .dpf .dpf-avatar-link {
+                font-size: 10px
+            }
+
+            .dpf .dpf-identity {
+                flex-basis: calc(100% - 92px)
+            }
+
+            .dpf .dpf-eyebrow {
+                font-size: 8px;
+                letter-spacing: 1.3px
+            }
+
+            .dpf .dpf-name {
+                font-size: 20px
+            }
+
+            .dpf .dpf-handle {
+                font-size: 11px
+            }
+
+            .dpf .dpf-identity-note {
+                font-size: 10px;
+                margin-top: 8px
+            }
+
+            .dpf .dpf-hero-actions {
+                align-items: flex-start;
+                gap: 12px
+            }
+
+            .dpf .dpf-primary-button {
+                font-size: 12px;
+                padding: 10px 14px;
+                gap: 8px
+            }
+
+            .dpf .dpf-hero-action-note {
+                font-size: 9px;
+                max-width: 125px;
+                line-height: 1.8
+            }
+
+            .dpf .dpf-summary {
+                grid-template-columns: 1fr;
+                padding: 0 19px;
+                gap: 0
+            }
+
+            .dpf .dpf-summary-item {
+                padding: 12px 0;
+                gap: 12px
+            }
+
+                .dpf .dpf-summary-item + .dpf-summary-item {
+                    padding: 12px 0;
+                    border-left: 0;
+                    border-top: 1px solid #f1e5e9
+                }
+
+                .dpf .dpf-summary-item > div {
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    flex: 1;
+                    gap: 12px
+                }
+
+            .dpf .dpf-summary-label {
+                font-size: 10px;
+                margin: 0
+            }
+
+            .dpf .dpf-summary-value {
+                font-size: 11px;
+                text-align: right
+            }
+
+            .dpf .dpf-summary-icon {
+                width: 28px;
+                height: 28px;
+                border-radius: 8px
+            }
+
+                .dpf .dpf-summary-icon .dpf-icon {
+                    width: 14px;
+                    height: 14px
+                }
+
+            .dpf .dpf-card {
+                border-radius: 14px
+            }
+
+            .dpf .dpf-card-head {
+                padding: 18px 19px 16px;
+                gap: 12px
+            }
+
+            .dpf .dpf-card-title {
+                font-size: 15px
+            }
+
+            .dpf .dpf-card-subtitle {
+                font-size: 11px
+            }
+
+            .dpf .dpf-info-body {
+                padding: 0 19px 19px
+            }
+
+            .dpf .dpf-info-grid {
+                grid-template-columns: 1fr;
+                column-gap: 0
+            }
+
+            .dpf .dpf-info-field {
+                padding: 14px 0
+            }
+
+                .dpf .dpf-info-field dt {
+                    font-size: 11px;
+                    margin-bottom: 3px
+                }
+
+                .dpf .dpf-info-field dd {
+                    font-size: 14px
+                }
+
+            .dpf .dpf-info-footer {
+                font-size: 10px;
+                margin-top: 16px
+            }
+
+            .dpf .dpf-side {
+                grid-template-columns: 1fr;
+                gap: 16px
+            }
+
+            .dpf .dpf-shortcuts {
+                padding: 3px 19px 7px
+            }
+
+            .dpf .dpf-shortcut {
+                min-height: 72px;
+                padding: 14px 0
+            }
+
+            .dpf .dpf-shortcut-title {
+                font-size: 13px
+            }
+
+            .dpf .dpf-shortcut-description {
+                font-size: 11px
+            }
+
+            .dpf .dpf-completion {
+                padding: 20px
+            }
+
+            .dpf .dpf-completion-text {
+                font-size: 11px
+            }
+
+            .dpf .dpf-missing-fields li {
+                font-size: 10px
+            }
+
+            .dpf .dpf-page-footnote {
+                font-size: 9px;
+                gap: 7px;
+                margin-top: 17px
+            }
+    }
+
+    @@media(prefers-reduced-motion:reduce) {
+        .dpf * {
+            transition: none !important
+        }
+
+        .dpf .dpf-shortcut:hover .dpf-shortcut-arrow {
+            transform: none
+        }
+    }
+</style>
+
+<section class="dpf" id="dpf-profile" aria-labelledby="dpf-title">
+    <svg class="dpf-symbols" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
+        <symbol id="dpf-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4" /><path d="M4 21v-2a8 8 0 0 1 16 0v2" /></symbol>
+        <symbol id="dpf-edit" viewBox="0 0 24 24"><path d="m15 5 4 4M4 20l4-1L20 7a2.8 2.8 0 0 0-4-4L4 15l-1 6z" /></symbol>
+        <symbol id="dpf-camera" viewBox="0 0 24 24"><path d="M4 6h4l2-3h4l2 3h4a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1z" /><circle cx="12" cy="13" r="4" /></symbol>
+        <symbol id="dpf-calendar" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M7 3v4m10-4v4M3 11h18m4 4h3" /></symbol>
+        <symbol id="dpf-mail" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="3" /><path d="m3 7 9 6 9-6" /></symbol>
+        <symbol id="dpf-check" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="m8 12 3 3 5-6" /></symbol>
+        <symbol id="dpf-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9" /><path d="M12 11v6m0-10h.01" /></symbol>
+        <symbol id="dpf-receipt" viewBox="0 0 24 24"><path d="M6 3h12v18l-3-2-3 2-3-2-3 2V3zm3 5h6m-6 4h6m-6 4h3" /></symbol>
+        <symbol id="dpf-pin" viewBox="0 0 24 24"><path d="M19 10c0 5-7 11-7 11S5 15 5 10a7 7 0 1 1 14 0z" /><circle cx="12" cy="10" r="2.5" /></symbol>
+        <symbol id="dpf-key" viewBox="0 0 24 24"><circle cx="8" cy="8" r="5" /><path d="m12 12 9 9m-3-3 2-2m-5-1 2-2M6 7h.01" /></symbol>
+    </svg>
+    <div class="dpf-container">
+        <nav class="dpf-breadcrumb" aria-label="Đường dẫn"><a href="@Url.Content("~/")">Trang chủ</a><span aria-hidden="true">/</span><span aria-current="page">Tài khoản của tôi</span></nav>
+        <header class="dpf-page-heading">
+            <div><h1 class="dpf-page-title" id="dpf-title">Tài khoản của tôi</h1><p class="dpf-page-description">Thông tin của bạn, những cuộc hẹn và trải nghiệm cùng DoraFood.</p></div>
+            <span class="dpf-page-signature"><span aria-hidden="true">✦</span> DORAFOOD · YOUR PERSONAL SPACE</span>
+        </header>
+
+        @if (TempData["ProfileSuccess"] is string message)
+        {
+            <div class="dpf-alert dpf-alert-success" role="status"><svg class="dpf-icon" aria-hidden="true"><use href="#dpf-check" /></svg><span>@message</span></div>
+        }
+        @if (TempData["ProfileError"] is string profileError)
+        {
+            <div class="dpf-alert dpf-alert-warning" role="alert"><svg class="dpf-icon" aria-hidden="true"><use href="#dpf-info" /></svg><span>@profileError</span></div>
+        }
+
+        <div class="dpf-hero">
+            <div class="dpf-hero-main">
+                <a asp-route="DoraFood.ChangeMyAvatar" class="dpf-avatar-link" aria-label="Đổi ảnh đại diện">
+                    <span class="dpf-avatar-shell">
+                        <span class="dpf-avatar" role="img" aria-label="Ảnh đại diện của @displayName">
+                            <span class="dpf-avatar-letter" aria-hidden="true">@initial</span>
+                            @if (!string.IsNullOrEmpty(avatarUrl))
+                            {
+                                <img src="@avatarUrl" alt="" width="84" height="84" class="dpf-avatar-image" data-dpf-avatar aria-hidden="true">
+                            }
+                        </span>
+                        <span class="dpf-avatar-camera" aria-hidden="true"><svg class="dpf-icon"><use href="#dpf-camera" /></svg></span>
+                    </span>
+                    <span>Đổi ảnh</span>
+                </a>
+                <div class="dpf-identity">
+                    <span class="dpf-eyebrow">RẤT VUI ĐƯỢC GẶP BẠN</span>
+                    <h2 class="dpf-name">@displayName</h2>
+                    <p class="dpf-handle">@ShowValue(Model.UserName)</p>
+                    <p class="dpf-identity-note">Một nơi để chăm chút hồ sơ và theo dõi những trải nghiệm của bạn.</p>
                 </div>
-            </aside>
-
-            <div class="col-lg-8">
-                <div class="card border-0 shadow-sm">
-                    <div class="card-body p-4">
-                        <h2 class="h5 fw-bold mb-4">Thông tin cá nhân</h2>
-                                  @if (TempData["ProfileSuccess"] is string message)
-{
-    <div class="alert alert-success" role="status">
-        @message
-    </div>
-}
-                        <dl class="row g-4 mb-0">
-                            <div class="col-md-6">
-                                <dt class="text-muted small fw-normal mb-1">Họ và tên</dt>
-                                <dd class="fw-semibold text-break mb-0">
-                                    @ShowValue(Model.FullName)
-                                </dd>
-                            </div>
-
-                            <div class="col-md-6">
-                                <dt class="text-muted small fw-normal mb-1">Tên đăng nhập</dt>
-                                <a asp-route="DoraFood.EditMyProfile"
-   class="btn btn-outline-primary mt-3">
-    <i class="far fa-edit me-1" aria-hidden="true"></i>
-    Chỉnh sửa hồ sơ
-</a>
-<a asp-route="DoraFood.ChangeMyAvatar"
-   class="btn btn-outline-secondary mt-3">
-    <i class="fas fa-camera me-1" aria-hidden="true"></i>
-    Đổi ảnh đại diện
-</a>
-<a asp-route="DoraFood.MyAddresses"
-   class="btn btn-outline-secondary mt-3">
-    <i class="fas fa-map-marker-alt me-1" aria-hidden="true"></i>
-    Địa chỉ giao hàng
-</a>
-<a asp-route="DoraFood.MyOrders"
-   class="btn btn-outline-secondary mt-3">
-    <i class="fas fa-receipt me-1" aria-hidden="true"></i>
-    Đơn hàng của tôi
-</a>
-@if (TempData["ProfileError"] is string profileError)
-{
-    <div class="alert alert-warning" role="alert">
-        @profileError
-    </div>
-}
-                                <dd class="fw-semibold text-break mb-0">
-                                    @Model.UserName
-                                </dd>
-                            </div>
-
-                            <div class="col-md-6">
-                                <dt class="text-muted small fw-normal mb-1">Email</dt>
-                                <dd class="fw-semibold text-break mb-0">
-                                    @ShowValue(Model.Email)
-
-                                    @if (!string.IsNullOrWhiteSpace(Model.Email))
-                                    {
-                                        var emailLabel = Model.EmailConfirmed
-                                            ? "Đã xác thực"
-                                            : "Chưa xác thực";
-
-                                        var emailClass = Model.EmailConfirmed
-                                            ? "bg-success"
-                                            : "bg-secondary";
-
-                                        <span class="badge @emailClass ms-1">
-                                            @emailLabel
-                                        </span>
-                                    }
-                                </dd>
-                            </div>
-
-                            <div class="col-md-6">
-                                <dt class="text-muted small fw-normal mb-1">Số điện thoại</dt>
-                                <dd class="fw-semibold mb-0">
-                                    @ShowValue(Model.PhoneNumber)
-                                </dd>
-                            </div>
-
-                            <div class="col-md-6">
-                                <dt class="text-muted small fw-normal mb-1">Ngày sinh</dt>
-                                <dd class="fw-semibold mb-0">
-                                    @ShowValue(Model.DateOfBirth)
-                                </dd>
-                            </div>
-
-                            <div class="col-md-6">
-                                <dt class="text-muted small fw-normal mb-1">Giới tính</dt>
-                                <dd class="fw-semibold mb-0">
-                                    @ShowValue(gender)
-                                </dd>
-                            </div>
-
-                            <div class="col-md-6">
-                                <dt class="text-muted small fw-normal mb-1">Ngày tạo tài khoản</dt>
-                                <dd class="fw-semibold mb-0">
-                                    @(Model.CreatedAtUtc.AddHours(7).ToString("dd/MM/yyyy"))
-                                </dd>
-                            </div>
-                        </dl>
-                    </div>
+                <div class="dpf-hero-actions">
+                    <a asp-route="DoraFood.EditMyProfile" class="dpf-primary-button"><svg class="dpf-icon" aria-hidden="true"><use href="#dpf-edit" /></svg>Chỉnh sửa hồ sơ</a>
+                    <span class="dpf-hero-action-note">Thông tin đầy đủ hơn.<br>Cuộc hẹn thuận tiện hơn.</span>
                 </div>
             </div>
+            <div class="dpf-summary" aria-label="Tóm tắt tài khoản">
+                <div class="dpf-summary-item"><span class="dpf-summary-icon"><svg class="dpf-icon" aria-hidden="true"><use href="#dpf-calendar" /></svg></span><div><span class="dpf-summary-label">Đồng hành cùng DoraFood từ</span><strong class="dpf-summary-value">@joinedAt.ToString("dd/MM/yyyy")</strong></div></div>
+                <div class="dpf-summary-item"><span class="dpf-summary-icon"><svg class="dpf-icon" aria-hidden="true"><use href="#dpf-mail" /></svg></span><div><span class="dpf-summary-label">Thông tin email</span><strong class="dpf-summary-value @(emailVerified ? "is-verified" : "")">@emailStatus</strong></div></div>
+                <div class="dpf-summary-item"><span class="dpf-summary-icon"><svg class="dpf-icon" aria-hidden="true"><use href="#dpf-user" /></svg></span><div><span class="dpf-summary-label">Mức độ cập nhật hồ sơ</span><strong class="dpf-summary-value">@filledFields/@totalFields thông tin</strong></div></div>
+            </div>
         </div>
+
+        <div class="dpf-content-grid">
+            <article class="dpf-card" aria-labelledby="dpf-info-title">
+                <div class="dpf-card-head"><div><h2 class="dpf-card-title" id="dpf-info-title">Thông tin cá nhân</h2><p class="dpf-card-subtitle">Những thông tin bạn đã chia sẻ với DoraFood.</p></div><span class="dpf-card-symbol"><svg class="dpf-icon" aria-hidden="true"><use href="#dpf-user" /></svg></span></div>
+                <div class="dpf-info-body">
+                    <dl class="dpf-info-grid">
+                        <div class="dpf-info-field"><dt>Họ và tên</dt><dd class="@(string.IsNullOrWhiteSpace(Model.FullName) ? "is-empty" : "")">@ShowValue(Model.FullName)</dd></div>
+                        <div class="dpf-info-field"><dt>Tên đăng nhập</dt><dd>@ShowValue(Model.UserName)</dd></div>
+                        <div class="dpf-info-field dpf-info-field-wide">
+                            <dt>Địa chỉ email</dt><dd class="dpf-email-value @(hasEmail ? "" : "is-empty")">
+                            <span>@ShowValue(Model.Email)</span>
+                            @if (hasEmail)
+                            {
+                                <span class="dpf-badge @(emailVerified ? "dpf-badge-verified" : "dpf-badge-pending")"><svg class="dpf-icon" aria-hidden="true"><use href="@(emailVerified ? "#dpf-check" : "#dpf-info")" /></svg>@(emailVerified ? "Đã xác thực" : "Chưa xác thực")</span>
+                            }
+                        </dd>
+                    </div>
+                    <div class="dpf-info-field"><dt>Số điện thoại</dt><dd class="@(string.IsNullOrWhiteSpace(Model.PhoneNumber) ? "is-empty" : "")">@ShowValue(Model.PhoneNumber)</dd></div>
+                    <div class="dpf-info-field"><dt>Ngày sinh</dt><dd class="@(string.IsNullOrWhiteSpace(Model.DateOfBirth) ? "is-empty" : "")">@ShowValue(Model.DateOfBirth)</dd></div>
+                    <div class="dpf-info-field"><dt>Giới tính</dt><dd class="@(string.IsNullOrWhiteSpace(gender) ? "is-empty" : "")">@ShowValue(gender)</dd></div>
+                    <div class="dpf-info-field"><dt>Ngày tạo tài khoản</dt><dd>@joinedAt.ToString("dd/MM/yyyy")</dd></div>
+                </dl>
+                <div class="dpf-info-footer"><svg class="dpf-icon" aria-hidden="true"><use href="#dpf-info" /></svg><p>Giữ email và số điện thoại chính xác để thuận tiện khi trao đổi về đơn hàng hoặc cuộc hẹn của bạn.</p></div>
+            </div>
+        </article>
+
+        <aside class="dpf-side" aria-label="Tiện ích tài khoản">
+            <section class="dpf-card" aria-labelledby="dpf-actions-title">
+                <div class="dpf-card-head"><div><h2 class="dpf-card-title" id="dpf-actions-title">Mọi thứ trong tầm tay</h2><p class="dpf-card-subtitle">Đi thẳng đến điều bạn cần.</p></div></div>
+                <nav class="dpf-shortcuts" aria-label="Quản lý tài khoản">
+                    <a asp-route="DoraFood.MyOrders" class="dpf-shortcut"><span class="dpf-shortcut-icon"><svg class="dpf-icon" aria-hidden="true"><use href="#dpf-receipt" /></svg></span><span class="dpf-shortcut-copy"><span class="dpf-shortcut-title">Đơn hàng của tôi</span><span class="dpf-shortcut-description">Xem lại các đơn hàng đã đặt.</span></span><span class="dpf-shortcut-arrow" aria-hidden="true">↗</span></a>
+                    <a asp-route="DoraFood.MyAddresses" class="dpf-shortcut"><span class="dpf-shortcut-icon"><svg class="dpf-icon" aria-hidden="true"><use href="#dpf-pin" /></svg></span><span class="dpf-shortcut-copy"><span class="dpf-shortcut-title">Địa chỉ giao hàng</span><span class="dpf-shortcut-description">Quản lý những địa chỉ bạn sử dụng.</span></span><span class="dpf-shortcut-arrow" aria-hidden="true">↗</span></a>
+                    <a asp-route="DoraFood.ChangeMyPassword" class="dpf-shortcut"><span class="dpf-shortcut-icon"><svg class="dpf-icon" aria-hidden="true"><use href="#dpf-key" /></svg></span><span class="dpf-shortcut-copy"><span class="dpf-shortcut-title">Đổi mật khẩu</span><span class="dpf-shortcut-description">Cập nhật mật khẩu cho tài khoản.</span></span><span class="dpf-shortcut-arrow" aria-hidden="true">↗</span></a>
+                </nav>
+            </section>
+            <section class="dpf-card dpf-completion" aria-labelledby="dpf-completion-title">
+                <div class="dpf-completion-heading"><h2 id="dpf-completion-title">Chăm chút hồ sơ của bạn</h2><strong>@completionPercent%</strong></div>
+                <progress class="dpf-progress" value="@filledFields" max="@totalFields" aria-label="Mức độ cập nhật hồ sơ">@completionPercent%</progress>
+                @if (missingFields.Length > 0)
+                {
+                    <p class="dpf-completion-text">Bạn đã cập nhật @filledFields/@totalFields thông tin. Những mục còn thiếu:</p>
+                    <ul class="dpf-missing-fields" aria-label="Thông tin chưa cập nhật">
+                        @foreach (var field in missingFields)
+                        {
+                            <li>@field</li>
+                        }
+                    </ul>
+                }
+                else
+                {
+                    <p class="dpf-completion-text">Bạn đã cập nhật đủ @totalFields thông tin hồ sơ. Hãy kiểm tra lại khi thông tin của bạn có thay đổi.</p>
+                }
+            </section>
+        </aside>
     </div>
+    <div class="dpf-page-footnote"><span>Ngày tạo tài khoản hiển thị theo giờ Việt Nam (UTC+7).</span><strong>DORAFOOD · TRỌN VỊ TỪNG CUỘC HẸN</strong></div>
+</div>
 </section>
+<script>
+    (function() {
+        var root = document.getElementById('dpf-profile');
+        var avatar = root ? root.querySelector('[data-dpf-avatar]') : null;
+        if (!avatar) return;
+        function showInitial() { avatar.hidden = true; }
+        avatar.addEventListener('error', showInitial, { once: true });
+        if (avatar.complete && avatar.naturalWidth === 0) showInitial();
+    })();
+</script>

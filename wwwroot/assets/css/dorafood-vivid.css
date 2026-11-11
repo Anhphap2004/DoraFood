@@ -1,0 +1,687 @@
+/*
+ * DoraFood Vivid & Readable — thêm SAU dorafood-premium.css.
+ * Chỉnh màu và cỡ chữ; không đổi route, dữ liệu hoặc JavaScript.
+ */
+:root {
+    --dfv-red: #c51d3a;
+    --dfv-red-deep: #99112e;
+    --dfv-blue: #2157c5;
+    --dfv-green: #087f5b;
+    --dfv-orange: #b83d0a;
+    --dfv-purple: #6d28d9;
+    --dfv-ink: #182942;
+    --dfv-text: #334155;
+    --dfv-muted: #475569;
+}
+body,
+.df-site,
+.df-home,
+.df-menu,
+.fd-food-strip,
+.fd-about,
+.df-cart-page,
+.df-dish-page,
+.dpf {
+    --dp-red: var(--dfv-red) !important;
+    --dp-red-deep: var(--dfv-red-deep) !important;
+    --dp-ink: var(--dfv-ink) !important;
+    --dp-muted: var(--dfv-muted) !important;
+    --dp-gold: #975000 !important;
+    --df-red: var(--dfv-red) !important;
+    --df-red-dark: var(--dfv-red-deep) !important;
+    --df-ink: var(--dfv-ink) !important;
+    --df-muted: var(--dfv-muted) !important;
+    --pf-red: var(--dfv-red) !important;
+    --pf-red-deep: var(--dfv-red-deep) !important;
+    --pf-ink: var(--dfv-ink) !important;
+    --pf-muted: var(--dfv-muted) !important;
+    --bs-primary: var(--dfv-red) !important;
+    --bs-primary-rgb: 197,29,58 !important;
+    font-family: "Open Sans", "Segoe UI", Arial, sans-serif;
+    font-size: 16px !important;
+    font-weight: 500;
+    color: var(--dfv-ink);
+    line-height: 1.75;
+}
+body :is(h1,h2,h3,h4,h5,h6,.h1,.h2,.h3,.h4,.h5,.h6) {
+    font-family: "Open Sans", "Segoe UI", Arial, sans-serif !important;
+    font-weight: 700 !important;
+}
+body .text-muted,
+body .text-secondary,
+body .text-black-50,
+body .form-text {
+    color: var(--dfv-muted) !important;
+    opacity: 1;
+}
+body :is(small,.small,.form-text,.badge) { font-size: 14px !important; }
+body :is(.form-label,label) { font-size: 15px; color: #243653; }
+body :is(.form-control,.form-select) { font-size: 16px !important; color: #1e293b; }
+body :is(input,textarea)::placeholder { color: #64748b; opacity: 1; }
+body .text-primary { color: var(--dfv-red) !important; }
+body .text-success { color: #087247 !important; }
+body .text-danger { color: #b01535 !important; }
+body .btn { font-size: 15px !important; font-weight: 700; min-height: 42px; }
+body .btn.btn-primary {
+    border-color: var(--dfv-red) !important;
+    background: linear-gradient(120deg,#d92845,#b91436) !important;
+    color: #fff !important;
+    box-shadow: 0 5px 16px #c51d3a24;
+}
+body .btn.btn-primary:hover { background: #99112e !important; color: #fff !important; }
+body .btn-outline-primary { color: #b91436; border-color: #c51d3a; }
+body .btn-outline-primary:hover { background: #c51d3a; color: #fff !important; }
+body .btn-outline-secondary { color: #2157c5; border-color: #9bb6ed; }
+body .btn-outline-secondary:hover { background: #2157c5; color: #fff !important; }
+body .bg-primary { background-color: #bf1b39 !important; color: #fff !important; }
+body .bg-primary :is(.text-dark,.text-muted,.text-secondary) { color: #fff7e6 !important; }
+body .bg-warning { color: #422006; }
+body :is(a,button,input,select,textarea,summary):focus-visible { outline: 3px solid #2157c5; outline-offset: 3px; }
+
+/* Nâng các cỡ chữ nhỏ và chữ nhạt có trong 6 file CSS được cung cấp. */
+
+
+/* Nguồn: style.css */
+.fapdora-header .fapdora-brand-name { color: #334155 !important; }
+.fapdora-header .fapdora-brand-caption { font-size: 14px !important; }
+.fapdora-header .fapdora-brand-caption { color: #334155 !important; }
+.fapdora-header .navbar-nav .nav-link { color: #334155 !important; }
+.fapdora-header .fapdora-dropdown .dropdown-item { color: #334155 !important; }
+.fapdora-header .fapdora-search { color: #334155 !important; }
+.fd-food-eyebrow { font-size: 14px !important; }
+.fd-food-heading p { font-size: 14px !important; }
+.fd-food-category { font-size: 14px !important; }
+.fd-food-name { font-size: 14px !important; }
+.fd-food-note { font-size: 14px !important; }
+.fd-food-toggle { font-size: 14px !important; }
+@media (max-width: 767.98px) {
+.fd-food-eyebrow { font-size: 14px !important; }
+.fd-food-heading p { font-size: 14px !important; }
+.fd-food-name { font-size: 14px !important; }
+.fd-food-category { font-size: 14px !important; }
+.fd-food-note { font-size: 14px !important; }
+}
+.fd-about-main figcaption span { font-size: 14px !important; }
+.fd-about-seal span { font-size: 14px !important; }
+.fd-about-seal strong { font-size: 14px !important; }
+.fd-about-eyebrow { font-size: 14px !important; }
+.fd-about-value p { font-size: 14px !important; }
+.fd-about-signoff { font-size: 14px !important; }
+@media (max-width: 575.98px) {
+.fd-about-seal strong { font-size: 14px !important; }
+.fd-about-description { font-size: 14px !important; }
+}
+
+/* Nguồn: dorafood-home.css */
+.df-home .df-section-head p { font-size: 14px !important; }
+.df-home .df-eyebrow,
+.df-booking-dialog .df-eyebrow { font-size: 14px !important; }
+.df-home .df-text-link { font-size: 14px !important; }
+.df-home .df-button,
+.df-booking-dialog .df-button { font-size: 14px !important; }
+.df-home .df-experience-note p { font-size: 14px !important; }
+.df-home .df-service-top > span { color: #334155 !important; }
+.df-home .df-service-card p { font-size: 14px !important; }
+.df-home .df-filter button { font-size: 14px !important; }
+.df-home .df-filter button { color: #334155 !important; }
+.df-home .df-event-card > div > span { font-size: 14px !important; }
+.df-home .df-dish-body .df-eyebrow { font-size: 14px !important; }
+.df-home .df-dish-link { font-size: 14px !important; }
+.df-home .df-menu-foot { font-size: 14px !important; }
+.df-home .df-booking-story .df-eyebrow { font-size: 14px !important; }
+.df-home .df-booking-story p { font-size: 14px !important; }
+.df-home .df-booking-form-wrap > p { font-size: 14px !important; }
+.df-home .df-field label { font-size: 14px !important; }
+.df-home .df-field input,
+.df-home .df-field select,
+.df-home .df-field textarea { font-size: 14px !important; }
+.df-home .df-form-hint { font-size: 14px !important; }
+.df-booking-dialog { color: #334155 !important; }
+.df-booking-dialog dl { font-size: 14px !important; }
+.df-booking-dialog dt { color: #334155 !important; }
+.df-preview-note { font-size: 14px !important; }
+.df-home .df-person .df-eyebrow { font-size: 14px !important; }
+.df-home .df-person p { font-size: 14px !important; }
+.df-home .df-feedback-shell p { font-size: 14px !important; }
+.df-home .df-feedback-empty { font-size: 14px !important; }
+.df-home .df-feedback-empty { color: #334155 !important; }
+.df-home .df-journal-body .df-eyebrow { font-size: 14px !important; }
+.df-home .df-journal-body summary { font-size: 14px !important; }
+.df-home .df-journal-body details p { font-size: 14px !important; }
+@media(max-width:575.98px) {
+.df-home .df-filter button { font-size: 14px !important; }
+.df-home .df-event-card > div > span { font-size: 14px !important; }
+.df-home .df-dish-link { font-size: 14px !important; }
+.df-home .df-person h3 { font-size: 14px !important; }
+.df-home .df-person p { font-size: 14px !important; }
+}
+
+/* Nguồn: dorafood-premium.css */
+.df-site .df-skip-link { font-size: 14px !important; }
+.df-site .df-announcement { font-size: 14px !important; }
+.df-site .df-small-diamond { font-size: 14px !important; }
+.df-site .df-brand-word { color: #334155 !important; }
+.df-site .df-brand-word sup { font-size: 14px !important; }
+.df-site .df-brand-tagline { font-size: 14px !important; }
+.df-site .df-brand-tagline { color: #334155 !important; }
+.df-site .df-brand-message > span { font-size: 14px !important; }
+.df-site .df-brand-message > span { color: #334155 !important; }
+.df-site .df-brand-message strong { font-size: 14px !important; }
+.df-site .df-brand-message strong { color: #334155 !important; }
+.df-site .df-header-search { color: #334155 !important; }
+.df-site .df-login-link { font-size: 14px !important; }
+.df-site .df-login-link { color: #334155 !important; }
+.df-site .df-reserve-link { font-size: 14px !important; }
+.df-site .df-mainmenu .nav-link { font-size: 14px !important; }
+.df-site .df-mainmenu .nav-link { color: #334155 !important; }
+.df-site .df-site-header .dropdown-item { font-size: 14px !important; }
+.df-site .df-site-header .dropdown-item { color: #334155 !important; }
+.df-site .df-user-button { font-size: 14px !important; }
+.df-site .df-user-button { color: #334155 !important; }
+.df-site .df-user-intro > span { font-size: 14px !important; }
+.df-site .df-user-intro > span { color: #334155 !important; }
+.df-site .df-user-intro strong { font-size: 14px !important; }
+.df-site .df-overline { font-size: 14px !important; }
+.df-site .df-search-modal p { font-size: 14px !important; }
+.df-site .df-quick-search-field input { font-size: 14px !important; }
+.df-site .df-search-menu-link { font-size: 14px !important; }
+.df-site .df-quick-results a { font-size: 14px !important; }
+.df-site .df-quick-results a { color: #334155 !important; }
+.df-site .df-quick-results a > span:last-child { color: #334155 !important; }
+.df-site .df-premium-label { font-size: 14px !important; }
+.df-site .fd-food-heading > p { font-size: 14px !important; }
+.df-site .df-premium-button { font-size: 14px !important; }
+.df-site .df-premium-text-link { font-size: 14px !important; }
+.df-site .df-editorial-kicker { font-size: 14px !important; }
+.df-site .df-editorial-box p { font-size: 14px !important; }
+.df-site .df-editorial-box a { font-size: 14px !important; }
+.df-site .fd-food-category { font-size: 14px !important; }
+.df-site .fd-food-name { font-size: 14px !important; }
+.df-site .fd-food-note { font-size: 14px !important; }
+.df-site .fd-food-note { color: #334155 !important; }
+.df-site .df-home-paths-grid h2 { font-size: 14px !important; }
+.df-site .df-home-paths-grid p { font-size: 14px !important; }
+.df-site .df-path-arrow { color: #334155 !important; }
+.df-site .df-home .df-service-top > span { color: #334155 !important; }
+.df-site .df-menu-breadcrumb { font-size: 14px !important; }
+.df-site .df-menu-eyebrow { font-size: 14px !important; }
+.df-site .df-menu-intro { font-size: 14px !important; }
+.df-site .df-menu-hero-note > span:not(.df-menu-note-symbol) { font-size: 14px !important; }
+.df-site .df-menu-hero-note p { font-size: 14px !important; }
+.df-site .df-menu-service-notes { font-size: 14px !important; }
+.df-site .df-menu-service-notes { color: #334155 !important; }
+.df-site .df-menu-search input { font-size: 14px !important; }
+.df-site .df-menu-category { font-size: 14px !important; }
+.df-site .df-menu-category { color: #334155 !important; }
+.df-site .df-menu-sidebar-note p { font-size: 14px !important; }
+.df-site .df-menu-sort select { font-size: 14px !important; }
+.df-site .df-menu-featured { font-size: 14px !important; }
+.df-site .df-menu-card-category { font-size: 14px !important; }
+.df-site .df-menu-card-description { font-size: 14px !important; }
+.df-site .df-menu-allergen { font-size: 14px !important; }
+.df-site .df-menu-allergen { color: #334155 !important; }
+.df-site .df-guide-heading > p { font-size: 14px !important; }
+.df-site .df-guide-number { color: #334155 !important; }
+.df-site .df-guide-grid p { font-size: 14px !important; }
+.df-site .df-guide-grid a { font-size: 14px !important; }
+.df-site .df-faq-intro > p { font-size: 14px !important; }
+.df-site .df-faq-list summary { font-size: 14px !important; }
+.df-site .df-faq-list summary { color: #334155 !important; }
+.df-site .df-faq-list details > div { font-size: 14px !important; }
+.df-site .df-footer-invitation .df-overline { font-size: 14px !important; }
+.df-site .df-footer-invitation p { font-size: 14px !important; }
+.df-site .df-footer-button { font-size: 14px !important; }
+.df-site .df-site-footer .df-brand-tagline { font-size: 14px !important; }
+.df-site .df-footer-brand p { font-size: 14px !important; }
+.df-site .df-footer-signature { font-size: 14px !important; }
+.df-site .df-site-footer h3 { font-size: 14px !important; }
+.df-site .df-footer-links a { font-size: 14px !important; }
+.df-site .df-footer-contact p { font-size: 14px !important; }
+.df-site .df-footer-bottom { font-size: 14px !important; }
+@media(max-width:991.98px) {
+.df-site .df-mainmenu .nav-link { font-size: 14px !important; }
+.df-site .fd-food-heading > p { font-size: 14px !important; }
+.df-site .df-premium-button,
+.df-site .df-premium-text-link { font-size: 14px !important; }
+.df-site .df-guide-grid p { font-size: 14px !important; }
+}
+@media(max-width:767.98px) {
+.df-site .df-brand-tagline { font-size: 14px !important; }
+.df-site .df-reserve-link { font-size: 14px !important; }
+.df-site .df-login-link { font-size: 14px !important; }
+.df-site .df-user-button { font-size: 14px !important; }
+.df-site .df-mainmenu .nav-link { font-size: 14px !important; }
+.df-site .fd-food-note { font-size: 14px !important; }
+.df-site .df-menu-service-notes { font-size: 14px !important; }
+.df-site .df-guide-grid p { font-size: 14px !important; }
+}
+@media(max-width:479.98px) {
+.df-site .df-announcement { font-size: 14px !important; }
+.df-site .df-announcement a { font-size: 14px !important; }
+.df-site .df-header-search { font-size: 14px !important; }
+.df-site .df-login-link { font-size: 14px !important; }
+.df-site .df-reserve-link { font-size: 14px !important; }
+.df-site .df-brand-tagline { font-size: 14px !important; }
+.df-site .df-user-button { font-size: 14px !important; }
+.df-site .df-site-header .dropdown-menu { font-size: 14px !important; }
+.df-site .df-mainmenu .nav-link { font-size: 14px !important; }
+.df-site .df-editorial-box a { font-size: 14px !important; }
+.df-site .df-premium-label { font-size: 14px !important; }
+.df-site .df-menu-search button { font-size: 14px !important; }
+.df-site .df-footer-bottom { font-size: 14px !important; }
+}
+
+/* Nguồn: dorafood-menu.css */
+.df-menu-breadcrumb { font-size: 14px !important; }
+.df-menu-eyebrow { font-size: 14px !important; }
+.df-menu-hero-note > span:not(.df-menu-note-symbol) { font-size: 14px !important; }
+.df-menu-hero-note p { font-size: 14px !important; }
+.df-menu-search-field > i { color: #334155 !important; }
+.df-menu-search button { font-size: 14px !important; }
+.df-menu-small-label { font-size: 14px !important; }
+.df-menu-category { font-size: 14px !important; }
+.df-menu-category { color: #334155 !important; }
+.df-menu-category > span:last-child { color: #334155 !important; }
+.df-menu-category.is-child { font-size: 14px !important; }
+.df-menu-sidebar-note strong { font-size: 14px !important; }
+.df-menu-sidebar-note p { font-size: 14px !important; }
+.df-menu-toolbar p { font-size: 14px !important; }
+.df-menu-sort label { font-size: 14px !important; }
+.df-menu-sort select { font-size: 14px !important; }
+.df-menu-sort button { font-size: 14px !important; }
+.df-menu-featured { font-size: 14px !important; }
+.df-menu-card-category { font-size: 14px !important; }
+.df-menu-card-description { font-size: 14px !important; }
+.df-menu-portions strong { font-size: 14px !important; }
+.df-menu-portions small { font-size: 14px !important; }
+.df-menu-price small { font-size: 14px !important; }
+.df-menu-allergen { font-size: 14px !important; }
+.df-menu-allergen { color: #334155 !important; }
+.df-menu-empty p { font-size: 14px !important; }
+.df-menu-empty a { font-size: 14px !important; }
+.df-menu-pagination > a,
+.df-menu-pagination > span { font-size: 14px !important; }
+.df-menu-pagination .is-disabled { color: #334155 !important; }
+.df-menu-footnote { font-size: 14px !important; }
+@media(max-width:1100px) {
+.df-menu-search-label { font-size: 14px !important; }
+}
+@media(max-width:767px) {
+.df-menu-intro { font-size: 14px !important; }
+.df-menu-search-label { font-size: 14px !important; }
+.df-menu-search input { font-size: 14px !important; }
+.df-menu-search button { font-size: 14px !important; }
+.df-menu-category,
+.df-menu-category.is-child { font-size: 14px !important; }
+.df-menu-toolbar p { font-size: 14px !important; }
+.df-menu-card-category { font-size: 14px !important; }
+.df-menu-card-description { font-size: 14px !important; }
+.df-menu-featured { font-size: 14px !important; }
+.df-menu-portions strong { font-size: 14px !important; }
+}
+@media(max-width:420px) {
+.df-menu-portions strong { font-size: 14px !important; }
+.df-menu-card-description { font-size: 14px !important; }
+}
+
+/* Nguồn: dorafood-dish-details.css */
+.df-dish-page { color: #334155 !important; }
+.df-dish-breadcrumb { color: #334155 !important; }
+.df-dish-eyebrow { font-size: 14px !important; }
+.df-dish-eyebrow { color: #334155 !important; }
+.df-dish-title { color: #334155 !important; }
+.df-dish-badge { font-size: 14px !important; }
+.df-dish-intro { color: #334155 !important; }
+.df-dish-panel h2 { color: #334155 !important; }
+.df-dish-variants small { color: #334155 !important; }
+.df-review-form h3 { color: #334155 !important; }
+.df-review-item time { font-size: 14px !important; }
+.df-review-item time { color: #334155 !important; }
+
+/* Nguồn: dorafood-cart.css */
+.df-cart-page { color: #334155 !important; }
+.df-cart-heading h1 { color: #334155 !important; }
+.df-cart-eyebrow { font-size: 14px !important; }
+.df-cart-eyebrow { color: #334155 !important; }
+.df-cart-item h2 { color: #334155 !important; }
+.df-cart-quantity label { font-size: 14px !important; }
+.df-cart-remove { font-size: 14px !important; }
+.df-cart-line-total span { font-size: 14px !important; }
+.df-cart-line-total span { color: #334155 !important; }
+.df-cart-summary h2 { color: #334155 !important; }
+/* 1. Navbar: chữ rõ, trạng thái chọn có màu, luôn giữ cách hiển thị hiện tại. */
+.df-site .df-announcement { background: linear-gradient(100deg,#a41134,#cc2445 60%,#a41134); color:#fff7ed; font-size:14px !important; }
+.df-site .df-announcement a { color:#fff !important; font-weight:700; }
+.df-site .df-small-diamond { color:#ffd26a !important; }
+.df-site .df-brandbar { flex-wrap:wrap; }
+.df-site .df-header-actions { flex-wrap:wrap; justify-content:flex-end; }
+.df-site .df-brand-word { color:#1c3152 !important; }
+.df-site .df-brand-word>span { color:#c51d3a !important; }
+.df-site .df-brand-tagline,
+.df-site .df-brand-message>span { color:#9a2647 !important; font-weight:700; letter-spacing:1.1px; }
+.df-site .df-brand-message strong { color:#334155 !important; font-size:15px !important; font-weight:600; }
+.df-site .df-mainmenu .nav-link { color:#20395c !important; font-size:16px !important; font-weight:700; padding:13px 16px !important; }
+.df-site .df-mainmenu .nav-link:hover { background:#ffedf2; color:#b7193a !important; }
+.df-site .df-mainmenu .nav-link.active,
+.df-site .df-mainmenu .nav-link.show { background:linear-gradient(120deg,#d62b48,#b31738) !important; color:#fff !important; border-radius:8px 8px 0 0 !important; }
+.df-site .df-mainmenu .nav-link.active::before,
+.df-site .df-mainmenu .nav-link.show::before { background:#ffd26a; }
+.df-site .df-login-link,
+.df-site .df-user-button { color:#234780 !important; font-size:15px !important; font-weight:700; }
+.df-site .df-header-search { color:#2157c5 !important; background:#eef4ff; }
+.df-site .df-reserve-link { background:linear-gradient(120deg,#db2b47,#b91436); border-color:#bd1836; font-size:15px !important; min-height:44px; }
+.df-site .df-reserve-link,
+.df-site .df-reserve-link>span { color:#fff !important; }
+.df-site .df-site-header .dropdown-item { font-size:15px !important; color:#223b60 !important; font-weight:600; }
+.df-site .df-site-header .dropdown-item:hover,
+.df-site .df-site-header .dropdown-item:focus { background:#fff0f4; color:#b51738 !important; }
+.df-site .df-site-header .dropdown-item.active { background:#b7193a; color:#fff !important; }
+.df-site .df-site-header .dropdown-item.active i { color:#fff !important; }
+.df-site .df-site-header .df-logout { color:#b51738 !important; }
+.df-site .df-user-intro>span { color:#8b2448 !important; font-weight:700; }
+.df-site .df-user-intro strong { color:#1d3558 !important; font-size:15px !important; }
+.df-site .df-quick-search-field input,
+.df-site .df-quick-results a { font-size:16px !important; color:#253956 !important; }
+.df-site .df-search-modal p { color:#475569 !important; font-size:15px !important; }
+
+/* 2. Trang chủ: đỏ nổi bật, xen màu xanh/cam/xanh lá có chủ đích. */
+.df-site .fd-food-strip { background:linear-gradient(115deg,#fff2e8,#fff9fc 48%,#fff0f5); }
+.df-site .df-premium-label,
+.df-site .fd-about-eyebrow { color:#ac1537 !important; font-size:14px !important; font-weight:800; letter-spacing:1.2px; }
+.df-site .fd-food-heading>p,
+.df-site .fd-about-lead,
+.df-site .fd-about-description { color:#334155 !important; font-size:16px !important; }
+.df-site .fd-food-strip .fd-food-heading h1 { font-weight:800 !important; }
+.df-site .fd-food-heading h1 em { color:#c51d3a; }
+.df-site .df-editorial-box,
+.df-site .df-menu-hero-note { background:linear-gradient(135deg,#d72849,#a81537 65%,#841333); border-color:#b71638; }
+.df-site .df-editorial-box h2 { color:#fff !important; }
+.df-site .df-editorial-kicker,
+.df-site .df-editorial-box p,
+.df-site .df-editorial-box a,
+.df-site .df-menu-hero-note>span:not(.df-menu-note-symbol),
+.df-site .df-menu-hero-note p { color:#fff5df !important; opacity:1; }
+.df-site .df-editorial-box p { font-size:15px !important; }
+.df-site .df-editorial-box a { font-size:14px !important; }
+.df-site .df-editorial-mark,
+.df-site .df-menu-note-symbol { color:#ffd26a !important; }
+.df-site .df-premium-button,
+.df-site .df-home .df-button-red { background:linear-gradient(120deg,#d62948,#b51638); border-color:#b51638; color:#fff !important; font-size:15px !important; font-weight:700; }
+.df-site .df-premium-text-link,
+.df-site .df-home .df-text-link { color:#b31536 !important; font-size:15px !important; font-weight:700; }
+.df-site .fd-food-card { border-color:#e9afbd; box-shadow:0 8px 22px #af214014; }
+.df-site .fd-food-card:nth-child(3n+1) { background:#fff4f6; }
+.df-site .fd-food-card:nth-child(3n+2) { background:#f0f6ff; border-color:#bdd0ef; }
+.df-site .fd-food-card:nth-child(3n) { background:#fff7eb; border-color:#ecd0a1; }
+.df-site .fd-food-category { color:#b31536 !important; font-size:14px !important; font-weight:700; letter-spacing:.6px; }
+.df-site .fd-food-name { color:#1b3152 !important; font-size:16px !important; font-weight:700; }
+.df-site .fd-food-card figcaption { min-height:83px; gap:7px; }
+.df-site .fd-food-note { color:#334155 !important; font-size:14px !important; }
+.df-site .fd-food-toggle { color:#a51537; background:#fff; border-color:#cc5872; font-size:14px !important; min-height:40px; font-weight:700; }
+.df-site .fd-food-toggle:hover,
+.df-site .fd-food-toggle[aria-pressed="true"] { color:#fff !important; background:#b7193a; }
+.df-site .df-home-paths-grid>a:nth-child(1) { background:#fff1f5; }
+.df-site .df-home-paths-grid>a:nth-child(2) { background:#edf5ff; }
+.df-site .df-home-paths-grid>a:nth-child(3) { background:#eefaf3; }
+.df-site .df-home-paths-grid h2 { color:#1f3557 !important; font-size:16px !important; }
+.df-site .df-home-paths-grid p { color:#334155 !important; font-size:14px !important; }
+.df-site .df-home-paths-grid>a:nth-child(2) .df-path-icon { background:#dbeafe; color:#2157c5; }
+.df-site .df-home-paths-grid>a:nth-child(3) .df-path-icon { background:#dcf4e6; color:#087247; }
+.df-site .fd-about-value p { color:#475569 !important; font-size:15px !important; }
+.df-site .fd-about-value h3 { color:#24395b !important; font-size:17px !important; }
+.df-site .fd-about-signoff { color:#475569 !important; font-size:14px !important; }
+.df-site .fd-about-seal { background:linear-gradient(140deg,#db2d49,#a91436); }
+.df-site .fd-about-seal span,
+.df-site .fd-about-seal strong { color:#fff !important; opacity:1; }
+.df-site .fd-about-seal strong { font-size:14px !important; }
+.df-site .fd-about-main figcaption { color:#fff !important; font-size:16px !important; }
+.df-site .fd-about-main figcaption>span { color:#ffe0ad !important; }
+.df-site .df-home .df-section-head p,
+.df-site .df-home .df-experience-note p { color:#334155 !important; font-size:16px !important; }
+.df-site .df-home .df-service-card { border-width:1px; }
+.df-site .df-home .df-service-card:nth-child(4n+1) { background:linear-gradient(150deg,#fff0f4,#fff); border-color:#edb1c1; }
+.df-site .df-home .df-service-card:nth-child(4n+2) { background:linear-gradient(150deg,#eaf3ff,#fff); border-color:#b5cdf2; }
+.df-site .df-home .df-service-card:nth-child(4n+3) { background:linear-gradient(150deg,#fff2df,#fff); border-color:#efce9e; }
+.df-site .df-home .df-service-card:nth-child(4n+4) { background:linear-gradient(150deg,#e8f8ee,#fff); border-color:#a9dec1; }
+.df-site .df-home .df-service-card:nth-child(4n+2) .df-service-top i { background:#dbeafe; color:#2157c5; }
+.df-site .df-home .df-service-card:nth-child(4n+3) .df-service-top i { background:#ffdfb5; color:#a73a0a; }
+.df-site .df-home .df-service-card:nth-child(4n+4) .df-service-top i { background:#cdf2dd; color:#087247; }
+.df-site .df-home .df-service-card h3 { color:#193557 !important; font-size:19px !important; }
+.df-site .df-home .df-service-card p { color:#334155 !important; font-size:15px !important; }
+.df-site .df-home .df-filter button { color:#24456f; border-color:#bbcee9; font-size:15px !important; font-weight:700; }
+.df-site .df-home .df-filter button[aria-pressed="true"] { background:#b7193a; border-color:#b7193a; color:#fff !important; }
+.df-site .df-home .df-event-card h3 { color:#fff !important; font-size:19px !important; }
+.df-site .df-home .df-event-card>div>span { color:#ffe0a4 !important; font-weight:700; letter-spacing:1px; }
+.df-site .df-home .df-booking-story { background:#a21838; }
+.df-site .df-home .df-booking-story p,
+.df-site .df-home .df-booking-story .df-eyebrow { color:#fff2da !important; }
+.df-site .df-home .df-field label { color:#1f3557 !important; font-size:15px !important; font-weight:700; }
+.df-site .df-home .df-field :is(input,select,textarea) { font-size:16px !important; border-color:#c4bfd1; color:#1e293b; }
+.df-site .df-home .df-form-hint { color:#475569 !important; font-size:14px !important; }
+.df-site .df-home .df-person h3 { color:#203b62 !important; font-size:17px !important; }
+.df-site .df-home .df-person p { color:#475569 !important; font-size:15px !important; }
+.df-site .df-home .df-feedback-shell { background:linear-gradient(120deg,#ffeff4,#fff8e9); border-color:#e8b4c3; }
+.df-site .df-home .df-feedback-shell p { color:#334155 !important; font-size:16px !important; }
+.df-site .df-home .df-feedback-empty { color:#475569 !important; font-size:14px !important; }
+.df-site .df-home .df-journal-body details p { color:#334155 !important; font-size:15px !important; }
+.df-site .df-guide-grid article:nth-child(3n+1) { border-top:4px solid #c51d3a; }
+.df-site .df-guide-grid article:nth-child(3n+2) { border-top:4px solid #2157c5; }
+.df-site .df-guide-grid article:nth-child(3n) { border-top:4px solid #087f5b; }
+.df-site .df-guide-grid h3 { font-size:18px !important; color:#1e3557 !important; }
+.df-site .df-guide-grid p,
+.df-site .df-faq-intro>p,
+.df-site .df-faq-list details>div { font-size:16px !important; color:#334155 !important; }
+.df-site .df-faq-list summary { font-size:16px !important; color:#203b62 !important; }
+.df-site .df-faq-list details[open] summary { color:#b31536 !important; }
+
+/* 3. Menu: chữ và giá rõ, giữ nguyên phân loại và dữ liệu. */
+.df-site .df-menu-hero { background:linear-gradient(110deg,#fff0e5,#fff9fc 55%,#ffeaf1); }
+.df-site .df-menu-intro { color:#334155 !important; font-size:16px !important; }
+.df-site .df-menu-service-notes { color:#234373 !important; font-size:15px !important; font-weight:600; border-bottom-color:#c6d5ed; }
+.df-site .df-menu-search { border:1px solid #d9a3b4; box-shadow:0 7px 25px #c51d3a12; }
+.df-site .df-menu-search-label { font-size:16px !important; color:#1f3b62 !important; font-weight:700; }
+.df-site .df-menu-search input { font-size:16px !important; color:#1e293b; }
+.df-site .df-menu-search button { font-size:15px !important; background:#bd1939; color:#fff !important; font-weight:700; }
+.df-site .df-menu-sidebar { border-color:#b9ccee; background:#f8fbff; }
+.df-site .df-menu-category { color:#244574 !important; font-size:15px !important; font-weight:600; }
+.df-site .df-menu-category:hover { background:#e4edff; color:#173a8b !important; }
+.df-site .df-menu-category.is-active { background:linear-gradient(120deg,#d42b48,#b51839) !important; border-color:#b51839; color:#fff !important; }
+.df-site .df-menu-category.is-active>span { color:#fff !important; }
+.df-site .df-menu-toolbar p { color:#475569 !important; font-size:15px !important; }
+.df-site .df-menu-sort label,
+.df-site .df-menu-sort select,
+.df-site .df-menu-sort button { font-size:14px !important; color:#244574 !important; }
+.df-site .df-menu-card { border-color:#e6becb; background:#fff; box-shadow:0 5px 20px #98223e0a; }
+.df-site .df-menu-card h3 { color:#1b3356 !important; font-size:20px !important; line-height:1.5; }
+.df-site .df-menu-card-category { color:#b31536 !important; font-size:14px !important; font-weight:800; letter-spacing:.6px; }
+.df-site .df-menu-card-description { color:#334155 !important; font-size:15px !important; }
+.df-site .df-menu-price,
+.df-site .df-menu-price small { color:#b23a0a !important; font-weight:800; }
+.df-site .df-menu-price { font-size:22px !important; }
+.df-site .df-menu-portions strong { font-size:15px !important; color:#243653 !important; }
+.df-site .df-menu-portions small { font-size:14px !important; color:#475569 !important; }
+.df-site .df-menu-featured { background:#b7193a !important; color:#fff !important; font-size:14px !important; font-weight:700; }
+.df-site .df-menu-allergen { background:#fff0cd; color:#784006 !important; border:1px solid #eed398; font-size:14px !important; }
+.df-site .df-menu-pagination>a,
+.df-site .df-menu-pagination>span { font-size:15px !important; min-width:40px; min-height:40px; }
+.df-site .df-menu-pagination a.is-current { color:#fff !important; background:#b7193a; }
+.df-site .df-menu-footnote { font-size:14px !important; color:#475569 !important; }
+
+/* 4. Chi tiết món, đánh giá và giỏ hàng. */
+.df-dish-page,
+.df-cart-page { background:linear-gradient(115deg,#fff6ed,#fff8fc); color:#203452; }
+.df-dish-breadcrumb,
+.df-dish-intro,
+.df-dish-description { color:#334155 !important; font-size:16px !important; }
+.df-dish-eyebrow,
+.df-cart-eyebrow { color:#a63b0a !important; font-size:14px !important; font-weight:800; }
+.df-dish-badge { background:#ffe4ae; color:#743800; font-size:14px !important; font-weight:700; }
+.df-dish-panel,
+.df-cart-items { border-color:#e3bdc8; box-shadow:0 5px 20px #8b203908; }
+.df-dish-panel h2,
+.df-cart-summary h2 { color:#1b355b !important; font-size:23px !important; }
+.df-dish-variants strong { color:#203b62; font-size:17px; }
+.df-dish-variants small { color:#475569 !important; font-size:14px !important; }
+.df-dish-variants>li>span { color:#b23a0a !important; font-size:21px !important; }
+.df-dish-allergen { background:#fff0cd; border-left-color:#b86b00; color:#784006; font-size:15px; }
+.df-review-average { color:#b31536 !important; font-weight:800; }
+.df-review-stars { color:#996000 !important; }
+.df-review-form { background:linear-gradient(120deg,#fff1f5,#fffaf0); border-color:#deb5c3; }
+.df-review-form h3 { color:#233d61 !important; }
+.df-review-rating-options label { border-color:#e0b7c5; color:#203b62; font-size:15px; font-weight:600; }
+.df-review-rating-options label:has(input:checked) { background:#ffe0e9; color:#a51235; border-color:#bf1d3c; }
+.df-review-item time { color:#475569 !important; font-size:14px !important; }
+.df-review-body { color:#334155; font-size:16px; }
+.df-cart-back { color:#b31536 !important; font-size:16px; font-weight:700; }
+.df-cart-item h2 { font-size:20px !important; color:#1e3b62 !important; }
+.df-cart-quantity label,
+.df-cart-remove { font-size:15px !important; }
+.df-cart-quantity input { font-size:16px; min-height:40px; }
+.df-cart-remove { color:#b01535 !important; font-weight:600; }
+.df-cart-line-total { color:#b31536 !important; font-size:19px; font-weight:700; }
+.df-cart-line-total span { color:#475569 !important; font-size:14px !important; }
+.df-cart-summary { background:linear-gradient(145deg,#fff0f4,#fffaf0); border:1px solid #e5a4b7; }
+.df-cart-summary-total strong { color:#b31536 !important; font-size:27px !important; font-weight:800; }
+
+/* 5. Trang tài khoản đã thiết kế: xử lý cả CSS nhúng trong view. */
+.dpf { background:radial-gradient(ellipse at 100% 0%,#ffe5ee,transparent 52%),#f6f9ff; }
+.dpf .dpf-hero { border-color:#e5a6bb; box-shadow:0 8px 28px #bd254312; }
+.dpf .dpf-hero::before { background:linear-gradient(90deg,#c51d3a,#ee6d2d,#2157c5); }
+.dpf .dpf-hero-main { background:linear-gradient(110deg,#fff8f1,#fff6fa 65%,#eef5ff); }
+.dpf .dpf-page-description,
+.dpf .dpf-identity-note { color:#334155 !important; font-size:16px !important; }
+.dpf .dpf-eyebrow { color:#ac173b !important; font-size:14px !important; font-weight:800; letter-spacing:1px; }
+.dpf .dpf-name { color:#19375f !important; }
+.dpf .dpf-handle { color:#2157a8 !important; font-size:15px !important; font-weight:600; }
+.dpf .dpf-primary-button { background:linear-gradient(120deg,#da2a47,#b51637); color:#fff !important; font-size:15px !important; min-height:46px; }
+.dpf .dpf-avatar-link,
+.dpf .dpf-hero-action-note { color:#a51a3d !important; font-size:14px !important; }
+.dpf .dpf-summary { background:#fff9fb; }
+.dpf .dpf-summary-label { color:#475569 !important; font-size:14px !important; }
+.dpf .dpf-summary-value { color:#23467b !important; font-size:15px !important; font-weight:700; }
+.dpf .dpf-summary-value.is-verified { color:#087247 !important; }
+.dpf .dpf-card-title { color:#1d3b64 !important; font-size:18px !important; }
+.dpf .dpf-card-subtitle { color:#475569 !important; font-size:14px !important; }
+.dpf .dpf-info-field dt { color:#475569 !important; font-size:14px !important; font-weight:600; }
+.dpf .dpf-info-field dd { color:#183558 !important; font-size:16px !important; }
+.dpf .dpf-info-field dd.is-empty { color:#664b60 !important; font-size:15px !important; }
+.dpf .dpf-badge { font-size:13px !important; }
+.dpf .dpf-badge-verified { color:#08643e; background:#dcf6e8; border-color:#9bd3b4; }
+.dpf .dpf-badge-pending { color:#754000; background:#ffedc2; border-color:#eac67b; }
+.dpf .dpf-info-footer { background:#edf4ff; color:#264d86 !important; font-size:14px !important; }
+.dpf .dpf-shortcut-title { color:#203c65 !important; font-size:16px !important; }
+.dpf .dpf-shortcut-description { color:#475569 !important; font-size:14px !important; }
+.dpf .dpf-shortcut:nth-child(2) .dpf-shortcut-icon { color:#2157c5; background:#e5eeff; border-color:#b5c9ee; }
+.dpf .dpf-shortcut:nth-child(3) .dpf-shortcut-icon { color:#9b4505; background:#ffedcf; border-color:#edcc99; }
+.dpf .dpf-completion { background:linear-gradient(115deg,#ffeaf1,#fff5e4); border-color:#dfa6b8; }
+.dpf .dpf-completion-heading h2 { color:#a0193b !important; font-size:16px !important; }
+.dpf .dpf-completion-text { color:#4a3550 !important; font-size:14px !important; }
+.dpf .dpf-missing-fields li { color:#89304e !important; background:#fff; border-color:#dcb2c0; font-size:14px !important; }
+.dpf .dpf-page-footnote,
+.dpf .dpf-breadcrumb,
+.dpf .dpf-breadcrumb a { color:#475569 !important; font-size:14px !important; }
+
+/* 6. Footer và mọi panel tối: chữ sáng rõ, không áp màu chữ tối. */
+.df-site .df-site-footer { background:linear-gradient(115deg,#4b1534,#7f1538 55%,#3d2361); }
+.df-site .df-site-footer h2,
+.df-site .df-site-footer h3 { color:#fff !important; }
+.df-site .df-site-footer h2>span { color:#ffd58f !important; }
+.df-site .df-site-footer .df-brand-word { color:#fff !important; }
+.df-site .df-site-footer .df-brand-word>span { color:#ffc58a !important; }
+.df-site .df-site-footer p,
+.df-site .df-site-footer .text-muted,
+.df-site .df-footer-links a,
+.df-site .df-footer-contact a,
+.df-site .df-footer-contact span,
+.df-site .df-footer-bottom,
+.df-site .df-footer-bottom a { color:#fff0df !important; font-size:15px !important; opacity:1; }
+.df-site .df-footer-links a:hover,
+.df-site .df-footer-bottom a:hover { color:#fff !important; }
+.df-site .df-site-footer :is(.df-brand-tagline,.df-footer-signature,.df-overline) { color:#ffd58f !important; font-size:14px !important; font-weight:700; letter-spacing:1px; }
+.df-site .df-footer-button { background:#ffc66f; color:#511828 !important; border-color:#ffc66f; font-size:16px !important; font-weight:800; }
+.df-site .df-footer-button:hover { background:#ffdc9f; color:#3a1230 !important; }
+.df-site .df-footer-strip img { opacity:1; }
+body .text-white-50 { color:#fff0df !important; opacity:1; }
+
+/* Kích thước lớn hơn cần thêm khoảng thở thay vì ép chữ nhỏ lại. */
+@media(max-width:991.98px) {
+    .df-site .df-mainmenu .navbar-nav { gap:3px 0; }
+    .df-site .df-mainmenu .nav-link { font-size:15px !important; padding:12px 14px !important; }
+    .df-site .df-menu-layout { grid-template-columns:205px minmax(0,1fr); }
+    .df-site .df-menu-card h3 { font-size:19px !important; }
+    .df-site .df-editorial-box { padding:24px; }
+    .dpf .dpf-summary-item { gap:10px; }
+    .dpf .dpf-summary-value { font-size:14px !important; }
+    .dpf .dpf-side { grid-template-columns:1fr; }
+}
+@media(max-width:767.98px) {
+    .df-site .df-menu-layout { display:block; }
+    .df-site .df-menu-sidebar { position:static; }
+    .df-site .df-menu-search-field { flex-wrap:wrap; gap:10px; }
+    .df-site .df-menu-search input { min-width:140px; flex:1; }
+    .df-site .df-menu-search button { min-height:44px; }
+    .df-site .df-editorial-box { display:block; }
+    .df-site .df-editorial-box a { max-width:none; margin-top:15px; padding-top:13px; border-top:1px solid #ffffff55; }
+    .df-site .df-editorial-box p { margin-top:12px; }
+    .df-site .df-home-intro { grid-template-columns:1fr; }
+    .df-site .df-home-intro-actions { gap:16px; }
+    .df-site .df-primary-navigation .df-navigation-inner { padding-block:4px; }
+    .df-site .df-footer-invitation { gap:23px; }
+}
+@media(max-width:575.98px) {
+    .df-site .df-shell { width:calc(100% - 28px); }
+    .df-site .df-brandbar { gap:14px 10px; }
+    .df-site .df-header-actions { gap:12px; margin-left:auto; }
+    .df-site .df-header-search { width:38px; height:40px; }
+    .df-site .df-brand-tagline { font-size:12px !important; letter-spacing:1px; }
+    .df-site .df-announcement-inner { flex-wrap:wrap; justify-content:center; gap:3px 14px; padding-block:7px; text-align:center; }
+    .df-site .df-announcement,
+    .df-site .df-announcement a { font-size:13px !important; }
+    .df-site .df-mainmenu .nav-link { font-size:15px !important; padding:10px 12px !important; }
+    .df-site .df-reserve-link { min-height:43px; padding:10px 14px; }
+    .df-site .fd-food-bottom { flex-wrap:wrap; gap:12px; }
+    .df-site .fd-food-note { max-width:none; flex:1 1 210px; }
+    .df-site .fd-food-card figcaption { min-height:95px; }
+    .df-site .df-menu-grid { grid-template-columns:1fr; }
+    .df-site .df-menu-featured { max-width:calc(100% - 24px); }
+    .df-site .df-menu-portions li { flex-wrap:wrap; }
+    .df-site .df-menu-sort>div { flex-wrap:wrap; }
+    .df-site .df-menu-sort select { max-width:100%; }
+    .df-site .df-footer-columns { gap:28px 20px; }
+    .df-site .df-footer-links a { align-items:flex-start; gap:9px; }
+    .df-site .df-footer-button { white-space:normal; }
+    .dpf .dpf-hero-main { padding:22px 18px; }
+    .dpf .dpf-eyebrow { font-size:13px !important; }
+    .dpf .dpf-hero-actions { flex-wrap:wrap; align-items:center; }
+    .dpf .dpf-hero-action-note { max-width:none; }
+    .dpf .dpf-summary-item>div { flex-wrap:wrap; gap:4px 12px; }
+    .dpf .dpf-summary-value { text-align:left; }
+    .dpf .dpf-shortcut-description { font-size:14px !important; }
+    .df-cart-item { grid-template-columns:64px minmax(0,1fr); gap:12px; }
+    .df-cart-item img { width:64px; height:64px; }
+    .df-cart-item h2 { font-size:18px !important; }
+    .df-cart-line-total { white-space:normal; }
+}
+@media(prefers-reduced-motion:reduce) {
+    .df-site .df-menu-card,
+    .df-site .df-reserve-link,
+    .dpf .dpf-primary-button { transition:none !important; }
+}
+
+/* Giữ tương phản trong các trạng thái hover và template cũ. */
+.df-site .df-home .df-filter button:hover,
+.df-site .df-home .df-filter button:focus-visible {
+    color:#fff !important; background:#b7193a; border-color:#b7193a;
+}
+.dpf .dpf-shortcut:hover .dpf-shortcut-title { color:#b31536 !important; }
+.service-item:hover .service-content-icon :is(i,p,h4) { color:#fff !important; }
+.service-item:hover .service-content-icon a.btn-primary { background:#fff !important; color:#b31536 !important; }
+.menu .nav-item a.active .text-dark { color:#fff !important; }
+.fapdora-header .navbar-nav .nav-link { font-size:16px !important; color:#20395c !important; font-weight:700; }
+.fapdora-header .navbar-nav .nav-link.active { background:#b7193a; color:#fff !important; }
+
+/* Chữ Bootstrap trong các vùng nền tối. */
+body .text-body { color:#334155 !important; }
+.df-site .df-site-footer :is(.text-body,.text-muted,.text-secondary,.text-black-50,.form-text),
+.df-site .df-editorial-box :is(.text-body,.text-muted,.text-secondary),
+.df-site .df-home .df-booking-story :is(.text-body,.text-muted,.text-secondary) { color:#fff0df !important; }

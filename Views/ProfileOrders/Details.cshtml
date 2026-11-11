@@ -15,25 +15,28 @@
             <i class="fas fa-arrow-left me-1" aria-hidden="true"></i>
             Đơn hàng của tôi
         </a>
-            @if (TempData["OrderSuccess"] is string successMessage)
-{
-    <div class="alert alert-success mt-3" role="status">
-        @successMessage
-    </div>
-}
 
-@if (TempData["OrderError"] is string errorMessage)
-{
-    <div class="alert alert-warning mt-3" role="alert">
-        @errorMessage
-    </div>
-}
+        @if (TempData["OrderSuccess"] is string successMessage)
+        {
+            <div class="alert alert-success mt-3" role="status">
+                @successMessage
+            </div>
+        }
+
+        @if (TempData["OrderError"] is string errorMessage)
+        {
+            <div class="alert alert-warning mt-3" role="alert">
+                @errorMessage
+            </div>
+        }
+
         <div class="d-flex flex-wrap align-items-center
-                    justify-content-between gap-3 my-4">
+            justify-content-between gap-3 my-4">
             <div>
                 <h1 class="h2 fw-bold text-break mb-1">
                     Đơn @Model.Order.Code
                 </h1>
+
                 <p class="text-muted mb-0">
                     Ngày đặt
                     @(Model.Order.OpenedAtUtc.AddHours(7)
@@ -41,31 +44,31 @@
                 </p>
             </div>
 
-          <div class="d-flex flex-wrap align-items-center gap-2">
-    <span class="badge @Model.Order.StatusBadge fs-6">
-        @Model.Order.StatusLabel
-    </span>
+            <div class="d-flex flex-wrap align-items-center gap-2">
+                <span class="badge @Model.Order.StatusBadge fs-6">
+                    @Model.Order.StatusLabel
+                </span>
 
-    @if (Model.Order.Status == "OPEN")
-    {
-        <form asp-route="DoraFood.CancelMyOrder"
-              asp-route-id="@Model.Order.Id"
-              asp-antiforgery="true"
-              method="post"
-              class="m-0"
-              onsubmit="return window.confirm('Anh có chắc muốn hủy đơn hàng này không?');">
-
-            <button type="submit" class="btn btn-sm btn-outline-danger">
-                Hủy đơn
-            </button>
-        </form>
-    }
-</div>
+                @if (Model.Order.Status == "OPEN")
+                {
+                    <form asp-route="DoraFood.CancelMyOrder"
+                          asp-route-id="@Model.Order.Id"
+                          asp-antiforgery="true"
+                          method="post"
+                          class="m-0"
+                          onsubmit="return confirm('Bạn có chắc muốn hủy đơn hàng này không?');">
+                        <button type="submit"
+                                class="btn btn-sm btn-outline-danger">
+                            Hủy đơn
+                        </button>
+                    </form>
+                }
+            </div>
         </div>
 
         <div class="row g-4">
             <div class="col-lg-7">
-                <div class="card border-0 shadow-sm">
+                <div class="card border-0 shadow-sm mb-4">
                     <div class="card-body p-4">
                         <h2 class="h5 mb-3">Món đã đặt</h2>
 
@@ -81,7 +84,7 @@
                                 @foreach (var item in Model.Items)
                                 {
                                     <li class="list-group-item px-0 d-flex
-                                               flex-wrap justify-content-between gap-2">
+                                        flex-wrap justify-content-between gap-2">
                                         <div>
                                             <div class="fw-semibold text-break">
                                                 @item.Name
@@ -109,12 +112,40 @@
                         }
 
                         <div class="d-flex justify-content-between
-                                    gap-2 border-top pt-3 mt-3">
+                            gap-2 border-top pt-3 mt-3">
                             <span class="fw-semibold">Tổng tiền đơn</span>
                             <strong class="text-danger text-nowrap">
                                 @Model.Order.Total.ToString("N0", culture) ₫
                             </strong>
                         </div>
+                    </div>
+                </div>
+
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                        <h2 class="h5 mb-3">Lịch sử xử lý</h2>
+
+                        <ol class="list-group list-group-flush mb-0">
+                            @foreach (var entry in Model.History)
+                            {
+                                <li class="list-group-item px-0 py-3
+                                    d-flex align-items-start gap-3">
+                                    <i class="fas fa-circle text-primary small mt-1"
+                                       aria-hidden="true"></i>
+
+                                    <div>
+                                        <div class="fw-semibold">
+                                            @entry.Title
+                                        </div>
+
+                                        <div class="text-muted small mt-1">
+                                            @(entry.ChangedAtUtc.AddHours(7)
+                                                .ToString("dd/MM/yyyy HH:mm", culture))
+                                        </div>
+                                    </div>
+                                </li>
+                            }
+                        </ol>
                     </div>
                 </div>
             </div>
@@ -126,18 +157,24 @@
 
                         <dl class="mb-0">
                             <dt class="small text-muted">Người nhận</dt>
-                            <dd class="text-break mb-3">@Display(Model.ReceiverName)</dd>
+                            <dd class="text-break mb-3">
+                                @Display(Model.ReceiverName)
+                            </dd>
 
                             <dt class="small text-muted">Số điện thoại</dt>
-                            <dd class="mb-3">@Display(Model.PhoneNumber)</dd>
+                            <dd class="mb-3">
+                                @Display(Model.PhoneNumber)
+                            </dd>
 
                             <dt class="small text-muted">Địa chỉ giao hàng</dt>
-                            <dd class="text-break mb-3" style="white-space: pre-line;">@Display(Model.DeliveryAddress)</dd>
+                            <dd class="text-break mb-3"
+                                style="white-space: pre-line;">@Display(Model.DeliveryAddress)</dd>
 
                             @if (!string.IsNullOrWhiteSpace(Model.Note))
                             {
                                 <dt class="small text-muted">Ghi chú cho quán</dt>
-                                <dd class="text-break mb-0" style="white-space: pre-line;">@Model.Note</dd>
+                                <dd class="text-break mb-0"
+                                    style="white-space: pre-line;">@Model.Note</dd>
                             }
                         </dl>
                     </div>

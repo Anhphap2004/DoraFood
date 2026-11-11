@@ -14,6 +14,9 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
 using System;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.SqlClient;
 
 namespace DoraFood.Controllers;
@@ -410,5 +413,111 @@ public class ProfileController : Controller
         {
             logger.LogWarning(exception, "Không dọn được tệp ảnh đại diện {Path}.", path);
         }
+    }
+    [HttpGet("doi-mat-khau", Name = "DoraFood.ChangeMyPassword")]
+    public IActionResult ChangePassword()
+    {
+        return View(new ChangePasswordInput());
+    }
+
+    [HttpPost("doi-mat-khau")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ChangePassword(
+        ChangePasswordInput input,
+        [FromServices] IPasswordHasher<DoraFood.Models.User> passwordHasher,
+        CancellationToken cancellationToken)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View(input);
+        }
+
+        var userIdClaim = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var stampClaim = User.FindFirstValue("SecurityStamp");
+
+        if (!long.TryParse(userIdClaim, out var userId)
+            || !Guid.TryParse(stampClaim, out var securityStamp))
+        {
+            await HttpContext.SignOutAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme);
+
+            return RedirectToAction("Login", "Account");
+        }
+
+        var account = await _context.Set<DoraFood.Models.User>()
+            .AsNoTracking()
+            .SingleOrDefaultAsync(
+                user => user.Id == userId
+                    && user.IsActive
+                    && user.SecurityStamp == securityStamp,
+                cancellationToken);
+
+        if (account is null)
+        {
+            await HttpContext.SignOutAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme);
+
+            return RedirectToAction("Login", "Account");
+        }
+
+        var verification = passwordHasher.VerifyHashedPassword(
+            account,
+            account.PasswordHash,
+            input.CurrentPassword);
+
+        if (verification == PasswordVerificationResult.Failed)
+        {
+            ModelState.AddModelError(
+                nameof(input.CurrentPassword),
+                "Mật khẩu hiện tại không đúng.");
+
+            return View(input);
+        }
+
+        if (string.Equals(
+            input.CurrentPassword,
+            input.NewPassword,
+            StringComparison.Ordinal))
+        {
+            ModelState.AddModelError(
+                nameof(input.NewPassword),
+                "Mật khẩu mới cần khác mật khẩu hiện tại.");
+
+            return View(input);
+        }
+
+        var newPasswordHash = passwordHasher.HashPassword(
+            account,
+            input.NewPassword);
+
+        var newSecurityStamp = Guid.NewGuid();
+        var updatedAt = DateTime.UtcNow;
+
+        var updatedRows = await _context.Set<DoraFood.Models.User>()
+            .Where(user =>
+                user.Id == userId
+                && user.IsActive
+                && user.SecurityStamp == securityStamp)
+            .ExecuteUpdateAsync(setters => setters
+                .SetProperty(user => user.PasswordHash, newPasswordHash)
+                .SetProperty(user => user.SecurityStamp, newSecurityStamp)
+                .SetProperty(user => user.UpdatedAtUtc, updatedAt),
+                cancellationToken);
+
+        if (updatedRows == 0)
+        {
+            await HttpContext.SignOutAsync(
+                CookieAuthenticationDefaults.AuthenticationScheme);
+
+            return RedirectToAction("Login", "Account");
+        }
+
+        await HttpContext.SignOutAsync(
+            CookieAuthenticationDefaults.AuthenticationScheme);
+
+        TempData["PasswordSuccess"] =
+            "Đã đổi mật khẩu. Vui lòng đăng nhập bằng mật khẩu mới.";
+
+        return RedirectToAction("Login", "Account");
     }
 }
