@@ -1,174 +1,233 @@
-﻿@using System.Globalization
+@using System.Globalization
 @model DoraFood.Areas.Admin.ViewModels.DeliveryOrderDetailsViewModel
 
 @{
     ViewData["Title"] = "Chi tiết đơn giao hàng";
     var culture = CultureInfo.GetCultureInfo("vi-VN");
-
-    var statusLabel = Model.Status switch
+    var (statusLabel, statusClass) = Model.Status switch
     {
-        "OPEN" => "Đơn mới",
-        "IN_PROGRESS" => "Đang xử lý",
-        "COMPLETED" => "Hoàn tất",
-        "CANCELLED" => "Đã hủy",
-        _ => Model.Status
+        "OPEN" => ("Chờ tiếp nhận", "dv-status-new"),
+        "IN_PROGRESS" => ("Đang chuẩn bị", "dv-status-preparing"),
+        "SHIPPING" => ("Đang giao", "dv-status-shipping"),
+        "COMPLETED" => ("Hoàn tất", "dv-status-completed"),
+        "CANCELLED" => ("Đã hủy", "dv-status-cancelled"),
+        _ => (Model.Status, "dv-status-cancelled")
     };
-}
-
-<a class="btn btn-outline-secondary btn-sm mb-3"
-   href="@Url.Action("Index", "DeliveryOrders",
-       new { area = "Admin", page = Model.ReturnPage })">
-    ← Về danh sách
-</a>
-@if (TempData["DeliverySuccess"] is string success)
-{
-    <div class="alert alert-success" role="status">@success</div>
-}
-
-@if (TempData["DeliveryError"] is string error)
-{
-    <div class="alert alert-warning" role="alert">@error</div>
-}
-
-@if (Model.Status == "OPEN" && Model.PendingAmount > 0)
-{
-    <form method="post"
-          action="@Url.Action("Accept", "DeliveryOrders", new { area = "Admin" })"
-          class="mb-3">
-        @Html.AntiForgeryToken()
-
-        <input type="hidden" name="code" value="@Model.Code" />
-        <input type="hidden" name="page" value="@Model.ReturnPage" />
-
-        <button type="submit" class="btn btn-primary">
-            Tiếp nhận đơn
-        </button>
-
-    </form>
-}
-@if (Model.Status == "IN_PROGRESS" && Model.PendingAmount > 0)
-{
-    <div class="card mb-3">
-        <div class="card-body">
-            <p class="mb-2">
-                Số tiền cần thu
-                <strong>@Model.PendingAmount.ToString("N0", culture) ₫</strong>
-            </p>
-
-            <p class="small text-body-secondary">
-                Bấm xác nhận sau khi đã giao hàng và nhận đủ số tiền trên.
-            </p>
-
-            <form method="post"
-                  action="@Url.Action("CompleteCashDelivery", "DeliveryOrders",
-                      new { area = "Admin" })">
-                @Html.AntiForgeryToken()
-
-                <input type="hidden" name="code" value="@Model.Code" />
-                <input type="hidden" name="page" value="@Model.ReturnPage" />
-
-                <button type="submit" class="btn btn-success">
-                    Xác nhận đã thu
-                </button>
-            </form>
-        </div>
-    </div>
-}
-<div class="row g-3 mb-3">
-    <div class="col-lg-7">
-        <div class="card h-100">
-            <div class="card-header"><strong>Thông tin giao hàng</strong></div>
-            <div class="card-body">
-                <dl class="row mb-0">
-                    <dt class="col-sm-4">Mã đơn</dt>
-                    <dd class="col-sm-8 text-break">@Model.Code</dd>
-
-                    <dt class="col-sm-4">Trạng thái</dt>
-                    <dd class="col-sm-8">@statusLabel</dd>
-
-                    <dt class="col-sm-4">Giờ đặt</dt>
-                    <dd class="col-sm-8">
-                        @Model.OpenedAtUtc.AddHours(7).ToString("dd/MM/yyyy HH:mm")
-                    </dd>
-
-                    <dt class="col-sm-4">Người nhận</dt>
-                    <dd class="col-sm-8">@(Model.GuestName ?? "—")</dd>
-
-                    <dt class="col-sm-4">Điện thoại</dt>
-                    <dd class="col-sm-8">@(Model.GuestPhone ?? "—")</dd>
-
-                    <dt class="col-sm-4">Địa chỉ giao</dt>
-                    <dd class="col-sm-8 text-break">@(Model.DeliveryAddress ?? "—")</dd>
-
-                    <dt class="col-sm-4">Ghi chú</dt>
-                    <dd class="col-sm-8 text-break">@(Model.Note ?? "—")</dd>
-                </dl>
-            </div>
-        </div>
-    </div>
-
-    <div class="col-lg-5">
-        <div class="card h-100">
-            <div class="card-header"><strong>Thanh toán</strong></div>
-            <div class="card-body">
-                <p>Tiền mặt khi nhận hàng</p>
-                <p class="mb-2">
-                    Chờ thu
-                    <strong>
-                        @(Model.Status == "CANCELLED"
-                            ? "—"
-                            : Model.PendingAmount.ToString("N0", culture) + " ₫")
-                    </strong>
-                </p>
-                <p class="mb-0">
-                    Đã thu <strong>@Model.ReceivedAmount.ToString("N0", culture) ₫</strong>
-                </p>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div class="card">
-    <div class="card-header"><strong>Món trong đơn</strong></div>
-
-    @if (Model.Items.Count == 0)
+    var currentStep = Model.Status switch
     {
-        <div class="card-body">Đơn này chưa có dòng món.</div>
+        "OPEN" => 1,
+        "IN_PROGRESS" => 2,
+        "SHIPPING" => 3,
+        "COMPLETED" => 4,
+        _ => 0
+    };
+    var stages = new[]
+    {
+        (Label: "Chờ tiếp nhận", Icon: "bi-inbox"),
+        (Label: "Đang chuẩn bị", Icon: "bi-cup-hot"),
+        (Label: "Đang giao", Icon: "bi-truck"),
+        (Label: "Hoàn tất", Icon: "bi-check2-circle")
+    };
+    var canProcess = Model.PendingAmount > 0m && Model.ReceivedAmount == 0m;
+}
+
+<div class="dv-page">
+    <div class="dv-detail-top">
+        <a class="btn btn-outline-secondary btn-sm"
+           href="@Url.Action("Index", "DeliveryOrders", new { area = "Admin", page = Model.ReturnPage })">
+            <i class="bi bi-arrow-left me-1" aria-hidden="true"></i> Về danh sách
+        </a>
+        <span class="dv-status @statusClass"><span></span>@statusLabel</span>
+    </div>
+
+    <section class="dv-intro">
+        <span class="dv-intro-icon"><i class="bi bi-bag-heart" aria-hidden="true"></i></span>
+        <div>
+            <span class="dv-kicker">DORAFOOD · CHĂM TỪNG CHẶNG GIAO</span>
+            <h2 class="text-break">Đơn @Model.Code</h2>
+            <p>Kiểm tra thông tin nhận hàng và thực hiện bước tiếp theo của đơn.</p>
+        </div>
+        <span class="dv-season"><i class="bi bi-flower1" aria-hidden="true"></i> Vị xuân sum vầy</span>
+    </section>
+
+    @if (TempData["DeliverySuccess"] is string success)
+    {
+        <div class="alert alert-success" role="status">@success</div>
     }
-    else
+    @if (TempData["DeliveryError"] is string error)
     {
-        <div class="table-responsive">
-            <table class="table align-middle mb-0">
-                <thead>
-                    <tr>
-                        <th scope="col">Món</th>
-                        <th scope="col" class="text-end">Số lượng</th>
-                        <th scope="col" class="text-end">Đơn giá</th>
-                        <th scope="col" class="text-end">Thành tiền</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    @foreach (var item in Model.Items)
-                    {
-                        <tr>
-                            <td>
-                                @item.Name
-                                @if (item.Status == "CANCELLED")
+        <div class="alert alert-warning" role="alert">@error</div>
+    }
+
+    @if (currentStep > 0)
+    {
+        <nav class="dv-progress" aria-label="Tiến trình đơn hàng">
+            <ol>
+                @for (var index = 0; index < stages.Length; index++)
+                {
+                    var number = index + 1;
+                    var stateClass = number < currentStep ? "is-done"
+                        : number == currentStep ? "is-current" : "";
+                    <li class="@stateClass" aria-current="@(number == currentStep ? "step" : null)">
+                        <span class="dv-step-icon"><i class="bi @stages[index].Icon" aria-hidden="true"></i></span>
+                        <span><small>BƯỚC @number</small><strong>@stages[index].Label</strong></span>
+                    </li>
+                }
+            </ol>
+        </nav>
+    }
+
+    <div class="dv-detail-grid">
+        <div class="dv-main">
+            <div class="card dv-card">
+                <div class="card-header dv-card-header">
+                    <span class="dv-heading-icon"><i class="bi bi-geo-alt" aria-hidden="true"></i></span>
+                    <div><strong>Thông tin giao hàng</strong><small>Thông tin người nhận trong đơn đã đặt</small></div>
+                </div>
+                <div class="card-body">
+                    <dl class="dv-info-list">
+                        <div><dt>Mã đơn</dt><dd class="text-break fw-semibold">@Model.Code</dd></div>
+                        <div><dt>Trạng thái</dt><dd>@statusLabel</dd></div>
+                        <div><dt>Giờ đặt · Việt Nam</dt><dd>@Model.OpenedAtUtc.AddHours(7).ToString("dd/MM/yyyy HH:mm")</dd></div>
+                        <div><dt>Người nhận</dt><dd>@(Model.GuestName ?? "—")</dd></div>
+                        <div><dt>Điện thoại</dt><dd>@(Model.GuestPhone ?? "—")</dd></div>
+                        <div><dt>Địa chỉ giao</dt><dd class="dv-preserve">@(Model.DeliveryAddress ?? "—")</dd></div>
+                        <div><dt>Ghi chú</dt><dd class="dv-preserve">@(Model.Note ?? "—")</dd></div>
+                    </dl>
+                </div>
+            </div>
+
+            <div class="card dv-card">
+                <div class="card-header dv-card-header">
+                    <span class="dv-heading-icon"><i class="bi bi-egg-fried" aria-hidden="true"></i></span>
+                    <div><strong>Món trong đơn</strong><small>@Model.Items.Count dòng món</small></div>
+                </div>
+                @if (Model.Items.Count == 0)
+                {
+                    <div class="card-body dv-empty text-body-secondary">Đơn này chưa có dòng món.</div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0 dv-table dv-items-table">
+                            <thead><tr>
+                                <th scope="col">Món</th>
+                                <th scope="col" class="text-end">Số lượng</th>
+                                <th scope="col" class="text-end">Đơn giá</th>
+                                <th scope="col" class="text-end">Thành tiền</th>
+                            </tr></thead>
+                            <tbody>
+                                @foreach (var item in Model.Items)
                                 {
-                                    <span class="badge text-bg-secondary">Đã hủy</span>
+                                    <tr>
+                                        <td class="text-break">
+                                            <strong>@item.Name</strong>
+                                            @if (item.Status == "CANCELLED")
+                                            {
+                                                <span class="dv-status dv-status-cancelled mt-1">Đã hủy</span>
+                                            }
+                                        </td>
+                                        <td class="text-end">@item.Quantity.ToString("0.###", culture)</td>
+                                        <td class="text-end text-nowrap">@item.UnitPrice.ToString("N0", culture) ₫</td>
+                                        <td class="text-end text-nowrap fw-semibold">@item.LineTotal.ToString("N0", culture) ₫</td>
+                                    </tr>
                                 }
-                            </td>
-                            <td class="text-end">@item.Quantity.ToString("0.###", culture)</td>
-                            <td class="text-end text-nowrap">
-                                @item.UnitPrice.ToString("N0", culture) ₫
-                            </td>
-                            <td class="text-end text-nowrap">
-                                @item.LineTotal.ToString("N0", culture) ₫
-                            </td>
-                        </tr>
-                    }
-                </tbody>
-            </table>
+                            </tbody>
+                        </table>
+                    </div>
+                }
+            </div>
         </div>
-    }
+
+        <aside class="dv-side" aria-label="Thanh toán và xử lý đơn">
+            <div class="card dv-card dv-payment-card">
+                <div class="card-header dv-card-header">
+                    <span class="dv-heading-icon"><i class="bi bi-cash-coin" aria-hidden="true"></i></span>
+                    <div><strong>Thanh toán tiền mặt</strong><small>Thu tiền khi giao hàng cho khách</small></div>
+                </div>
+                <div class="card-body">
+                    <span class="dv-money-label">Số tiền đang chờ thu</span>
+                    <div class="dv-money">
+                        @(Model.Status == "CANCELLED" ? "—" : Model.PendingAmount.ToString("N0", culture) + " ₫")
+                    </div>
+                    <div class="dv-received"><span>Đã ghi nhận thu</span><strong>@Model.ReceivedAmount.ToString("N0", culture) ₫</strong></div>
+                    <p class="dv-payment-note">Số tiền được lấy từ hệ thống. Không cần nhập lại khi xác nhận.</p>
+                </div>
+            </div>
+
+            <div class="card dv-card dv-action-card">
+                <div class="card-body">
+                    <span class="dv-kicker">BƯỚC TIẾP THEO</span>
+                    @if (Model.Status == "COMPLETED")
+                    {
+                        <h3><i class="bi bi-check2-circle" aria-hidden="true"></i> Đơn đã hoàn tất</h3>
+                        <p>Không còn thao tác chuyển bước cho đơn này.</p>
+                    }
+                    else if (Model.Status == "CANCELLED")
+                    {
+                        <h3>Đơn đã hủy</h3>
+                        <p>Không tiếp nhận, giao hoặc xác nhận thu tiền cho đơn đã hủy.</p>
+                    }
+                    else if (currentStep == 0)
+                    {
+                        <h3>Kiểm tra trạng thái đơn</h3>
+                        <p>Trạng thái hiện tại chưa có thao tác xử lý trên màn hình này.</p>
+                    }
+                    else if (!canProcess)
+                    {
+                        <h3>Cần kiểm tra thanh toán</h3>
+                        <p>Đơn chưa có tiền chờ thu hợp lệ hoặc đã ghi nhận thu tiền. Hãy tải lại trang và kiểm tra trước khi xử lý.</p>
+                    }
+                    else if (Model.Status == "OPEN")
+                    {
+                        <h3>Tiếp nhận đơn mới</h3>
+                        <p>Kiểm tra thông tin người nhận và các món trước khi bắt đầu chuẩn bị.</p>
+                        <form asp-area="Admin" asp-controller="DeliveryOrders" asp-action="Accept"
+                              asp-antiforgery="true" method="post" data-delivery-action>
+                            <input type="hidden" name="code" value="@Model.Code" />
+                            <input type="hidden" name="page" value="@Model.ReturnPage" />
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-check2 me-1" aria-hidden="true"></i><span>Tiếp nhận đơn</span>
+                            </button>
+                        </form>
+                    }
+                    else if (Model.Status == "IN_PROGRESS")
+                    {
+                        <h3>Sẵn sàng giao món</h3>
+                        <p>Bấm khi món đã chuẩn bị xong và được bàn giao cho người giao hàng.</p>
+                        <form asp-area="Admin" asp-controller="DeliveryOrders" asp-action="StartShipping"
+                              asp-antiforgery="true" method="post" data-delivery-action>
+                            <input type="hidden" name="code" value="@Model.Code" />
+                            <input type="hidden" name="page" value="@Model.ReturnPage" />
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-truck me-1" aria-hidden="true"></i><span>Bắt đầu giao</span>
+                            </button>
+                        </form>
+                    }
+                    else if (Model.Status == "SHIPPING")
+                    {
+                        <h3>Xác nhận giao và thu tiền</h3>
+                        <p>Chỉ xác nhận sau khi khách đã nhận món và nhân viên đã thu đủ <strong>@Model.PendingAmount.ToString("N0", culture) ₫</strong>.</p>
+                        <form asp-area="Admin" asp-controller="DeliveryOrders" asp-action="CompleteCashDelivery"
+                              asp-antiforgery="true" method="post" data-delivery-action
+                              data-confirm="Xác nhận đơn đã được giao cho khách và đã thu đủ số tiền đang chờ thu?">
+                            <input type="hidden" name="code" value="@Model.Code" />
+                            <input type="hidden" name="page" value="@Model.ReturnPage" />
+                            <button type="submit" class="btn btn-success w-100">
+                                <i class="bi bi-cash-coin me-1" aria-hidden="true"></i><span>Xác nhận đã giao và thu tiền</span>
+                            </button>
+                        </form>
+                    }
+                </div>
+            </div>
+            <p class="dv-side-note"><i class="bi bi-shield-check" aria-hidden="true"></i> Hệ thống kiểm tra lại trạng thái đơn và khoản thu khi lưu thao tác.</p>
+        </aside>
+    </div>
 </div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/admin/css/delivery-orders-tet.css" asp-append-version="true" />
+}
+@section Scripts {
+    <script src="~/admin/js/delivery-orders-tet.js" asp-append-version="true"></script>
+}

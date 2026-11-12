@@ -1,4 +1,4 @@
-﻿@using System.Globalization
+@using System.Globalization
 @model DoraFood.Areas.Admin.ViewModels.DeliveryOrderListViewModel
 
 @{
@@ -6,22 +6,39 @@
     var culture = CultureInfo.GetCultureInfo("vi-VN");
 }
 
-<div class="card">
-    <div class="card-header">
+<div class="dv-page">
+    <section class="dv-intro">
+        <span class="dv-intro-icon"><i class="bi bi-truck" aria-hidden="true"></i></span>
+        <div><span class="dv-kicker">DORAFOOD · GIAO TRỌN VỊ NGON</span>
+            <h2>Theo sát từng đơn giao hàng</h2>
+            <p>Tiếp nhận, chuẩn bị, giao món và xác nhận thu tiền theo đúng tiến trình.</p>
+        </div>
+        <span class="dv-season"><i class="bi bi-flower1" aria-hidden="true"></i> Vị xuân sum vầy</span>
+    </section>
+    @if (TempData["DeliverySuccess"] is string success)
+    {
+        <div class="alert alert-success" role="status">@success</div>
+    }
+    @if (TempData["DeliveryError"] is string error)
+    {
+        <div class="alert alert-warning" role="alert">@error</div>
+    }
+    <div class="card dv-card">
+    <div class="card-header dv-card-header">
         <strong>Đơn giao hàng thu tiền mặt</strong>
         <span class="text-body-secondary ms-2">@Model.TotalOrders đơn</span>
     </div>
 
     @if (Model.Orders.Count == 0)
     {
-        <div class="card-body text-body-secondary">
+        <div class="card-body dv-empty text-body-secondary">
             Chưa có đơn giao hàng thu tiền mặt.
         </div>
     }
     else
     {
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table table-hover align-middle mb-0 dv-table dv-orders-table">
                 <thead>
                     <tr>
                         <th scope="col">Mã đơn</th>
@@ -31,18 +48,20 @@
                         <th scope="col">Trạng thái</th>
                         <th scope="col" class="text-end">Chờ thu</th>
                         <th scope="col" class="text-end">Đã thu</th>
+                        <th scope="col" class="text-end">Thao tác</th>
                     </tr>
                 </thead>
                 <tbody>
                     @foreach (var order in Model.Orders)
                     {
-                        var statusLabel = order.Status switch
+                        var (statusLabel, statusClass) = order.Status switch
                         {
-                            "OPEN" => "Đơn mới",
-                            "IN_PROGRESS" => "Đang xử lý",
-                            "COMPLETED" => "Hoàn tất",
-                            "CANCELLED" => "Đã hủy",
-                            _ => order.Status
+                            "OPEN" => ("Chờ tiếp nhận", "dv-status-new"),
+                            "IN_PROGRESS" => ("Đang chuẩn bị", "dv-status-preparing"),
+                            "SHIPPING" => ("Đang giao", "dv-status-shipping"),
+                            "COMPLETED" => ("Hoàn tất", "dv-status-completed"),
+                            "CANCELLED" => ("Đã hủy", "dv-status-cancelled"),
+                            _ => (order.Status, "dv-status-cancelled")
                         };
 
                         <tr>
@@ -63,7 +82,7 @@
                             <td class="text-nowrap">
                                 @order.OpenedAtUtc.AddHours(7).ToString("dd/MM/yyyy HH:mm")
                             </td>
-                            <td>@statusLabel</td>
+                            <td><span class="dv-status @statusClass"><span></span>@statusLabel</span></td>
                             <td class="text-end text-nowrap">
                                 @if (order.Status == "CANCELLED")
                                 {
@@ -77,6 +96,13 @@
                             <td class="text-end text-nowrap">
                                 @order.ReceivedAmount.ToString("N0", culture) ₫
                             </td>
+                            <td class="text-end">
+                                <a class="btn btn-outline-primary btn-sm text-nowrap"
+                                   href="@Url.Action("Details", "DeliveryOrders",
+                                       new { area = "Admin", code = order.Code, page = Model.Page })">
+                                    Xem chi tiết <i class="bi bi-arrow-up-right ms-1" aria-hidden="true"></i>
+                                </a>
+                            </td>
                         </tr>
                     }
                 </tbody>
@@ -85,7 +111,7 @@
 
         @if (Model.TotalPages > 1)
         {
-            <div class="card-footer d-flex align-items-center gap-2">
+            <div class="card-footer dv-pagination d-flex flex-wrap align-items-center gap-2">
                 @if (Model.Page > 1)
                 {
                     <a class="btn btn-outline-secondary btn-sm"
@@ -109,3 +135,11 @@
         }
     }
 </div>
+    <div class="dv-list-note"><i class="bi bi-info-circle" aria-hidden="true"></i>
+        Mở chi tiết đơn để thao tác. Tiếp nhận và bắt đầu giao chưa ghi nhận đã thu tiền.
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/admin/css/delivery-orders-tet.css" asp-append-version="true" />
+}
