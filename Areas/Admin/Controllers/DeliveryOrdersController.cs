@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Data;
+using System.Globalization;
 using System.Linq;
 using System.Security.Claims;
 using System.Threading;
@@ -11,6 +12,11 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+
 
 namespace DoraFood.Areas.Admin.Controllers;
 
@@ -73,6 +79,321 @@ public class DeliveryOrdersController : Controller
 
         return View(new DeliveryOrderListViewModel(
             orders, page, totalPages, totalOrders));
+    }
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> ReviewCancellation(
+    [FromForm] string? code,
+    [FromForm] long requestId,
+    [FromForm] string? version,
+    [FromForm] string? decision,
+    [FromForm] string? reviewNote,
+    [FromForm] int page = 1,
+    CancellationToken cancellationToken = default)
+    {
+        // 1. Kiểm tra thông tin gửi lên.
+        if (!ModelState.IsValid
+            || !ValidCode(code)
+            || requestId <= 0)
+        {
+            return BadRequest("Thông tin yêu cầu không hợp lệ.");
+        }
+
+        code = code!.Trim();
+        reviewNote = reviewNote?.Trim();
+
+        if (string.IsNullOrWhiteSpace(reviewNote))
+        {
+            reviewNote = null;
+        }
+
+        if (decision != "APPROVED" && decision != "REJECTED")
+        {
+            return BadRequest("Thao tác xét duyệt không hợp lệ.");
+        }
+
+        var approve = decision == "APPROVED";
+
+        // Khi từ chối, quản lý phải giải thích cho khách.
+        if ((!approve && reviewNote is null)
+            || reviewNote?.Length > 500)
+        {
+            TempData["DeliveryError"] =
+                "Khi từ chối phải nhập phản hồi; phản hồi tối đa 500 ký tự.";
+
+            return RedirectToAction(
+                nameof(Details),
+                new { area = "Admin", code, page });
+        }
+
+        // 2. Đọc phiên bản yêu cầu từ form.
+        byte[] expectedVersion;
+
+        try
+        {
+            expectedVersion = Convert.FromBase64String(version ?? "");
+        }
+        catch (FormatException)
+        {
+            return BadRequest(
+                "Mã phiên bản không hợp lệ. Hãy tải lại trang.");
+        }
+
+        if (expectedVersion.Length != 8)
+        {
+            return BadRequest(
+                "Mã phiên bản không hợp lệ. Hãy tải lại trang.");
+        }
+
+        // Kiểm tra tài khoản quản lý vẫn đang hoạt động và có quyền.
+        var actorId = await GetActorIdAsync(cancellationToken);
+
+        if (!actorId.HasValue)
+        {
+            return Forbid();
+        }
+
+        var userId = actorId.Value;
+        string? error;
+
+        try
+        {
+            error = await _context.Database
+                .CreateExecutionStrategy()
+                .ExecuteAsync(async () =>
+                {
+                    _context.ChangeTracker.Clear();
+
+                    await using var transaction =
+                        await _context.Database.BeginTransactionAsync(
+                            IsolationLevel.Serializable,
+                            cancellationToken);
+
+                    // 3. Khóa đơn trước khi kiểm tra và thay đổi.
+                    // Các thao tác cùng đơn phải chờ giao dịch này hoàn tất.
+                    var order = await _context.Set<Order>()
+                        .FromSqlInterpolated($@"
+                        SELECT *
+                        FROM dbo.Orders WITH (UPDLOCK, HOLDLOCK)
+                        WHERE Code = {code}
+                          AND OrderType = 'DELIVERY'")
+                        .AsNoTracking()
+                        .SingleOrDefaultAsync(cancellationToken);
+
+                    if (order is null)
+                    {
+                        return "Không tìm thấy đơn giao hàng.";
+                    }
+
+                    var request = await _context
+                        .Set<OrderCancellationRequest>()
+                        .AsNoTracking()
+                        .SingleOrDefaultAsync(
+                            r => r.Id == requestId
+                                && r.OrderId == order.Id,
+                            cancellationToken);
+
+                    if (request is null)
+                    {
+                        return "Yêu cầu hủy không thuộc đơn này.";
+                    }
+
+                    if (request.Status != "PENDING"
+                        || !request.Version.SequenceEqual(expectedVersion))
+                    {
+                        return
+                            "Yêu cầu đã thay đổi hoặc đã được xử lý. Hãy tải lại trang.";
+                    }
+
+                    // Lấy giờ từ SQL Server, thống nhất với thời gian tạo yêu cầu.
+                    var now = await _context.Database
+                        .SqlQueryRaw<DateTime>(
+                            "SELECT SYSUTCDATETIME() AS [Value]")
+                        .SingleAsync(cancellationToken);
+
+                    // 4. Nếu đồng ý: kiểm tra và hủy đơn.
+                    if (approve)
+                    {
+                        if (order.ClosedAtUtc.HasValue
+                            || (order.Status != "OPEN"
+                                && order.Status != "IN_PROGRESS"))
+                        {
+                            return
+                                "Chỉ được chấp thuận hủy đơn đang chờ hoặc đang chuẩn bị.";
+                        }
+
+                        var payments = _context.Set<Payment>()
+                            .Where(p => p.OrderId == order.Id);
+
+                        var hasCollectedPayment = await payments
+                            .AnyAsync(
+                                p => p.Status == "SUCCEEDED",
+                                cancellationToken);
+
+                        if (hasCollectedPayment)
+                        {
+                            return
+                                "Đơn đã thu tiền, không thể hủy theo quy trình này.";
+                        }
+
+                        var pendingPayments = await (
+                            from payment in payments.AsNoTracking()
+                            join method in _context.Set<PaymentMethod>()
+                                .AsNoTracking()
+                                on payment.MethodId equals method.Id
+                            where payment.Status == "PENDING"
+                            select new
+                            {
+                                payment.Id,
+                                payment.Amount,
+                                payment.Purpose,
+                                MethodCode = method.Code
+                            })
+                            .Take(2)
+                            .ToListAsync(cancellationToken);
+
+                        if (pendingPayments.Count != 1
+                            || pendingPayments[0].MethodCode != "CASH"
+                            || pendingPayments[0].Purpose != "SETTLEMENT"
+                            || pendingPayments[0].Amount <= 0m)
+                        {
+                            return
+                                "Khoản tiền mặt chờ thu không hợp lệ. Hãy kiểm tra lại thanh toán.";
+                        }
+
+                        // Hủy đơn.
+                        var changedOrders = await _context.Set<Order>()
+                            .Where(o =>
+                                o.Id == order.Id
+                                && o.ClosedAtUtc == null
+                                && (o.Status == "OPEN"
+                                    || o.Status == "IN_PROGRESS"))
+                            .ExecuteUpdateAsync(
+                                setters => setters
+                                    .SetProperty(
+                                        o => o.Status,
+                                        "CANCELLED")
+                                    .SetProperty(
+                                        o => o.ClosedAtUtc,
+                                        (DateTime?)now),
+                                cancellationToken);
+
+                        if (changedOrders != 1)
+                        {
+                            return "Đơn vừa thay đổi. Hãy tải lại trang.";
+                        }
+
+                        // Hủy khoản tiền mặt chờ thu.
+                        var paymentId = pendingPayments[0].Id;
+
+                        var changedPayments = await payments
+                            .Where(p =>
+                                p.Id == paymentId
+                                && p.Status == "PENDING")
+                            .ExecuteUpdateAsync(
+                                setters => setters.SetProperty(
+                                    p => p.Status,
+                                    "CANCELLED"),
+                                cancellationToken);
+
+                        if (changedPayments != 1)
+                        {
+                            return
+                                "Khoản chờ thu vừa thay đổi. Hãy tải lại trang.";
+                        }
+
+                        // Hủy các món thuộc đơn.
+                        await _context.Set<OrderItem>()
+                            .Where(item =>
+                                item.OrderId == order.Id
+                                && item.Status != "CANCELLED")
+                            .ExecuteUpdateAsync(
+                                setters => setters.SetProperty(
+                                    item => item.Status,
+                                    "CANCELLED"),
+                                cancellationToken);
+                    }
+
+                    // 5. Lưu kết quả xét duyệt.
+                    // Khi từ chối, chỉ thay đổi yêu cầu hủy.
+                    var changedRequests = await _context
+                        .Set<OrderCancellationRequest>()
+                        .Where(r =>
+                            r.Id == requestId
+                            && r.OrderId == order.Id
+                            && r.Status == "PENDING"
+                            && r.Version == expectedVersion)
+                        .ExecuteUpdateAsync(
+                            setters => setters
+                                .SetProperty(
+                                    r => r.Status,
+                                    decision!)
+                                .SetProperty(
+                                    r => r.ReviewedBy,
+                                    (long?)userId)
+                                .SetProperty(
+                                    r => r.ReviewedAtUtc,
+                                    (DateTime?)now)
+                                .SetProperty(
+                                    r => r.ReviewNote,
+                                    reviewNote),
+                            cancellationToken);
+
+                    if (changedRequests != 1)
+                    {
+                        return
+                            "Yêu cầu đã được xử lý ở nơi khác. Hãy tải lại trang.";
+                    }
+
+                    // 6. Ghi lịch sử thao tác.
+                    _context.Set<AuditLog>().Add(new AuditLog
+                    {
+                        ActorId = userId,
+
+                        Action = approve
+                            ? "delivery.cancel"
+                            : "delivery.cancel_request.reject",
+
+                        EntityName = "Orders",
+
+                        EntityKey = order.Id.ToString(
+                            CultureInfo.InvariantCulture),
+
+                        Summary =
+                            $"Yêu cầu hủy #{request.Id}. Khách: {request.Reason}"
+                            + (reviewNote is null
+                                ? ""
+                                : $"\nPhản hồi: {reviewNote}"),
+
+                        CreatedAtUtc = now
+                    });
+
+                    await _context.SaveChangesAsync(cancellationToken);
+                    await transaction.CommitAsync(cancellationToken);
+
+                    return (string?)null;
+                });
+        }
+        catch (SqlException exception) when (exception.Number == 1205)
+        {
+            error =
+                "Đơn đang được xử lý đồng thời. Hãy tải lại trang rồi thử lại.";
+        }
+
+        // 7. Thông báo và trở về chi tiết đơn.
+        TempData[error is null ? "DeliverySuccess" : "DeliveryError"] =
+            error ?? (approve
+                ? "Đã đồng ý hủy đơn theo yêu cầu của khách."
+                : "Đã từ chối yêu cầu hủy và lưu phản hồi cho khách.");
+
+        return RedirectToAction(
+            nameof(Details),
+            new
+            {
+                area = "Admin",
+                code,
+                page = Math.Max(1, page)
+            });
     }
     [HttpGet]
     public async Task<IActionResult> Details(
@@ -144,6 +465,47 @@ public class DeliveryOrdersController : Controller
             items,
             Math.Max(1, page));
 
+        if (order.Status == "CANCELLED")
+        {
+            var entityKey = order.Id.ToString(CultureInfo.InvariantCulture);
+            ViewData["DeliveryCancellation"] = await _context.Set<AuditLog>()
+                .AsNoTracking()
+                .Where(log => log.Action == "delivery.cancel"
+                    && log.EntityName == "Orders" && log.EntityKey == entityKey)
+                .OrderByDescending(log => log.CreatedAtUtc).ThenByDescending(log => log.Id)
+                .Select(log => new DeliveryCancellationInfo(
+                    log.Actor != null ? log.Actor.UserName : "Tài khoản không còn",
+                    log.Summary ?? "", log.CreatedAtUtc))
+                .FirstOrDefaultAsync(cancellationToken);
+        }
+        // Tìm yêu cầu hủy đang chờ xử lý của đơn.
+        var pendingCancellation = await _context
+            .Set<OrderCancellationRequest>()
+            .AsNoTracking()
+            .Where(request =>
+                request.OrderId == order.Id
+                && request.Status == "PENDING")
+            .Select(request => new
+            {
+                request.Id,
+                request.Version,
+                CustomerName = request.Requester.UserName,
+                request.Reason,
+                request.RequestedAtUtc
+            })
+            .SingleOrDefaultAsync(cancellationToken);
+
+        ViewData["PendingCancellation"] =
+            pendingCancellation is null
+                ? null
+                : new CancellationReviewViewModel(
+                    pendingCancellation.Id,
+                    Convert.ToBase64String(pendingCancellation.Version),
+                    order.Code,
+                    Math.Max(1, page),
+                    pendingCancellation.CustomerName,
+                    pendingCancellation.Reason,
+                    pendingCancellation.RequestedAtUtc);
         return View(model);
     }
     // OPEN -> IN_PROGRESS: nhà hàng tiếp nhận và chuẩn bị món.
@@ -185,15 +547,9 @@ public class DeliveryOrdersController : Controller
             return BadRequest("Mã đơn hoặc số trang không hợp lệ.");
 
         code = code!.Trim();
-        if (!long.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var userId)
-            || userId <= 0)
-            return Forbid();
-
-        var actorIsValid = await _context.Set<DoraFood.Models.User>().AsNoTracking()
-            .AnyAsync(user => user.Id == userId && user.IsActive
-                && user.Roles.Any(role => role.Code == "ADMIN" || role.Code == "MANAGER"),
-                cancellationToken);
-        if (!actorIsValid) return Forbid();
+        var actorId = await GetActorIdAsync(cancellationToken);
+        if (!actorId.HasValue) return Forbid();
+        var userId = actorId.Value;
 
         string? error;
         try
@@ -220,6 +576,16 @@ public class DeliveryOrdersController : Controller
 
                 if (updatedOrders != 1)
                     return "Đơn không còn ở bước phù hợp. Hãy tải lại chi tiết đơn để kiểm tra.";
+
+                if (toStatus == "SHIPPING"
+    && await _context.Set<OrderCancellationRequest>()
+        .AnyAsync(
+            request => request.Order.Code == code
+                && request.Status == "PENDING",
+            cancellationToken))
+                {
+                    return "Khách đang yêu cầu hủy đơn. Hãy xử lý yêu cầu trước khi bắt đầu giao.";
+                }
 
                 // Cả ba bước đều yêu cầu đúng một khoản thanh toán đang có hiệu lực:
                 // tiền mặt, mục đích thanh toán đơn và đang chờ thu.
@@ -284,6 +650,140 @@ public class DeliveryOrdersController : Controller
 
         return RedirectToAction(nameof(Details),
             new { area = "Admin", code, page = Math.Max(1, page) });
+    }
+
+    // Hủy đơn chưa giao và chưa thu tiền; không xóa đơn hoặc dòng món.
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> Cancel(
+        [FromForm] string? code,
+        [FromForm] string? reason,
+        [FromForm] int page = 1,
+        CancellationToken cancellationToken = default)
+    {
+        if (!ModelState.IsValid || !ValidCode(code))
+            return BadRequest("Mã đơn hoặc số trang không hợp lệ.");
+
+        code = code!.Trim();
+        reason = reason?.Trim() ?? "";
+        if (reason.Length is 0 or > 500)
+        {
+            TempData["DeliveryCancelReason"] = reason.Length > 500 ? reason[..500] : reason;
+            return BackToDetails(code, page, "Hãy nhập lý do hủy, tối đa 500 ký tự.");
+        }
+
+        var actorId = await GetActorIdAsync(cancellationToken);
+        if (!actorId.HasValue) return Forbid();
+
+        string? error;
+        try
+        {
+            error = await _context.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
+            {
+                // Chỉ AuditLog được thêm qua SaveChanges; đơn và tiền dùng ExecuteUpdate.
+                // Xóa đối tượng theo dõi từ lần thử trước nếu kết nối cần thực hiện lại.
+                _context.ChangeTracker.Clear();
+                await using var transaction = await _context.Database.BeginTransactionAsync(
+                    IsolationLevel.Serializable, cancellationToken);
+                var now = DateTime.UtcNow;
+                var orders = _context.Set<Order>()
+                    .Where(order => order.Code == code && order.OrderType == "DELIVERY");
+
+                // Cùng khóa dòng đơn như các thao tác bắt đầu giao/hoàn tất.
+                var changedOrders = await orders
+                    .Where(order => (order.Status == "OPEN" || order.Status == "IN_PROGRESS")
+                        && order.ClosedAtUtc == null)
+                    .ExecuteUpdateAsync(setters => setters
+                        .SetProperty(order => order.Status, "CANCELLED")
+                        .SetProperty(order => order.ClosedAtUtc, (DateTime?)now), cancellationToken);
+                if (changedOrders != 1)
+                    return "Chỉ được hủy đơn đang chờ tiếp nhận hoặc đang chuẩn bị. Hãy tải lại chi tiết.";
+
+                var orderId = await orders
+    .Select(order => order.Id)
+    .SingleAsync(cancellationToken);
+
+                var hasPendingRequest = await _context.Set<OrderCancellationRequest>()
+                    .AnyAsync(
+                        request => request.OrderId == orderId
+                            && request.Status == "PENDING",
+                        cancellationToken);
+
+                if (hasPendingRequest)
+                {
+                    return "Khách đang có yêu cầu hủy chờ xử lý. Hãy xét duyệt yêu cầu thay vì hủy trực tiếp.";
+                }
+
+                var payments = _context.Set<Payment>()
+                    .Where(payment => payment.OrderId == orderId);
+                // Chặn mọi khoản đã thu, kể cả tiền cọc hoặc phương thức khác.
+                if (await payments.AnyAsync(payment => payment.Status == "SUCCEEDED", cancellationToken))
+                    return "Đơn đã ghi nhận thu tiền nên không thể hủy theo cách này.";
+
+                var pending = await (
+                    from payment in payments.AsNoTracking()
+                    join method in _context.Set<PaymentMethod>().AsNoTracking()
+                        on payment.MethodId equals method.Id
+                    where payment.Status == "PENDING"
+                    select new { payment.Id, payment.Amount, payment.Purpose, MethodCode = method.Code })
+                    .Take(2).ToListAsync(cancellationToken);
+                if (pending.Count != 1 || pending[0].MethodCode != "CASH"
+                    || pending[0].Purpose != "SETTLEMENT" || pending[0].Amount <= 0m)
+                    return "Đơn phải có đúng một khoản tiền mặt chờ thu hợp lệ. Hãy kiểm tra thanh toán trước khi hủy.";
+
+                var pendingId = pending[0].Id;
+                var changedPayments = await payments
+                    .Where(payment => payment.Id == pendingId && payment.Status == "PENDING")
+                    .ExecuteUpdateAsync(setters => setters.SetProperty(payment => payment.Status, "CANCELLED"),
+                        cancellationToken);
+                if (changedPayments != 1)
+                    return "Khoản chờ thu vừa thay đổi. Hãy tải lại trang trước khi hủy.";
+
+                await _context.Set<OrderItem>()
+                    .Where(item => item.OrderId == orderId && item.Status != "CANCELLED")
+                    .ExecuteUpdateAsync(setters => setters.SetProperty(item => item.Status, "CANCELLED"),
+                        cancellationToken);
+
+                _context.Set<AuditLog>().Add(new AuditLog
+                {
+                    ActorId = actorId.Value,
+                    Action = "delivery.cancel",
+                    EntityName = "Orders",
+                    EntityKey = orderId.ToString(CultureInfo.InvariantCulture),
+                    Summary = reason,
+                    CreatedAtUtc = now
+                });
+                await _context.SaveChangesAsync(cancellationToken);
+                await transaction.CommitAsync(cancellationToken);
+                return (string?)null;
+            });
+        }
+        catch (SqlException exception) when (exception.Number == 1205)
+        {
+            error = "Đơn đang được xử lý đồng thời. Hãy tải lại chi tiết rồi thử lại.";
+        }
+
+        if (error is not null) TempData["DeliveryCancelReason"] = reason;
+        return BackToDetails(code, page, error);
+    }
+
+    private IActionResult BackToDetails(string code, int page, string? error)
+    {
+        TempData[error is null ? "DeliverySuccess" : "DeliveryError"] =
+            error ?? $"Đã hủy đơn {code} và khoản tiền mặt chờ thu.";
+        return RedirectToAction(nameof(Details),
+            new { area = "Admin", code, page = Math.Max(1, page) });
+    }
+
+    private async Task<long?> GetActorIdAsync(CancellationToken cancellationToken)
+    {
+        if (!long.TryParse(User.FindFirstValue(ClaimTypes.NameIdentifier), out var id) || id <= 0)
+            return null;
+        var valid = await _context.Set<DoraFood.Models.User>().AsNoTracking()
+            .AnyAsync(user => user.Id == id && user.IsActive
+                && user.Roles.Any(role => role.Code == "ADMIN" || role.Code == "MANAGER"),
+                cancellationToken);
+        return valid ? id : (long?)null;
     }
 
     private IQueryable<Payment> CashSettlements() =>

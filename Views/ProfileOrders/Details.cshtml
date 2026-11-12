@@ -49,23 +49,12 @@
                     @Model.Order.StatusLabel
                 </span>
 
-                @if (Model.Order.Status == "OPEN")
-                {
-                    <form asp-route="DoraFood.CancelMyOrder"
-                          asp-route-id="@Model.Order.Id"
-                          asp-antiforgery="true"
-                          method="post"
-                          class="m-0"
-                          onsubmit="return confirm('Bạn có chắc muốn hủy đơn hàng này không?');">
-                        <button type="submit"
-                                class="btn btn-sm btn-outline-danger">
-                            Hủy đơn
-                        </button>
-                    </form>
-                }
+                
             </div>
         </div>
-
+        @await Component.InvokeAsync(
+"OrderCancellation",
+new { id = Model.Order.Id })
         <div class="row g-4">
             <div class="col-lg-7">
                 <div class="card border-0 shadow-sm mb-4">

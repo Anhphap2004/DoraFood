@@ -162,8 +162,9 @@ public sealed class ProfileOrdersController : Controller
     [HttpPost("{id:long}/huy", Name = "DoraFood.CancelMyOrder")]
     [ValidateAntiForgeryToken]
     public async Task<IActionResult> Cancel(
- [FromRoute] long id,
- CancellationToken cancellationToken)
+    [FromRoute] long id,
+    [FromForm] OrderCancellationRequestInput input,
+    CancellationToken cancellationToken)
     {
         if (id <= 0)
         {
@@ -175,6 +176,32 @@ public sealed class ProfileOrdersController : Controller
             return Forbid();
         }
 
+        input.Code = input.Code?.Trim() ?? "";
+        input.Reason = input.Reason?.Trim() ?? "";
+
+        IActionResult BackWithError(string message)
+        {
+            TempData["OrderError"] = message;
+
+            // Giữ lý do để khách sửa lại khi có lỗi.
+            TempData["OrderCancelReason"] = input.Reason.Length > 500
+                ? input.Reason[..500]
+                : input.Reason;
+
+            return RedirectToRoute(
+                "DoraFood.MyOrderDetails",
+                new { id });
+        }
+
+        if (!ModelState.IsValid
+            || input.Code.Length is 0 or > 40
+            || string.IsNullOrWhiteSpace(input.Reason)
+            || input.Reason.Length > 500)
+        {
+            return BackWithError(
+                "Mã đơn không hợp lệ hoặc lý do hủy chưa được nhập đúng, tối đa 500 ký tự.");
+        }
+
         try
         {
             await _context.Database.ExecuteSqlInterpolatedAsync($"""
@@ -183,19 +210,40 @@ public sealed class ProfileOrdersController : Controller
             BEGIN TRY
                 BEGIN TRANSACTION;
 
+                -- Khóa dòng đơn trong lúc kiểm tra và gửi yêu cầu.
                 IF NOT EXISTS
                 (
                     SELECT 1
                     FROM dbo.Orders WITH (UPDLOCK, HOLDLOCK)
                     WHERE Id = {id}
+                      AND Code = {input.Code}
                       AND CustomerId = {userId}
                       AND OrderType = 'DELIVERY'
-                      AND Status = 'OPEN'
+                      AND Status IN ('OPEN', 'IN_PROGRESS')
+                      AND ClosedAtUtc IS NULL
                 )
                 BEGIN
-                    THROW 51010, 'Order cannot be cancelled.', 1;
+                    THROW 51010,
+                        N'Đơn không còn đủ điều kiện gửi yêu cầu hủy.',
+                        1;
                 END;
 
+                -- Không nhận thêm yêu cầu nếu đang có yêu cầu chờ.
+                IF EXISTS
+                (
+                    SELECT 1
+                    FROM dbo.OrderCancellationRequests
+                        WITH (UPDLOCK, HOLDLOCK)
+                    WHERE OrderId = {id}
+                      AND Status = 'PENDING'
+                )
+                BEGIN
+                    THROW 51011,
+                        N'Đơn đã có yêu cầu hủy đang chờ quản lý xử lý.',
+                        1;
+                END;
+
+                -- Chặn nếu đã thu tiền, kể cả khoản cọc.
                 IF EXISTS
                 (
                     SELECT 1
@@ -203,40 +251,43 @@ public sealed class ProfileOrdersController : Controller
                     WHERE OrderId = {id}
                       AND Status = 'SUCCEEDED'
                 )
-                OR EXISTS
-                (
-                    SELECT 1
-                    FROM dbo.OrderItems WITH (UPDLOCK, HOLDLOCK)
-                    WHERE OrderId = {id}
-                      AND Status IN ('PREPARING', 'READY', 'SERVED')
-                )
                 BEGIN
-                    THROW 51010, 'Order cannot be cancelled.', 1;
+                    THROW 51012,
+                        N'Đơn đã ghi nhận thu tiền. Anh hãy liên hệ nhà hàng để được hỗ trợ.',
+                        1;
                 END;
 
-                DECLARE @CancelledAtUtc datetime2(3) = SYSUTCDATETIME();
+                -- COD hiện tại phải có đúng một khoản tiền mặt chờ thu.
+                IF
+                (
+                    SELECT COUNT_BIG(*)
+                    FROM dbo.Payments WITH (UPDLOCK, HOLDLOCK)
+                    WHERE OrderId = {id}
+                      AND Status = 'PENDING'
+                ) <> 1
+                OR NOT EXISTS
+                (
+                    SELECT 1
+                    FROM dbo.Payments AS p WITH (UPDLOCK, HOLDLOCK)
+                    INNER JOIN dbo.PaymentMethods AS m WITH (HOLDLOCK)
+                        ON m.Id = p.MethodId
+                    WHERE p.OrderId = {id}
+                      AND p.Status = 'PENDING'
+                      AND p.Purpose = 'SETTLEMENT'
+                      AND p.Amount > 0
+                      AND m.Code = 'CASH'
+                )
+                BEGIN
+                    THROW 51013,
+                        N'Thông tin thanh toán của đơn cần được nhà hàng kiểm tra.',
+                        1;
+                END;
 
-                UPDATE dbo.Orders
-                SET Status = 'CANCELLED',
-                    ClosedAtUtc = CASE
-                        WHEN OpenedAtUtc > @CancelledAtUtc THEN OpenedAtUtc
-                        ELSE @CancelledAtUtc
-                    END
-                WHERE Id = {id};
-
-                UPDATE dbo.OrderItems
-                SET Status = 'CANCELLED'
-                WHERE OrderId = {id} AND Status = 'NEW';
-
-                UPDATE dbo.Payments
-                SET Status = 'CANCELLED'
-                WHERE OrderId = {id} AND Status = 'PENDING';
-
-                INSERT INTO dbo.OrderStatusHistory
-                    (OrderId, FromStatus, ToStatus, ChangedBy, Reason, ChangedAtUtc)
+                -- SQL tự đặt PENDING, thời điểm gửi và Version.
+                INSERT INTO dbo.OrderCancellationRequests
+                    (OrderId, RequestedBy, Reason)
                 VALUES
-                    ({id}, 'OPEN', 'CANCELLED', {userId},
-                     N'Khách hàng tự hủy đơn.', @CancelledAtUtc);
+                    ({id}, {userId}, {input.Reason});
 
                 COMMIT TRANSACTION;
             END TRY
@@ -248,21 +299,32 @@ public sealed class ProfileOrdersController : Controller
             END CATCH;
             """, cancellationToken);
 
-            TempData["OrderSuccess"] = "Đã hủy đơn hàng.";
+            TempData.Remove("OrderCancelReason");
+
+            TempData["OrderSuccess"] =
+                "Đã gửi yêu cầu hủy. Đơn chưa bị hủy; nhà hàng sẽ xem xét và phản hồi.";
         }
-        catch (SqlException exception) when (exception.Number == 51010)
+        catch (SqlException exception)
+            when (exception.Number is 51010 or 51011 or 51012 or 51013)
         {
-            TempData["OrderError"] =
-                "Đơn này không còn hủy được trên website. "
-                + "Nếu vẫn cần hủy, anh hãy liên hệ với quán.";
+            return BackWithError(exception.Message);
         }
-        catch (SqlException exception) when (exception.Number == 1205)
+        catch (SqlException exception)
+            when (exception.Number is 2601 or 2627)
         {
-            TempData["OrderError"] =
-                "Đơn đang được cập nhật. Anh hãy kiểm tra trạng thái rồi thử lại.";
+            return BackWithError(
+                "Đơn đã có yêu cầu hủy đang chờ xử lý. Anh hãy tải lại trang.");
+        }
+        catch (SqlException exception)
+            when (exception.Number == 1205)
+        {
+            return BackWithError(
+                "Đơn đang được cập nhật. Anh hãy tải lại trang rồi thử lại.");
         }
 
-        return RedirectToRoute("DoraFood.MyOrderDetails", new { id });
+        return RedirectToRoute(
+            "DoraFood.MyOrderDetails",
+            new { id });
     }
     private IQueryable<Order> DeliveryOrdersOf(long userId)
     {

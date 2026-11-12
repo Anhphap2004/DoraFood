@@ -1,0 +1,138 @@
+﻿@model DoraFood.Areas.Admin.ViewModels.CancellationReviewViewModel
+
+<div class="card dv-card border-warning mb-4">
+    <div class="card-body">
+        <h3 class="h5 mb-3">
+            <i class="bi bi-exclamation-circle text-warning me-1"
+               aria-hidden="true"></i>
+            Khách yêu cầu hủy đơn
+        </h3>
+
+        <dl class="mb-3">
+            <dt class="small text-muted">Tài khoản gửi yêu cầu</dt>
+            <dd class="text-break">
+                @Model.CustomerName
+            </dd>
+
+            <dt class="small text-muted">Thời gian gửi</dt>
+            <dd>
+                @Model.RequestedAtUtc.AddHours(7).ToString("dd/MM/yyyy HH:mm")
+            </dd>
+
+            <dt class="small text-muted">Lý do của khách</dt>
+            <dd class="text-break mb-0"
+                style="white-space: pre-wrap;">@Model.Reason</dd>
+        </dl>
+
+        <div class="alert alert-warning small">
+            Hãy xét duyệt yêu cầu trước khi chuyển đơn sang giao hàng.
+        </div>
+
+        <!-- Đồng ý hủy -->
+        <form asp-area="Admin"
+              asp-controller="DeliveryOrders"
+              asp-action="ReviewCancellation"
+              asp-antiforgery="true"
+              method="post"
+              data-delivery-action
+              data-confirm="Đồng ý hủy đơn theo yêu cầu của khách?">
+
+            <input type="hidden"
+                   name="code"
+                   value="@Model.Code" />
+
+            <input type="hidden"
+                   name="requestId"
+                   value="@Model.RequestId" />
+
+            <input type="hidden"
+                   name="version"
+                   value="@Model.Version" />
+
+            <input type="hidden"
+                   name="page"
+                   value="@Model.ReturnPage" />
+
+            <input type="hidden"
+                   name="decision"
+                   value="APPROVED" />
+
+            <div class="mb-3">
+                <label for="approve-cancellation-note"
+                       class="form-label">
+                    Phản hồi khi đồng ý
+                    <span class="text-muted small">(không bắt buộc)</span>
+                </label>
+
+                <textarea id="approve-cancellation-note"
+                          name="reviewNote"
+                          class="form-control"
+                          rows="2"
+                          maxlength="500"
+                          placeholder="Ví dụ: Quán đã tiếp nhận và đồng ý hủy đơn của bạn."></textarea>
+            </div>
+
+            <button type="submit"
+                    class="btn btn-danger w-100">
+                <span>Đồng ý hủy đơn</span>
+            </button>
+        </form>
+
+        <hr class="my-4" />
+
+        <!-- Từ chối yêu cầu -->
+        <form asp-area="Admin"
+              asp-controller="DeliveryOrders"
+              asp-action="ReviewCancellation"
+              asp-antiforgery="true"
+              method="post"
+              data-delivery-action
+              data-confirm="Từ chối yêu cầu hủy và tiếp tục xử lý đơn?">
+
+            <input type="hidden"
+                   name="code"
+                   value="@Model.Code" />
+
+            <input type="hidden"
+                   name="requestId"
+                   value="@Model.RequestId" />
+
+            <input type="hidden"
+                   name="version"
+                   value="@Model.Version" />
+
+            <input type="hidden"
+                   name="page"
+                   value="@Model.ReturnPage" />
+
+            <input type="hidden"
+                   name="decision"
+                   value="REJECTED" />
+
+            <div class="mb-3">
+                <label for="reject-cancellation-note"
+                       class="form-label">
+                    Lý do từ chối
+                    <span class="text-danger">*</span>
+                </label>
+
+                <textarea id="reject-cancellation-note"
+                          name="reviewNote"
+                          class="form-control"
+                          rows="3"
+                          maxlength="500"
+                          required
+                          placeholder="Nhập lý do để khách biết vì sao yêu cầu bị từ chối."></textarea>
+
+                <div class="form-text">
+                    Khách sẽ xem được phản hồi này trong chi tiết đơn hàng.
+                </div>
+            </div>
+
+            <button type="submit"
+                    class="btn btn-outline-secondary w-100">
+                <span>Từ chối yêu cầu hủy</span>
+            </button>
+        </form>
+    </div>
+</div>

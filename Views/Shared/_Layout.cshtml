@@ -67,7 +67,15 @@
                             <a href="@Url.RouteUrl("DoraFood.MyProfile")" class="dropdown-item">
                                 <i class="far fa-id-card" aria-hidden="true"></i>
                                 Tài khoản của tôi
+                            </a>   
+                            <a href="@Url.RouteUrl("DoraFoodCart")" class="dropdown-item">
+                                <i class="far fa-id-card" aria-hidden="true"></i>
+                                Giỏ Hàng
                             </a>
+                            <a href="@Url.RouteUrl("DoraFood.MyOrders")" class="dropdown-item">
+                            <i class="far fa-id-card" aria-hidden="true"></i>
+                            Đơn Hàng của tôi
+                        </a>
                             <div class="dropdown-divider"></div>
                             <form action="@Url.Action("Logout", "Account")" method="post">@Html.AntiForgeryToken()<button type="submit" class="dropdown-item df-logout"><i class="fas fa-sign-out-alt" aria-hidden="true"></i> Đăng xuất</button></form>
                         </div>

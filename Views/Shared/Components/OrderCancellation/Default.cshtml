@@ -1,0 +1,167 @@
+﻿@using System.Globalization
+@model DoraFood.ViewModels.MyOrderCancellationViewModel
+
+@{
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+    var previousReason = TempData["OrderCancelReason"] as string ?? "";
+}
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-4">
+        <div class="d-flex flex-wrap align-items-center
+            justify-content-between gap-2 mb-3">
+            <h2 class="h5 mb-0">Yêu cầu hủy đơn</h2>
+
+            @if (Model.HasPendingRequest)
+            {
+                <span class="badge bg-warning text-dark">
+                    Đang chờ xác nhận hủy
+                </span>
+            }
+        </div>
+
+        @if (Model.HasPendingRequest)
+        {
+            <div class="alert alert-warning mb-3" role="status">
+                Nhà hàng đang xem xét yêu cầu của bạn.
+                Đơn chưa được xác nhận hủy.
+                Bạn sẽ thấy kết quả và phản hồi tại đây.
+            </div>
+        }
+
+        @if (Model.CanRequest)
+        {
+            <p class="text-muted small">
+                Bạn có thể gửi yêu cầu khi đơn chưa được giao và chưa thu tiền.
+                Nhà hàng sẽ kiểm tra trước khi xác nhận hủy.
+            </p>
+
+            <form asp-route="DoraFood.CancelMyOrder"
+                  asp-route-id="@Model.OrderId"
+                  asp-antiforgery="true"
+                  method="post"
+                  onsubmit="return confirm('Gửi yêu cầu hủy đơn này đến nhà hàng?');">
+
+                <input type="hidden"
+                       name="Code"
+                       value="@Model.Code" />
+
+                <div class="mb-3">
+                    <label for="order-cancel-reason"
+                           class="form-label fw-semibold">
+                        Lý do muốn hủy
+                        <span class="text-danger">*</span>
+                    </label>
+
+                    <textarea id="order-cancel-reason"
+                              name="Reason"
+                              class="form-control"
+                              rows="3"
+                              maxlength="500"
+                              required
+                              aria-describedby="order-cancel-help"
+                              placeholder="Bạn vui lòng cho nhà hàng biết lý do muốn hủy đơn...">@previousReason</textarea>
+
+                    <div id="order-cancel-help" class="form-text">
+                        Tối đa 500 ký tự. Gửi yêu cầu chưa đồng nghĩa đơn đã hủy.
+                    </div>
+                </div>
+
+                <button type="submit"
+                        class="btn btn-outline-danger rounded-pill px-4">
+                    <i class="fas fa-paper-plane me-2"
+                       aria-hidden="true"></i>
+                    Gửi yêu cầu hủy
+                </button>
+            </form>
+        }
+        else if (!Model.HasPendingRequest && Model.Requests.Count == 0)
+        {
+            <p class="text-muted mb-0">
+                Đơn hiện không đủ điều kiện gửi yêu cầu hủy trên website.
+                Nếu cần hỗ trợ, bạn vui lòng liên hệ nhà hàng.
+            </p>
+        }
+
+        @if (Model.Requests.Count > 0)
+        {
+            <div class="@(Model.CanRequest ? "border-top mt-4 pt-4" : "")">
+                <h3 class="h6 mb-3">Yêu cầu đã gửi</h3>
+
+                @foreach (var request in Model.Requests)
+                {
+                    var (statusLabel, badgeClass) = request.Status switch
+                    {
+                        "PENDING" => ("Chờ xác nhận", "bg-warning text-dark"),
+                        "APPROVED" => ("Đã đồng ý hủy", "bg-success"),
+                        "REJECTED" => ("Đã từ chối", "bg-secondary"),
+                        _ => (request.Status, "bg-secondary")
+                    };
+
+                    <div class="border rounded-3 p-3 mb-3">
+                        <div class="d-flex flex-wrap align-items-center
+                            justify-content-between gap-2 mb-3">
+                            <span class="badge @badgeClass">
+                                @statusLabel
+                            </span>
+
+                            <span class="small text-muted">
+                                Gửi lúc
+                                @request.RequestedAtUtc.AddHours(7)
+                                .ToString("dd/MM/yyyy HH:mm", culture)
+                            </span>
+                        </div>
+
+                        <div class="small text-muted mb-1">
+                            Lý do bạn muốn hủy
+                        </div>
+
+                        <p class="text-break mb-3"
+                           style="white-space: pre-wrap;">@request.Reason</p>
+
+                        @if (request.Status == "APPROVED")
+                        {
+                            <p class="text-success fw-semibold mb-2">
+                                Đã hủy theo yêu cầu của khách.
+                            </p>
+                        }
+                        else if (request.Status == "REJECTED")
+                        {
+                            <p class="fw-semibold mb-2">
+                                Nhà hàng chưa đồng ý hủy yêu cầu này.
+                            </p>
+                        }
+
+                        @if (!string.IsNullOrWhiteSpace(request.ReviewNote))
+                        {
+                            <div class="rounded bg-light p-3 mb-2">
+                                <div class="small text-muted mb-1">
+                                    Phản hồi của nhà hàng
+                                </div>
+
+                                <p class="text-break mb-0"
+                                   style="white-space: pre-wrap;">@request.ReviewNote</p>
+                            </div>
+                        }
+
+                        @if (request.ReviewedAtUtc.HasValue)
+                        {
+                            <div class="small text-muted">
+                                Xử lý lúc
+                                @request.ReviewedAtUtc.Value.AddHours(7)
+                                .ToString("dd/MM/yyyy HH:mm", culture)
+                            </div>
+                        }
+                    </div>
+                }
+
+                @if (Model.Requests.Count == 10)
+                {
+                    <p class="small text-muted mb-0">
+                        Hiển thị 10 yêu cầu gần nhất.
+                    </p>
+                }
+            </div>
+        }
+    </div>
+</div>

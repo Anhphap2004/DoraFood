@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using DoraFood.Data.Configurations;
 using DoraFood.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -56,6 +57,8 @@ public partial class DoraFoodContext : DbContext
     public virtual DbSet<Notification> Notifications { get; set; }
 
     public virtual DbSet<Order> Orders { get; set; }
+
+    public virtual DbSet<OrderCancellationRequest> OrderCancellationRequests { get; set; }
 
     public virtual DbSet<OrderDiscount> OrderDiscounts { get; set; }
 
@@ -1705,6 +1708,8 @@ public partial class DoraFoodContext : DbContext
             entity.Property(e => e.IsActive).HasDefaultValue(true);
             entity.Property(e => e.Name).HasMaxLength(100);
         });
+
+        modelBuilder.ApplyConfiguration(new OrderCancellationRequestConfiguration());
 
         OnModelCreatingPartial(modelBuilder);
     }

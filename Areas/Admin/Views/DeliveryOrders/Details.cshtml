@@ -1,7 +1,11 @@
 @using System.Globalization
+@using DoraFood.Areas.Admin.ViewModels
 @model DoraFood.Areas.Admin.ViewModels.DeliveryOrderDetailsViewModel
 
 @{
+
+    var pendingCancellation =
+    ViewData["PendingCancellation"] as CancellationReviewViewModel;
     ViewData["Title"] = "Chi tiết đơn giao hàng";
     var culture = CultureInfo.GetCultureInfo("vi-VN");
     var (statusLabel, statusClass) = Model.Status switch
@@ -29,6 +33,12 @@
         (Label: "Hoàn tất", Icon: "bi-check2-circle")
     };
     var canProcess = Model.PendingAmount > 0m && Model.ReceivedAmount == 0m;
+    var canCancel =
+    (Model.Status == "OPEN" || Model.Status == "IN_PROGRESS")
+    && Model.ReceivedAmount == 0m
+    && pendingCancellation is null;
+    var cancellation = ViewData["DeliveryCancellation"] as DeliveryCancellationInfo;
+    var cancelReason = TempData["DeliveryCancelReason"] as string ?? "";
 }
 
 <div class="dv-page">
@@ -110,12 +120,14 @@
                 {
                     <div class="table-responsive">
                         <table class="table align-middle mb-0 dv-table dv-items-table">
-                            <thead><tr>
-                                <th scope="col">Món</th>
-                                <th scope="col" class="text-end">Số lượng</th>
-                                <th scope="col" class="text-end">Đơn giá</th>
-                                <th scope="col" class="text-end">Thành tiền</th>
-                            </tr></thead>
+                            <thead>
+                                <tr>
+                                    <th scope="col">Món</th>
+                                    <th scope="col" class="text-end">Số lượng</th>
+                                    <th scope="col" class="text-end">Đơn giá</th>
+                                    <th scope="col" class="text-end">Thành tiền</th>
+                                </tr>
+                            </thead>
                             <tbody>
                                 @foreach (var item in Model.Items)
                                 {
@@ -140,6 +152,11 @@
         </div>
 
         <aside class="dv-side" aria-label="Thanh toán và xử lý đơn">
+            @if (pendingCancellation is not null)
+            {
+                <partial name="_CancellationReview"
+                         model="pendingCancellation" />
+            }
             <div class="card dv-card dv-payment-card">
                 <div class="card-header dv-card-header">
                     <span class="dv-heading-icon"><i class="bi bi-cash-coin" aria-hidden="true"></i></span>
@@ -172,6 +189,15 @@
                     {
                         <h3>Kiểm tra trạng thái đơn</h3>
                         <p>Trạng thái hiện tại chưa có thao tác xử lý trên màn hình này.</p>
+                    }
+                    else if (pendingCancellation is not null)
+                    {
+                        <h3>Đang chờ xét duyệt hủy</h3>
+
+                        <p>
+                            Khách đã gửi yêu cầu hủy đơn.
+                            Hãy đồng ý hoặc từ chối tại phần xét duyệt phía trên.
+                        </p>
                     }
                     else if (!canProcess)
                     {
@@ -220,6 +246,55 @@
                     }
                 </div>
             </div>
+            @if (canCancel)
+            {
+                <details class="card dv-card dv-cancel-panel" open="@(!string.IsNullOrWhiteSpace(cancelReason))">
+                    <summary><i class="bi bi-x-circle me-1" aria-hidden="true"></i> Hủy đơn giao hàng</summary>
+                    <div class="card-body">
+                        <p class="dv-cancel-hint">Chỉ hủy khi đã kiểm tra với khách và đơn chưa được giao, chưa thu tiền.</p>
+                        <form asp-area="Admin" asp-controller="DeliveryOrders" asp-action="Cancel"
+                              asp-antiforgery="true" method="post" data-delivery-action
+                              data-confirm="Hủy đơn này và khoản tiền mặt đang chờ thu?">
+                            <input type="hidden" name="code" value="@Model.Code" />
+                            <input type="hidden" name="page" value="@Model.ReturnPage" />
+                            <label for="cancel-reason" class="form-label">Lý do hủy <span class="text-danger">*</span></label>
+                            <textarea id="cancel-reason" name="reason" class="form-control mb-2"
+                                      rows="3" maxlength="500" required aria-describedby="cancel-reason-help"
+                                      placeholder="Ví dụ: Khách yêu cầu hủy trước khi giao...">@cancelReason</textarea>
+                            <div id="cancel-reason-help" class="form-text mb-3">Bắt buộc, tối đa 500 ký tự. Lý do sẽ được lưu trong lịch sử.</div>
+                            <button type="submit" class="btn btn-outline-danger w-100">
+                                <i class="bi bi-x-circle me-1" aria-hidden="true"></i><span>Xác nhận hủy đơn</span>
+                            </button>
+                        </form>
+                    </div>
+                </details>
+            }
+            @if (Model.Status == "CANCELLED")
+            {
+                <div class="card dv-card dv-cancellation-history">
+                    <div class="card-header dv-card-header">
+                        <span class="dv-heading-icon"><i class="bi bi-clock-history" aria-hidden="true"></i></span>
+                        <div><strong>Thông tin hủy đơn</strong><small>Lịch sử thao tác quản trị</small></div>
+                    </div>
+                    <div class="card-body">
+                        @if (cancellation is not null)
+                        {
+                            <dl class="mb-0">
+                                <dt>Người thực hiện</dt>
+                                <dd class="text-break">@cancellation.ActorName</dd>
+                                <dt>Thời điểm · Việt Nam</dt>
+                                <dd>@cancellation.CreatedAtUtc.AddHours(7).ToString("dd/MM/yyyy HH:mm")</dd>
+                                <dt>Lý do</dt>
+                                <dd class="dv-preserve mb-0">@cancellation.Reason</dd>
+                            </dl>
+                        }
+                        else
+                        {
+                            <p class="text-body-secondary small mb-0">Chưa có thông tin người thực hiện và lý do hủy của đơn này.</p>
+                        }
+                    </div>
+                </div>
+            }
             <p class="dv-side-note"><i class="bi bi-shield-check" aria-hidden="true"></i> Hệ thống kiểm tra lại trạng thái đơn và khoản thu khi lưu thao tác.</p>
         </aside>
     </div>
@@ -227,6 +302,7 @@
 
 @section Styles {
     <link rel="stylesheet" href="~/admin/css/delivery-orders-tet.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/admin/css/delivery-cancel.css" asp-append-version="true" />
 }
 @section Scripts {
     <script src="~/admin/js/delivery-orders-tet.js" asp-append-version="true"></script>
