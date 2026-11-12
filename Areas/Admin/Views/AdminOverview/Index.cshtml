@@ -1,0 +1,68 @@
+@using System.Globalization
+@using System.Linq
+@using DoraFood.Areas.Admin.ViewModels
+@model OverviewModel
+@{
+    ViewData["Title"] = "Tổng quan thống kê";
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+    var peak = Model.Days.Max(day => day.Received);
+}
+<div class="container-fluid dm">
+    <div class="card dm-card mb-4"><div class="card-body">
+        <form asp-area="Admin" asp-controller="AdminOverview" asp-action="Index" method="get" class="row g-3 align-items-end">
+            <div class="col-sm-5 col-lg-4"><label for="from" class="form-label">Từ ngày</label>
+                <input type="date" id="from" name="from" value="@Model.From.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)" required class="form-control" /></div>
+            <div class="col-sm-5 col-lg-4"><label for="to" class="form-label">Đến ngày</label>
+                <input type="date" id="to" name="to" value="@Model.To.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)" required class="form-control" /></div>
+            <div class="col-sm-2 col-lg-4"><button type="submit" class="btn btn-primary">Xem thống kê</button></div>
+        </form>
+        <p class="small text-body-secondary mt-3 mb-0">Khoảng ngày theo giờ Việt Nam. Thực thu tính theo ngày nhận tiền, hoàn tiền tính theo ngày hoàn thành công.</p>
+    </div></div>
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-3"><div class="card dm-card h-100"><div class="card-body"><div class="dm-label">Tiền đã thu</div><div class="dm-value">@Model.Received.ToString("N0", culture) ₫</div><small class="text-body-secondary">Giao dịch thành công</small></div></div></div>
+        <div class="col-sm-6 col-xl-3"><div class="card dm-card h-100"><div class="card-body"><div class="dm-label">Tiền đã hoàn</div><div class="dm-value">@Model.Refunded.ToString("N0", culture) ₫</div><small class="text-body-secondary">Khoản hoàn thành công</small></div></div></div>
+        <div class="col-sm-6 col-xl-3"><div class="card dm-card h-100"><div class="card-body"><div class="dm-label">Thực thu ròng</div><div class="dm-value text-primary">@Model.Net.ToString("N0", culture) ₫</div><small class="text-body-secondary">Tiền đã thu trừ tiền đã hoàn</small></div></div></div>
+        <div class="col-sm-6 col-xl-3"><div class="card dm-card h-100"><div class="card-body"><div class="dm-label">Đơn tạo trong kỳ</div><div class="dm-value">@Model.Orders</div><small class="text-body-secondary">@Model.CompletedOrders hoàn tất · @Model.CancelledOrders đã hủy</small></div></div></div>
+    </div>
+    <div class="row g-3 mb-4">
+        <div class="col-sm-6 col-xl-3"><div class="card dm-card h-100"><div class="card-body"><div class="dm-label">Lịch đặt bàn trong kỳ</div><div class="dm-value">@Model.Reservations</div><small class="text-body-secondary">Theo ngày khách đến</small></div></div></div>
+        <div class="col-sm-6 col-xl-3"><div class="card dm-card h-100"><div class="card-body"><div class="dm-label">Tài khoản hoạt động</div><div class="dm-value">@Model.ActiveAccounts</div><small class="text-body-secondary">Số hiện tại</small></div></div></div>
+        <div class="col-sm-6 col-xl-3"><div class="card dm-card h-100"><div class="card-body"><div class="dm-label">Liên hệ mới</div><div class="dm-value">@Model.NewContacts</div><small class="text-body-secondary">Tổng đang chờ tiếp nhận</small></div></div></div>
+        <div class="col-sm-6 col-xl-3"><div class="card dm-card h-100"><div class="card-body"><div class="dm-label">Nội dung đã ẩn</div><div class="dm-value">@(Model.HiddenComments + Model.HiddenReviews)</div><small class="text-body-secondary">@Model.HiddenComments bình luận · @Model.HiddenReviews đánh giá</small></div></div></div>
+    </div>
+    <div class="row g-4">
+        <div class="col-xl-6"><div class="card dm-card h-100"><div class="card-header bg-transparent py-3"><strong>Thu và hoàn theo ngày</strong></div>
+            <div class="table-responsive dm-scroll"><table class="table align-middle mb-0">
+                <thead class="table-light"><tr><th>Ngày</th><th class="text-end">Đã thu</th><th class="text-end">Đã hoàn</th><th class="text-end">Ròng</th></tr></thead>
+                <tbody>
+                @foreach (var day in Model.Days)
+                {
+                    var width = peak > 0 ? (day.Received / peak * 100m).ToString("0.##", CultureInfo.InvariantCulture) : "0";
+                    <tr><td class="text-nowrap">@day.Day.ToString("dd/MM/yyyy")</td><td class="text-end text-nowrap">@day.Received.ToString("N0", culture)
+                        <div class="progress mt-1" style="height: 4px;"><div class="progress-bar" style="width: @(width)%"></div></div></td>
+                        <td class="text-end">@day.Refunded.ToString("N0", culture)</td><td class="text-end fw-semibold">@day.Net.ToString("N0", culture)</td></tr>
+                }
+                </tbody>
+            </table></div>
+            <div class="card-footer bg-transparent small text-body-secondary">Đơn vị VND. COD đang chờ thu được tính khi quán xác nhận đã thu tiền.</div>
+        </div></div>
+        <div class="col-xl-6"><div class="card dm-card h-100"><div class="card-header bg-transparent py-3"><strong>Đơn mới nhất trong kỳ</strong></div>
+            @if (Model.RecentOrders.Count == 0) { <div class="dm-empty">Chưa có đơn trong khoảng ngày đã chọn.</div> }
+            else
+            {
+                <div class="table-responsive"><table class="table align-middle mb-0"><thead class="table-light"><tr><th>Mã đơn / Khách</th><th>Loại đơn</th><th>Trạng thái</th><th>Ngày tạo</th></tr></thead><tbody>
+                @foreach (var order in Model.RecentOrders)
+                {
+                    <tr><td class="text-break"><strong>@order.Code</strong><div class="small text-body-secondary">@order.GuestName</div></td>
+                        <td>@ManagementText.OrderType(order.OrderType)</td><td>@ManagementText.OrderStatus(order.Status)</td>
+                        <td class="text-nowrap small">@order.OpenedAtUtc.AddHours(7).ToString("dd/MM HH:mm")</td></tr>
+                }
+                </tbody></table></div>
+            }
+        </div></div>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/admin/css/admin-management.css" asp-append-version="true" />
+}

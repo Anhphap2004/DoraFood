@@ -1,0 +1,1235 @@
+/* Home-only Tết layer. Keep existing theme and navbar styles. */
+.df-tet-home {
+    --spring-red: #b31529;
+    --spring-dark: #241c1d;
+    --spring-gold: #e6bf78;
+    --spring-line: #ead6ce;
+    color: var(--spring-dark);
+    font-family: 'Open Sans', Arial, sans-serif;
+}
+
+.df-site .df-tet-home .df-tet-intro {
+    position: relative;
+    isolation: isolate;
+    background: linear-gradient(120deg, #fff 20%, #fff7f2 100%);
+    padding-top: 38px;
+}
+
+.df-site .df-tet-home .df-home-intro {
+    grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr);
+    gap: clamp(24px, 4vw, 60px);
+    margin-bottom: 30px;
+}
+
+.df-tet-intro > .container {
+    position: relative;
+    z-index: 1;
+}
+
+.df-site .df-tet-home .df-tet-intro .fd-food-heading h1 {
+    font-size: clamp(30px, 3.1vw, 44px);
+    line-height: 1.3;
+    letter-spacing: -1px;
+    color: var(--spring-dark);
+}
+
+    .df-site .df-tet-home .df-tet-intro .fd-food-heading h1 em {
+        color: var(--spring-red);
+    }
+
+.df-site .df-tet-home .fd-food-heading > p {
+    font-size: 16px;
+    line-height: 1.8;
+    color: #483437;
+    margin: 18px 0 24px;
+}
+
+.df-site .df-tet-home .df-premium-label {
+    font-size: 14px;
+    letter-spacing: 1px;
+    color: #a31527;
+}
+
+.df-tet-picture {
+    position: relative;
+    min-width: 0;
+    padding: 8px;
+    background: #fff;
+    border: 1px solid var(--spring-line);
+    border-radius: 22px;
+    box-shadow: 0 12px 38px #8c1c1c12;
+}
+
+    .df-tet-picture figure {
+        margin: 0;
+    }
+
+.df-tet-picture-window {
+    position: relative;
+    overflow: hidden;
+    border-radius: 15px;
+    background: #8e111a;
+}
+
+.df-tet-table {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1.95;
+    object-fit: cover;
+    animation: df-tet-breathe 14s ease-in-out infinite alternate;
+}
+
+.df-tet-picture-tag {
+    position: absolute;
+    top: 13px;
+    left: 13px;
+    padding: 7px 11px;
+    border: 1px solid #f0cf8c;
+    border-radius: 6px;
+    background: #78101bea;
+    color: #fff;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .8px;
+}
+
+.df-tet-picture figcaption {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 17px 18px 13px;
+}
+
+.df-tet-kicker {
+    display: block;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.6;
+    letter-spacing: 1.1px;
+    color: #9e1b2c;
+}
+
+.df-site .df-tet-home .df-tet-picture h2 {
+    margin: 5px 0 0;
+    font-family: 'Open Sans', Arial, sans-serif !important;
+    font-size: clamp(20px, 1.7vw, 24px);
+    line-height: 1.45;
+    font-weight: 700 !important;
+    color: var(--spring-dark);
+}
+
+.df-tet-picture figcaption a {
+    display: grid;
+    place-items: center;
+    flex: 0 0 44px;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    color: #fff;
+    background: var(--spring-red);
+    text-decoration: none;
+    font-size: 24px;
+    transition: background .2s;
+}
+
+    .df-tet-picture figcaption a:hover {
+        background: #241c1d;
+        color: #fff;
+    }
+
+.df-tet-envelope {
+    position: absolute;
+    right: -16px;
+    top: 42%;
+    width: 58px;
+    height: auto;
+    pointer-events: none;
+    filter: drop-shadow(0 5px 5px #52141d25);
+    transform: rotate(12deg);
+    animation: df-tet-float 5s ease-in-out infinite;
+}
+
+.df-tet-decor {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+    pointer-events: none;
+    user-select: none;
+}
+
+.df-tet-lantern {
+    position: absolute;
+    top: 0;
+    transform-origin: 50% 0;
+    animation: df-tet-swing 5s ease-in-out infinite alternate;
+}
+
+.df-tet-lantern--left {
+    left: 1px;
+}
+
+.df-tet-lantern--right {
+    right: 10px;
+    animation-delay: -2.3s;
+}
+
+.df-tet-petal {
+    position: absolute;
+    top: -24px;
+    left: calc(5% + var(--petal-index) * 14%);
+    width: 11px;
+    height: 16px;
+    border-radius: 75% 10% 70% 20%;
+    background: linear-gradient(135deg, #ffe3ae, #ef9b80);
+    animation: df-tet-fall calc(12s + var(--petal-index) * 1s) linear infinite;
+    animation-delay: calc(var(--petal-index) * -2.8s);
+    opacity: 0;
+}
+
+.df-site .df-tet-home .df-tet-wishes {
+    background: #a91427;
+    color: #fff;
+    border-top: 1px solid #e5bd78;
+    border-bottom: 1px solid #e5bd78;
+}
+
+.df-tet-wishes-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 22px;
+    padding-top: 23px;
+    padding-bottom: 23px;
+}
+
+.df-tet-wishes-title {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+}
+
+    .df-tet-wishes-title > span {
+        color: #f6d89e;
+        font-size: 44px;
+        line-height: 1;
+        animation: df-tet-flower 12s ease-in-out infinite alternate;
+    }
+
+.df-tet-wishes .df-tet-kicker {
+    color: #ffe1a8;
+}
+
+.df-site .df-tet-home .df-tet-wishes h2 {
+    font-family: 'Open Sans', Arial, sans-serif !important;
+    color: #fff;
+    font-size: 20px;
+    font-weight: 700 !important;
+    line-height: 1.5;
+    margin: 4px 0 0;
+}
+
+.df-tet-wishes p {
+    font-size: 15px;
+    line-height: 1.8;
+    color: #fff;
+    margin: 0;
+}
+
+.df-tet-motion-toggle {
+    flex-shrink: 0;
+    min-height: 44px;
+    padding: 10px 15px;
+    border: 1px solid #f3d096;
+    border-radius: 8px;
+    background: #fff;
+    color: #951123;
+    font: 600 14px/1.5 'Open Sans', Arial, sans-serif;
+    cursor: pointer;
+}
+
+    .df-tet-motion-toggle:hover {
+        background: #fff0d8;
+    }
+
+    .df-tet-motion-toggle:disabled {
+        background: #fff1df;
+        color: #633728;
+        cursor: default;
+    }
+
+    .df-tet-motion-toggle[hidden] {
+        display: none;
+    }
+
+.df-tet-home :is(.df-tet-motion-toggle, .df-tet-picture a):focus-visible {
+    outline: 3px solid #dc9e36;
+    outline-offset: 4px;
+}
+
+.df-tet-home.is-tet-paused :is(.df-tet-table, .df-tet-envelope, .df-tet-lantern, .df-tet-petal, .df-tet-wishes-title > span),
+.df-tet-home.is-tet-away :is(.df-tet-table, .df-tet-envelope, .df-tet-lantern, .df-tet-petal, .df-tet-wishes-title > span) {
+    animation-play-state: paused;
+}
+
+.df-tet-intro:focus-within .df-tet-petal {
+    animation-play-state: paused;
+}
+
+@keyframes df-tet-breathe {
+    from {
+        transform: scale(1);
+    }
+
+    to {
+        transform: scale(1.045);
+    }
+}
+
+@keyframes df-tet-swing {
+    from {
+        transform: rotate(-5deg);
+    }
+
+    to {
+        transform: rotate(5deg);
+    }
+}
+
+@keyframes df-tet-float {
+    0%, 100% {
+        transform: translateY(0) rotate(12deg);
+    }
+
+    50% {
+        transform: translateY(-7px) rotate(7deg);
+    }
+}
+
+@keyframes df-tet-flower {
+    from {
+        transform: rotate(-12deg);
+    }
+
+    to {
+        transform: rotate(12deg);
+    }
+}
+
+@keyframes df-tet-fall {
+    0% {
+        transform: translate3d(0, 0, 0) rotate(0);
+        opacity: 0;
+    }
+
+    12% {
+        opacity: .65;
+    }
+
+    80% {
+        opacity: .5;
+    }
+
+    100% {
+        transform: translate3d(65px, 690px, 0) rotate(240deg);
+        opacity: 0;
+    }
+}
+
+@media (max-width: 1500px) {
+    .df-tet-lantern--left {
+        display: none;
+    }
+
+    .df-tet-lantern--right {
+        width: 38px;
+        height: auto;
+        right: 0;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .df-site .df-tet-home .df-home-intro {
+        grid-template-columns: minmax(0, 1fr) minmax(0, .9fr);
+        gap: 25px;
+    }
+
+    .df-tet-picture-tag {
+        font-size: 12px;
+        top: 10px;
+        left: 10px;
+    }
+
+    .df-tet-picture figcaption {
+        padding: 13px 9px 9px;
+        gap: 10px;
+    }
+
+    .df-tet-wishes-inner {
+        flex-wrap: wrap;
+    }
+
+    .df-tet-wishes p {
+        flex: 1;
+        min-width: 220px;
+    }
+
+    .df-tet-envelope {
+        right: -10px;
+        width: 45px;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .df-site .df-tet-home .df-tet-intro {
+        padding-top: 28px;
+    }
+
+    .df-site .df-tet-home .df-home-intro {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 24px;
+    }
+
+    .df-tet-picture {
+        max-width: 520px;
+        width: 100%;
+        margin: 0 auto;
+    }
+
+    .df-tet-table {
+        aspect-ratio: 2.15;
+    }
+
+    .df-site .df-tet-home .df-tet-intro .fd-food-heading h1 {
+        font-size: clamp(29px, 7.5vw, 38px);
+    }
+
+    .df-site .df-tet-home .fd-food-heading > p {
+        font-size: 16px;
+    }
+
+    .df-tet-wishes-inner {
+        gap: 16px;
+        padding-top: 22px;
+        padding-bottom: 22px;
+    }
+
+    .df-tet-wishes-title {
+        width: 100%;
+        gap: 12px;
+    }
+
+    .df-site .df-tet-home .df-tet-wishes h2 {
+        font-size: 18px;
+    }
+
+    .df-tet-wishes p {
+        width: 100%;
+        flex: auto;
+    }
+
+    .df-tet-petal:nth-last-child(-n+3) {
+        display: none;
+    }
+
+    .df-tet-lantern--right {
+        display: none;
+    }
+
+    .df-tet-envelope {
+        right: 3px;
+        width: 44px;
+        top: 35%;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .df-tet-home :is(.df-tet-table, .df-tet-envelope, .df-tet-lantern, .df-tet-petal, .df-tet-wishes-title > span) {
+        animation: none !important;
+    }
+
+    .df-tet-home .df-tet-petal {
+        display: none;
+    }
+}
+
+/* Editorial edition: globally loaded after dorafood-tet.css. */
+.df-site .df-announcement {
+    background: #9d1325;
+    color: #fff;
+    border-bottom: 1px solid #e5bd78;
+}
+
+    .df-site .df-announcement a {
+        color: #ffe2a6;
+    }
+
+.df-site .df-site-header {
+    border-bottom: 2px solid #d7ae6a;
+}
+
+.df-site .df-primary-navigation {
+    background: #fffdfa;
+}
+
+.df-site .df-brand-symbol {
+    background: #fff7e9;
+    border-color: #dbb269;
+}
+
+.df-site .df-brand-message > span {
+    color: #a4172c;
+}
+
+.df-site .df-mainmenu .nav-link.active {
+    background: #fff0ed;
+    border-radius: 7px;
+    color: #ad1428;
+}
+
+.df-site .df-footer-invitation {
+    background: url('../img/tet-motion/blossom.svg') right top / 240px auto no-repeat, #a51429;
+    border: 1px solid #dfb873;
+}
+
+    .df-site .df-footer-invitation p {
+        max-width: 520px;
+        color: #fff;
+    }
+
+.df-site .df-footer-strip img {
+    border: 1px solid #b88b50;
+}
+
+.df-site .df-tet-editorial {
+    --spring-red: #b31529;
+    --spring-cream: #fff8ed;
+}
+
+    .df-site .df-tet-editorial .df-tet-intro {
+        background: url('../img/tet-motion/blossom.svg') left -50px top -75px / 230px auto no-repeat, radial-gradient(ellipse at 85% 25%, #fae5cf 0, #fff8f3 35%, #fff 75%);
+        padding-top: 30px;
+    }
+
+    .df-site .df-tet-editorial .df-home-intro {
+        grid-template-columns: minmax(0, 1.08fr) minmax(0, 1fr);
+        gap: 54px;
+        margin-bottom: 34px;
+    }
+
+    .df-site .df-tet-editorial .fd-food-heading {
+        padding: 10px 0;
+    }
+
+        .df-site .df-tet-editorial .fd-food-heading h1 {
+            font-size: clamp(30px, 3vw, 46px);
+            line-height: 1.3;
+        }
+
+    .df-site .df-tet-editorial .df-tet-picture {
+        border-radius: 19px;
+        padding: 9px;
+        box-shadow: 0 16px 50px #8d24251a;
+        border-color: #dfbda5;
+    }
+
+    .df-site .df-tet-editorial .df-tet-picture-window {
+        border-radius: 12px;
+    }
+
+.df-tet-editorial .df-tet-slide {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1.94;
+    object-fit: cover;
+    display: block;
+}
+
+    .df-tet-editorial .df-tet-slide[hidden] {
+        display: none;
+    }
+
+    .df-tet-editorial .df-tet-slide:not([hidden]) {
+        animation: df-tet-breathe 14s ease-in-out infinite alternate;
+    }
+
+.df-tet-editorial .df-tet-table {
+    animation: none;
+}
+
+.df-tet-editorial .df-tet-carousel-controls {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 8px 12px;
+    margin-top: -1px;
+    background: #fff8ef;
+    border-radius: 0 0 10px 10px;
+    border-bottom: 1px solid #ead7bd;
+}
+
+    .df-tet-editorial .df-tet-carousel-controls[hidden] {
+        display: none;
+    }
+
+.df-tet-editorial .df-tet-dots {
+    display: flex;
+}
+
+    .df-tet-editorial .df-tet-dots button {
+        width: 30px;
+        height: 44px;
+        padding: 0;
+        border: 0;
+        background: none;
+        position: relative;
+    }
+
+        .df-tet-editorial .df-tet-dots button::after {
+            content: '';
+            position: absolute;
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            top: 18px;
+            left: 11px;
+            background: #cdb5a8;
+            transition: background .2s, transform .2s;
+        }
+
+        .df-tet-editorial .df-tet-dots button[aria-pressed='true']::after {
+            background: #b31529;
+            transform: scale(1.35);
+        }
+
+.df-tet-editorial .df-tet-slide-count {
+    color: #762d31;
+    font-size: 14px;
+    font-weight: 700;
+    margin-left: auto;
+    white-space: nowrap;
+}
+
+.df-tet-editorial .df-tet-slide-arrows {
+    display: flex;
+    gap: 5px;
+}
+
+    .df-tet-editorial .df-tet-slide-arrows button {
+        height: 44px;
+        width: 44px;
+        border: 1px solid #e5c9b4;
+        border-radius: 50%;
+        background: #fff;
+        color: #a31527;
+        font-size: 21px;
+    }
+
+        .df-tet-editorial .df-tet-slide-arrows button:hover {
+            background: #ad1428;
+            color: #fff;
+        }
+
+.df-tet-editorial .df-tet-picture figcaption {
+    padding: 15px 17px 10px;
+}
+
+.df-tet-editorial .df-tet-stamp {
+    position: absolute;
+    right: -17px;
+    top: -12px;
+    width: 72px;
+    height: 72px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: column;
+    border: 3px double #ffe2ac;
+    outline: 4px solid #a51429;
+    background: #a51429;
+    color: #ffe2ac;
+    font-size: 19px;
+    font-weight: 700;
+    transform: rotate(12deg);
+    pointer-events: none;
+    line-height: 1.4;
+}
+
+    .df-tet-editorial .df-tet-stamp b {
+        font-size: 10px;
+        letter-spacing: 1px;
+    }
+
+.df-tet-editorial .df-tet-envelope {
+    top: 46%;
+    right: -20px;
+}
+
+.df-tet-seasons {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 22px;
+}
+
+    .df-tet-seasons span {
+        padding: 5px 12px;
+        color: #8f2432;
+        border: 1px solid #e8cbb2;
+        background: #fff6e8;
+        border-radius: 5px;
+        font-size: 14px;
+        font-weight: 600;
+    }
+
+.df-tet-discover {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    margin-top: 22px;
+    color: #7a3c3d;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+    .df-tet-discover span {
+        border: 1px solid #d4b69f;
+        border-radius: 50%;
+        width: 27px;
+        height: 27px;
+        display: grid;
+        place-items: center;
+    }
+
+.df-site .df-tet-editorial .fd-food-card {
+    border-color: #d6b591;
+    border-radius: 13px;
+    box-shadow: 0 4px 14px #7820220b;
+}
+
+.df-site .df-tet-editorial .fd-food-name {
+    color: #272020;
+}
+
+.df-site .df-tet-editorial .df-tet-wishes {
+    background: url('../img/tet-motion/spring-pattern.svg') center / 140px, #a51429;
+}
+
+.df-site .df-tet-editorial .df-tet-paths {
+    background: #fffcf7;
+    border-bottom: 1px solid #ebd7c1;
+}
+
+.df-site .df-tet-editorial .df-home-paths-grid > a {
+    background: #fff;
+    border: 1px solid #ead6c0;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.df-site .df-tet-editorial .fd-about {
+    background: #fff;
+    padding-top: 64px;
+    padding-bottom: 64px;
+}
+
+.df-site .df-tet-editorial .df-home .df-section {
+    padding-top: 62px;
+    padding-bottom: 62px;
+}
+
+.df-site .df-tet-editorial .df-home .df-section-head {
+    margin-bottom: 28px;
+}
+
+    .df-site .df-tet-editorial .df-home .df-section-head h2,
+    .df-site .df-tet-editorial .df-home .df-experience h2 {
+        font-size: clamp(27px, 2.6vw, 38px);
+        line-height: 1.35;
+        font-family: 'Open Sans', Arial, sans-serif !important;
+        font-weight: 700 !important;
+    }
+
+    .df-site .df-tet-editorial .df-home .df-section-head p {
+        font-size: 16px !important;
+        color: #4c3536 !important;
+    }
+
+    .df-site .df-tet-editorial .df-home .df-section-head .df-eyebrow::before {
+        content: '✦';
+        margin-right: 9px;
+        color: #a87934;
+    }
+
+.df-site .df-tet-editorial .df-experience {
+    background: url('../img/tet-motion/spring-pattern.svg'), #241c1d;
+    border-block: 1px solid #b8894b;
+}
+
+    .df-site .df-tet-editorial .df-experience h2 {
+        color: #fff;
+    }
+
+        .df-site .df-tet-editorial .df-experience h2 span {
+            color: #f7d99b;
+        }
+
+    .df-site .df-tet-editorial .df-experience p {
+        color: #fff5e9 !important;
+    }
+
+    .df-site .df-tet-editorial .df-experience .df-eyebrow,
+    .df-site .df-tet-editorial .df-experience .df-text-link {
+        color: #ffe0a2;
+    }
+
+.df-site .df-tet-editorial .df-services-grid {
+    gap: 20px;
+}
+
+.df-site .df-tet-editorial .df-service-card {
+    padding: 0 0 22px;
+    overflow: hidden;
+    border: 1px solid #e6cdb6;
+    border-radius: 13px;
+    background: #fff;
+    box-shadow: 0 7px 22px #92202a08;
+}
+
+    .df-site .df-tet-editorial .df-service-card > :not(img) {
+        margin-left: 21px;
+        margin-right: 21px;
+    }
+
+    .df-site .df-tet-editorial .df-service-card > .df-service-top {
+        margin-top: 20px;
+        margin-bottom: 15px;
+    }
+
+    .df-site .df-tet-editorial .df-service-card h3 {
+        font-size: 20px;
+        line-height: 1.45;
+    }
+
+    .df-site .df-tet-editorial .df-service-card p {
+        font-size: 15px !important;
+        line-height: 1.8;
+        color: #4e383a !important;
+    }
+
+    .df-site .df-tet-editorial .df-service-card:hover {
+        background: #fffaf5;
+        transform: translateY(-4px);
+    }
+
+.df-site .df-tet-editorial .df-tet-service-photo {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1.55;
+    object-fit: cover;
+    display: block;
+    border-bottom: 1px solid #ead5bd;
+}
+
+.df-site .df-tet-editorial #df-events {
+    background: url('../img/tet-motion/blossom.svg') right -60px top 10px / 250px auto no-repeat, #fff6e9;
+    border-block: 1px solid #ecd8bd;
+}
+
+.df-site .df-tet-editorial .df-tet-mosaic {
+    display: grid;
+    grid-template-columns: 1.25fr 1fr 1fr;
+    grid-template-rows: 190px 190px;
+    gap: 18px;
+}
+
+    .df-site .df-tet-editorial .df-tet-mosaic .df-event-card {
+        height: auto;
+        min-height: 0;
+        border: 5px solid #fff;
+        outline: 1px solid #e2c5a1;
+        border-radius: 13px;
+    }
+
+        .df-site .df-tet-editorial .df-tet-mosaic .df-event-card:first-child {
+            grid-row: span 2;
+        }
+
+        .df-site .df-tet-editorial .df-tet-mosaic .df-event-card:last-child {
+            grid-column: span 2;
+        }
+
+        .df-site .df-tet-editorial .df-tet-mosaic .df-event-card::after {
+            background: linear-gradient(180deg, transparent 25%, #2b0e12d9);
+        }
+
+        .df-site .df-tet-editorial .df-tet-mosaic .df-event-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .df-site .df-tet-editorial .df-tet-mosaic .df-event-card h3 {
+            color: #fff;
+            font-size: 20px;
+        }
+
+        .df-site .df-tet-editorial .df-tet-mosaic .df-event-card > div > span {
+            color: #ffe0a5;
+        }
+
+    .df-site .df-tet-editorial .df-tet-mosaic.is-tet-filtered {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: auto;
+    }
+
+        .df-site .df-tet-editorial .df-tet-mosaic.is-tet-filtered .df-event-card {
+            grid-column: auto;
+            grid-row: auto;
+            height: 280px;
+        }
+
+    .df-site .df-tet-editorial .df-tet-mosaic .df-event-card[hidden] {
+        display: none;
+    }
+
+.df-site .df-tet-editorial .df-home .df-filter button {
+    font-size: 15px;
+    min-height: 44px;
+    border-radius: 6px;
+}
+
+    .df-site .df-tet-editorial .df-home .df-filter button[aria-pressed='true'] {
+        background: #a51429;
+        color: #fff;
+        border-color: #a51429;
+    }
+
+.df-site .df-tet-editorial .df-booking {
+    background: #fff8ef;
+}
+
+.df-site .df-tet-editorial .df-booking-shell {
+    border: 1px solid #dcb890;
+    box-shadow: 0 15px 40px #a2312510;
+    border-radius: 18px;
+    overflow: hidden;
+}
+
+.df-site .df-tet-editorial .df-booking-story::after {
+    background: linear-gradient(180deg, #3a0d1366, #4a0c16d9);
+}
+
+.df-site .df-tet-editorial .df-booking-story h2 {
+    color: #fff;
+    font-size: clamp(28px, 3vw, 40px);
+}
+
+.df-site .df-tet-editorial .df-booking-story .df-eyebrow {
+    color: #ffdfa6;
+}
+
+.df-site .df-tet-editorial .df-booking-story p {
+    color: #fff !important;
+}
+
+.df-site .df-tet-editorial .df-booking-form-wrap {
+    background: #fff;
+}
+
+    .df-site .df-tet-editorial .df-booking-form-wrap h2 {
+        font-size: 26px;
+        line-height: 1.4;
+    }
+
+.df-site .df-tet-editorial .df-field label {
+    color: #3a292c;
+    font-size: 15px !important;
+}
+
+.df-site .df-tet-editorial .df-field :is(input, select, textarea) {
+    font-size: 16px !important;
+    border-color: #dec5b6;
+    background: #fffdfa;
+}
+
+.df-site .df-tet-editorial .df-field :is(input, select) {
+    min-height: 46px;
+}
+
+.df-site .df-tet-editorial .df-tet-real-booking {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 15px;
+    font-weight: 700;
+    color: #a51429;
+    padding: 9px 0;
+    text-underline-offset: 4px;
+}
+
+.df-site .df-tet-editorial #df-team {
+    background: #fff;
+}
+
+.df-site .df-tet-editorial .df-person {
+    border: 1px solid #e8d2bc;
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fffaf3;
+}
+
+.df-site .df-tet-editorial .df-feedback-shell {
+    border: 1px solid #ddb982;
+    background: url('../img/tet-motion/spring-pattern.svg'), #fff8eb;
+}
+
+.df-site .df-tet-editorial .df-journal-card {
+    border: 1px solid #e4c8ae;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+    .df-site .df-tet-editorial .df-journal-card > img {
+        width: 100%;
+        aspect-ratio: 1.7;
+        object-fit: cover;
+    }
+
+    .df-site .df-tet-editorial .df-journal-card p {
+        color: #4b3335 !important;
+        font-size: 15px !important;
+    }
+
+.df-site .df-tet-editorial .df-dining-guide {
+    background: #fff8ed;
+}
+
+.df-site .df-tet-editorial .df-guide-grid article {
+    background: #fff;
+    border: 1px solid #e2c5a6;
+    border-radius: 12px;
+}
+
+.df-site .df-tet-editorial .df-faq-list details {
+    border-color: #dfc2a7;
+}
+
+.df-site .df-tet-editorial .df-faq-list summary {
+    color: #762032;
+    font-size: 17px;
+}
+
+.df-tet-editorial :is(.df-tet-dots button, .df-tet-slide-arrows button):focus-visible {
+    outline: 3px solid #a51429;
+    outline-offset: 3px;
+}
+
+.df-tet-editorial [data-tet-reveal].is-tet-seen {
+    animation: df-tet-arrive .6s ease-out both;
+}
+
+.df-tet-home:is(.is-tet-paused, .is-tet-away) :is(.df-tet-slide, [data-tet-reveal].is-tet-seen) {
+    animation-play-state: paused;
+}
+
+@keyframes df-tet-arrive {
+    from {
+        opacity: .3;
+        transform: translateY(16px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@media (max-width: 1199.98px) {
+    .df-site .df-tet-editorial .df-home-intro {
+        gap: 30px;
+    }
+
+    .df-tet-editorial .df-tet-stamp {
+        right: -5px;
+        top: -10px;
+        width: 60px;
+        height: 60px;
+        font-size: 17px;
+    }
+
+    .df-site .df-tet-editorial .df-services-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .df-site .df-tet-editorial .df-tet-mosaic {
+        grid-template-rows: 170px 170px;
+        gap: 14px;
+    }
+}
+
+@media (max-width: 991.98px) {
+    .df-site .df-tet-editorial .df-home-intro {
+        gap: 25px;
+    }
+
+    .df-site .df-tet-editorial .df-home-paths-grid > a {
+        padding: 16px;
+    }
+
+    .df-site .df-tet-editorial .df-tet-mosaic {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-rows: 220px 220px;
+    }
+
+        .df-site .df-tet-editorial .df-tet-mosaic .df-event-card:first-child {
+            grid-row: auto;
+        }
+
+        .df-site .df-tet-editorial .df-tet-mosaic .df-event-card:last-child {
+            grid-column: auto;
+        }
+
+    .df-site .df-tet-editorial .df-home .df-section {
+        padding-block: 46px;
+    }
+
+    .df-site .df-tet-editorial .df-service-card h3 {
+        font-size: 19px;
+    }
+}
+
+@media (max-width: 767.98px) {
+    .df-site .df-tet-editorial .df-home-intro {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 22px;
+    }
+
+    .df-site .df-tet-editorial .df-tet-intro {
+        padding-top: 25px;
+        background-size: 130px auto, auto;
+    }
+
+    .df-site .df-tet-editorial .fd-food-heading {
+        padding: 0;
+    }
+
+        .df-site .df-tet-editorial .fd-food-heading h1 {
+            font-size: clamp(29px, 7.3vw, 39px);
+        }
+
+    .df-site .df-tet-editorial .df-home-intro-actions {
+        gap: 14px;
+    }
+
+    .df-tet-editorial .df-tet-picture {
+        max-width: 560px;
+    }
+
+    .df-tet-editorial .df-tet-slide {
+        aspect-ratio: 2.05;
+    }
+
+    .df-tet-editorial .df-tet-picture-tag {
+        max-width: calc(100% - 66px);
+        font-size: 12px;
+        padding: 6px 8px;
+    }
+
+    .df-tet-discover {
+        margin-top: 15px;
+    }
+
+    .df-site .df-tet-editorial .fd-about {
+        padding-block: 44px;
+    }
+
+    .df-site .df-tet-editorial .df-tet-mosaic {
+        grid-template-rows: 180px 180px;
+        gap: 12px;
+    }
+
+        .df-site .df-tet-editorial .df-tet-mosaic .df-event-card h3 {
+            font-size: 17px;
+        }
+
+        .df-site .df-tet-editorial .df-tet-mosaic .df-event-card > div {
+            left: 13px;
+            right: 13px;
+            bottom: 15px;
+        }
+
+            .df-site .df-tet-editorial .df-tet-mosaic .df-event-card > div > span {
+                font-size: 12px;
+            }
+
+        .df-site .df-tet-editorial .df-tet-mosaic.is-tet-filtered .df-event-card {
+            height: 200px;
+        }
+
+    .df-site .df-tet-editorial .df-booking-form-wrap {
+        padding: 25px 20px;
+    }
+
+        .df-site .df-tet-editorial .df-booking-form-wrap h2 {
+            font-size: 23px;
+        }
+
+    .df-tet-editorial .df-tet-envelope {
+        right: 0;
+        width: 42px;
+    }
+}
+
+@media (max-width: 479.98px) {
+    .df-site .df-tet-editorial .df-services-grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .df-site .df-tet-editorial .df-tet-service-photo {
+        aspect-ratio: 1.9;
+    }
+
+    .df-site .df-tet-editorial .df-tet-mosaic {
+        grid-template-columns: minmax(0, 1fr);
+        grid-template-rows: repeat(4, 220px);
+    }
+
+        .df-site .df-tet-editorial .df-tet-mosaic.is-tet-filtered {
+            grid-template-columns: minmax(0, 1fr);
+            grid-template-rows: auto;
+        }
+
+    .df-tet-seasons {
+        gap: 6px;
+    }
+
+        .df-tet-seasons span {
+            font-size: 13px;
+            padding: 4px 9px;
+        }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .df-tet-editorial :is(.df-tet-slide, [data-tet-reveal].is-tet-seen) {
+        animation: none !important;
+    }
+
+    .df-site .df-tet-editorial .df-service-card:hover {
+        transform: none;
+    }
+}
+
+.df-tet-editorial .df-tet-lantern--left {
+    height: auto;
+    max-height: 290px;
+    object-fit: contain;
+}
+
+.df-tet-editorial .df-tet-service-photo {
+    flex-shrink: 0;
+}

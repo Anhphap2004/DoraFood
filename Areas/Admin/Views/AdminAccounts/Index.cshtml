@@ -1,0 +1,75 @@
+@using DoraFood.Areas.Admin.ViewModels
+@model AccountsIndexModel
+@{ ViewData["Title"] = "Quản lý tài khoản"; }
+<div class="container-fluid dm">
+    <partial name="_AdminManagementMessages" />
+    <div class="card dm-card">
+        <div class="card-header bg-transparent py-3"><strong>@Model.Total tài khoản phù hợp</strong></div>
+        <div class="card-body">
+            <form asp-area="Admin" asp-controller="AdminAccounts" asp-action="Index" method="get"
+                  class="row g-3 align-items-end">
+                <div class="col-lg-4">
+                    <label for="keyword" class="form-label">Tên đăng nhập hoặc email</label>
+                    <input id="keyword" name="keyword" value="@Model.Keyword" maxlength="200" class="form-control" />
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <label for="state" class="form-label">Trạng thái</label>
+                    <select id="state" name="state" class="form-select">
+                        <option value="all" selected="@(Model.State == "all")">Tất cả</option>
+                        <option value="active" selected="@(Model.State == "active")">Hoạt động</option>
+                        <option value="inactive" selected="@(Model.State == "inactive")">Đã khóa</option>
+                    </select>
+                </div>
+                <div class="col-sm-6 col-lg-3">
+                    <label for="roleId" class="form-label">Vai trò</label>
+                    <select id="roleId" name="roleId" class="form-select">
+                        <option value="">Tất cả vai trò</option>
+                        @foreach (var role in Model.Roles)
+                        {
+                            <option value="@role.Id" selected="@(Model.RoleId == role.Id)">@role.Name</option>
+                        }
+                    </select>
+                </div>
+                <div class="col-lg-2 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Lọc</button>
+                    <a asp-area="Admin" asp-controller="AdminAccounts" asp-action="Index"
+                       class="btn btn-outline-secondary text-nowrap">Xóa lọc</a>
+                </div>
+            </form>
+        </div>
+        @if (Model.Items.Count == 0)
+        {
+            <div class="dm-empty">Không tìm thấy tài khoản phù hợp.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle dm-table mb-0">
+                    <thead class="table-light"><tr><th>Tài khoản</th><th>Vai trò</th><th>Trạng thái</th><th>Ngày tạo</th><th class="text-end">Thao tác</th></tr></thead>
+                    <tbody>
+                    @foreach (var account in Model.Items)
+                    {
+                        <tr>
+                            <td class="text-break"><strong>@account.UserName</strong><div class="small text-body-secondary">@account.Email</div>
+                                @if (account.Id == Model.ActorId) { <span class="badge text-bg-light border">Đang đăng nhập</span> }
+                            </td>
+                            <td>@string.Join(", ", account.Roles)</td>
+                            <td><span class="badge @(account.IsActive ? "text-bg-success" : "text-bg-secondary")">@(account.IsActive ? "Hoạt động" : "Đã khóa")</span></td>
+                            <td class="text-nowrap">@account.CreatedAtUtc.AddHours(7).ToString("dd/MM/yyyy")</td>
+                            <td class="text-end">
+                                <a asp-area="Admin" asp-controller="AdminAccounts" asp-action="Details" asp-route-id="@account.Id"
+                                   class="btn btn-sm btn-outline-primary text-nowrap">Xem hồ sơ</a>
+                            </td>
+                        </tr>
+                    }
+                    </tbody>
+                </table>
+            </div>
+        }
+        <partial name="_AdminManagementPager" model="Model.Pager" />
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/admin/css/admin-management.css" asp-append-version="true" />
+}

@@ -1,11 +1,27 @@
-﻿@model DoraFood.Areas.Admin.Controllers.PostsController.IndexViewModel
+@model DoraFood.Areas.Admin.Controllers.PostsController.IndexViewModel
 
 @{
     ViewData["Title"] = "Quản lý bài viết";
     var nowUtc = System.DateTime.UtcNow;
 }
+<div class="tp-page tp-page-posts tp-page-index">
+    <section class="tp-module-intro" aria-label="Hướng dẫn màn hình">
+        <div class="tp-module-icon">
+        <i class="bi bi-journals" aria-hidden="true">
+        </i>
+        </div>
+        <div>
+        <span class="tp-kicker">DORAFOOD · CHĂM CHÚT TỪNG CHI TIẾT</span>
+        <h2>Những câu chuyện đáng chia sẻ</h2>
+        <p>Theo dõi bản nháp, bài đã xuất bản và nội dung hẹn đăng.</p>
+        </div>
+        <span class="tp-season-stamp">
+        <i class="bi bi-flower1" aria-hidden="true">
+        </i>Vị xuân sum vầy</span>
+    </section>
 
-<div class="container-fluid">
+
+<div class="tp-inner">
     @if (TempData["PostSuccess"] is string successMessage)
     {
         <div class="alert alert-success" role="status">
@@ -20,8 +36,8 @@
         </div>
     }
 
-    <div class="card border-0 shadow-sm">
-        <div class="card-header bg-transparent d-flex flex-wrap
+    <div class="card border-0 shadow-sm tp-card">
+        <div class="card-header tp-card-header bg-transparent d-flex flex-wrap
                     align-items-center justify-content-between gap-2 py-3">
 
             <strong>@Model.TotalPosts bài viết</strong>
@@ -35,7 +51,7 @@
             </a>
         </div>
 
-        <div class="card-body">
+        <div class="card-body tp-filter-panel">
             <form asp-area="Admin"
                   asp-controller="Posts"
                   asp-action="Index"
@@ -88,7 +104,7 @@
                 </div>
 
                 <div class="col-lg-2 d-flex gap-2">
-                    <button type="submit" class="btn btn-primary">Lọc</button>
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-funnel me-1" aria-hidden="true"></i>Lọc</button>
 
                     <a asp-area="Admin"
                        asp-controller="Posts"
@@ -109,7 +125,7 @@
         else
         {
             <div class="table-responsive">
-                <table class="table table-hover align-middle mb-0">
+                <table class="table table-hover align-middle mb-0 tp-table">
                     <thead class="table-light">
                         <tr>
                             <th scope="col" class="ps-3">Bài viết</th>
@@ -204,16 +220,12 @@
                                             @if (isPublished)
                                             {
                                                 <button type="submit"
-                                                        class="btn btn-sm btn-outline-secondary text-nowrap">
-                                                    Về bản nháp
-                                                </button>
+                                                        class="btn btn-sm btn-outline-secondary text-nowrap"><i class="bi bi-arrow-counterclockwise me-1" aria-hidden="true"></i>Về bản nháp</button>
                                             }
                                             else
                                             {
                                                 <button type="submit"
-                                                        class="btn btn-sm btn-outline-success text-nowrap">
-                                                    Xuất bản
-                                                </button>
+                                                        class="btn btn-sm btn-outline-success text-nowrap"><i class="bi bi-send-check me-1" aria-hidden="true"></i>Xuất bản</button>
                                             }
                                         </form>
 
@@ -229,9 +241,7 @@
                                                    value="@version" />
 
                                             <button type="submit"
-                                                    class="btn btn-sm btn-outline-danger">
-                                                Xóa
-                                            </button>
+                                                    class="btn btn-sm btn-outline-danger"><i class="bi bi-trash3 me-1" aria-hidden="true"></i>Xóa</button>
                                         </form>
                                     </div>
                                 </td>
@@ -244,7 +254,7 @@
 
         @if (Model.TotalPages > 1)
         {
-            <nav class="card-footer bg-transparent d-flex flex-wrap
+            <nav class="card-footer tp-card-footer bg-transparent d-flex flex-wrap
                         align-items-center justify-content-between gap-2"
                  aria-label="Phân trang bài viết">
                 <span class="small text-body-secondary">
@@ -284,3 +294,8 @@
         }
     </div>
 </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/admin/css/admin-tet-pages.css" asp-append-version="true" />
+}

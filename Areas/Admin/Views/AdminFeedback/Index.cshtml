@@ -1,0 +1,66 @@
+@using DoraFood.Areas.Admin.ViewModels
+@model FeedbackIndexModel
+@{
+    ViewData["Title"] = "Bình luận và đánh giá";
+    var isReview = Model.Kind == "reviews";
+}
+<div class="container-fluid dm">
+    <partial name="_AdminManagementMessages" />
+    <div class="dm-toolbar">
+        <div class="d-flex flex-wrap gap-2">
+            <a asp-area="Admin" asp-controller="AdminFeedback" asp-action="Index" asp-route-kind="comments"
+               class="btn @(!isReview ? "btn-primary" : "btn-outline-primary")">Bình luận bài viết</a>
+            <a asp-area="Admin" asp-controller="AdminFeedback" asp-action="Index" asp-route-kind="reviews"
+               class="btn @(isReview ? "btn-primary" : "btn-outline-primary")">Đánh giá món ăn</a>
+        </div>
+        <span class="text-body-secondary">@Model.Total nội dung phù hợp</span>
+    </div>
+    <div class="card dm-card">
+        <div class="card-body">
+            <form asp-area="Admin" asp-controller="AdminFeedback" asp-action="Index" method="get" class="row g-3 align-items-end">
+                <input type="hidden" name="kind" value="@Model.Kind" />
+                <div class="col-lg-6"><label for="keyword" class="form-label">Tìm theo nội dung, người gửi hoặc tên bài/món</label>
+                    <input id="keyword" name="keyword" value="@Model.Keyword" maxlength="200" class="form-control" /></div>
+                <div class="col-lg-3"><label for="status" class="form-label">Hiển thị</label>
+                    <select id="status" name="status" class="form-select">
+                        <option value="">Tất cả</option>
+                        <option value="APPROVED" selected="@(Model.Status == "APPROVED")">Đang hiển thị</option>
+                        <option value="REJECTED" selected="@(Model.Status == "REJECTED")">Đã ẩn</option>
+                        <option value="PENDING" selected="@(Model.Status == "PENDING")">Chờ hiển thị</option>
+                    </select></div>
+                <div class="col-lg-3 d-flex gap-2"><button type="submit" class="btn btn-primary">Tìm kiếm</button>
+                    <a asp-area="Admin" asp-controller="AdminFeedback" asp-action="Index" asp-route-kind="@Model.Kind" class="btn btn-outline-secondary">Xóa lọc</a></div>
+            </form>
+        </div>
+        @if (Model.Items.Count == 0)
+        {
+            <div class="dm-empty">Không tìm thấy nội dung phù hợp.</div>
+        }
+        else
+        {
+            <div class="table-responsive"><table class="table table-hover align-middle dm-table mb-0">
+                <thead class="table-light"><tr><th>@(isReview ? "Món ăn" : "Bài viết") / Người gửi</th><th>Nội dung</th><th>Trạng thái</th><th>Ngày gửi</th><th class="text-end">Thao tác</th></tr></thead>
+                <tbody>
+                @foreach (var item in Model.Items)
+                {
+                    <tr>
+                        <td class="text-break"><strong>@item.Target</strong><div class="small text-body-secondary">@item.Author</div></td>
+                        <td class="dm-snippet text-break">@item.Body
+                            @if (item.Rating.HasValue) { <div class="text-warning fw-semibold">@item.Rating / 5 sao</div> }
+                        </td>
+                        <td><span class="badge @(item.Status == "APPROVED" ? "text-bg-success" : "text-bg-secondary")">@ManagementText.FeedbackStatus(item.Status)</span></td>
+                        <td class="text-nowrap">@item.CreatedAtUtc.AddHours(7).ToString("dd/MM/yyyy HH:mm")</td>
+                        <td class="text-end"><a asp-area="Admin" asp-controller="AdminFeedback" asp-action="Details" asp-route-kind="@Model.Kind" asp-route-id="@item.Id"
+                            class="btn btn-sm btn-outline-primary text-nowrap">Xem và xử lý</a></td>
+                    </tr>
+                }
+                </tbody>
+            </table></div>
+        }
+        <partial name="_AdminManagementPager" model="Model.Pager" />
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/admin/css/admin-management.css" asp-append-version="true" />
+}

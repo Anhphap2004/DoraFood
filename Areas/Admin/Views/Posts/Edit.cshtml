@@ -1,4 +1,4 @@
-﻿@model DoraFood.Areas.Admin.ViewModels.PostFormInput
+@model DoraFood.Areas.Admin.ViewModels.PostFormInput
 
 @{
     ViewData["Title"] = "Sửa bài viết";
@@ -6,8 +6,25 @@
     var contentHtml = Html.ValueFor(m => m.ContentHtml) ?? string.Empty;
     var editorHtml = new Ganss.Xss.HtmlSanitizer().Sanitize(contentHtml);
 }
+<div class="tp-page tp-page-posts tp-page-edit">
+    <section class="tp-module-intro" aria-label="Hướng dẫn màn hình">
+        <div class="tp-module-icon">
+        <i class="bi bi-journal-richtext" aria-hidden="true">
+        </i>
+        </div>
+        <div>
+        <span class="tp-kicker">DORAFOOD · CHĂM CHÚT TỪNG CHI TIẾT</span>
+        <h2>Chỉnh sửa câu chuyện DoraFood</h2>
+        <p>Hoàn thiện nội dung bài viết và cập nhật ảnh bìa.</p>
+        </div>
+        <span class="tp-season-stamp">
+        <i class="bi bi-flower1" aria-hidden="true">
+        </i>Vị xuân sum vầy</span>
+    </section>
+    <div class="tp-workspace"><div class="tp-main">
 
-<div class="container-fluid">
+
+<div class="tp-inner">
     @if (TempData["PostSuccess"] is string successMessage)
     {
         <div class="alert alert-success" role="status">
@@ -28,11 +45,21 @@
           asp-route-id="@Model.Id"
           asp-antiforgery="true"
           method="post"
-          class="card border-0 shadow-sm">
+          class="card border-0 shadow-sm tp-card">
 
         <input asp-for="Version" type="hidden" />
 
         <div class="card-body p-4">
+        <div class="tp-form-section">
+        <span class="tp-section-icon">
+        <i class="bi bi-journal-richtext" aria-hidden="true">
+        </i>
+        </span>
+        <div>
+        <h2>Nội dung bài viết</h2>
+        <p>Lưu nội dung trước khi thực hiện tải ảnh bìa.</p>
+        </div>
+        </div>
             <div asp-validation-summary="ModelOnly"
                  class="text-danger"
                  role="alert"></div>
@@ -98,7 +125,7 @@
                       class="text-danger d-block mt-2"></span>
             </div>
 
-            <details class="border rounded p-3 mt-3">
+            <details class="border rounded p-3 mt-3 tp-html-import">
                 <summary class="fw-semibold">Nhập mã HTML</summary>
 
                 <label for="post-html-source" class="form-label mt-3">
@@ -122,7 +149,7 @@
             </details>
         </div>
 
-        <div class="card-footer bg-transparent d-flex flex-wrap justify-content-end gap-2">
+        <div class="card-footer tp-card-footer bg-transparent d-flex flex-wrap justify-content-end gap-2">
             <a asp-area="Admin"
                asp-controller="Posts"
                asp-action="Index"
@@ -130,9 +157,7 @@
                 Về danh sách
             </a>
 
-            <button type="submit" class="btn btn-primary">
-                Lưu thay đổi
-            </button>
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check2 me-1" aria-hidden="true"></i>Lưu thay đổi</button>
         </div>
     </form>
 
@@ -143,7 +168,7 @@
           asp-antiforgery="true"
           method="post"
           enctype="multipart/form-data"
-          class="card border-0 shadow-sm mt-4">
+          class="card border-0 shadow-sm mt-4 tp-card">
 
         <input type="hidden" name="version" value="@Model.Version" />
 
@@ -200,15 +225,47 @@
             </div>
         </div>
 
-        <div class="card-footer bg-transparent text-end">
-            <button type="submit" class="btn btn-primary">
-                Lưu ảnh bìa
-            </button>
+        <div class="card-footer tp-card-footer bg-transparent text-end">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-image me-1" aria-hidden="true"></i>Lưu ảnh bìa</button>
         </div>
     </form>
 </div>
 
+    </div>
+<aside class="tp-help">
+        <div class="tp-help-card">
+        <span class="tp-help-flower" aria-hidden="true">✿</span>
+        <span class="tp-kicker">GÓC CHUẨN BỊ</span>
+        <h2>Chăm nội dung, giữ cảm xúc</h2>
+        <ol>
+        <li>
+        <strong>Nội dung & ảnh bìa</strong>
+        <p>Hai phần lưu riêng. Lưu nội dung trước nếu đang chỉnh sửa cả hai.</p>
+        </li>
+        <li>
+        <strong>Đổi đường dẫn</strong>
+        <p>Có thể sửa slug, hoặc xóa trắng để tạo lại theo tiêu đề khi lưu.</p>
+        </li>
+        <li>
+        <strong>Định dạng bài viết</strong>
+        <p>Các chức năng Summernote và nhập HTML được giữ nguyên.</p>
+        </li>
+        <li>
+        <strong>Xuất bản</strong>
+        <p>Thao tác xuất bản hoặc đưa về nháp nằm ở danh sách bài viết.</p>
+        </li>
+        </ol>
+        <div class="tp-help-wish">
+        <i class="bi bi-cup-hot" aria-hidden="true">
+        </i> Chăm từng chi tiết, trọn từng trải nghiệm.</div>
+        </div>
+        </aside>
+    </div>
+</div>
+
 @section Styles {
+    <link rel="stylesheet" href="~/admin/css/admin-tet-pages.css" asp-append-version="true" />
+
     <link rel="stylesheet"
           href="https://cdnjs.cloudflare.com/ajax/libs/summernote/0.9.1/summernote-lite.min.css" />
 }

@@ -1,0 +1,35 @@
+@using DoraFood.Areas.Admin.ViewModels
+@model FeedbackDetailsModel
+@{ ViewData["Title"] = Model.Item.Kind == "reviews" ? "Chi tiết đánh giá món" : "Chi tiết bình luận"; }
+<div class="container-fluid dm">
+    <div class="dm-toolbar">
+        <a asp-area="Admin" asp-controller="AdminFeedback" asp-action="Index" asp-route-kind="@Model.Item.Kind" class="btn btn-outline-secondary">Về danh sách</a>
+        <span class="badge text-bg-light border">@ManagementText.FeedbackStatus(Model.Item.Status)</span>
+    </div>
+    <div class="card dm-card"><div class="card-body p-4">
+        <h2 class="h5 text-break">@Model.Item.Target</h2>
+        <p class="text-body-secondary">@Model.Item.Author · @Model.Item.CreatedAtUtc.AddHours(7).ToString("dd/MM/yyyy HH:mm")</p>
+        @if (Model.Item.Rating.HasValue) { <p class="text-warning fw-bold">@Model.Item.Rating / 5 sao</p> }
+        <div class="dm-body text-break">@(Model.Item.Body ?? "Không có nhận xét bằng chữ.")</div>
+        @if (Model.Item.Kind == "comments")
+        {
+            <p class="small text-body-secondary mt-3">@Model.ReplyCount trả lời trực tiếp. Khi xóa bình luận này, các trả lời được giữ và chuyển lên cấp trên.</p>
+        }
+    </div><div class="card-footer bg-transparent d-flex flex-wrap gap-2 p-3">
+        <form asp-area="Admin" asp-controller="AdminFeedback" asp-action="Visibility" asp-route-kind="@Model.Item.Kind" asp-route-id="@Model.Item.Id"
+              asp-antiforgery="true" method="post">
+            <input type="hidden" name="snapshot" value="@Model.Snapshot" />
+            <input type="hidden" name="targetStatus" value="@(Model.Item.Status == "APPROVED" ? "REJECTED" : "APPROVED")" />
+            <button type="submit" class="btn btn-primary">@(Model.Item.Status == "APPROVED" ? "Ẩn nội dung" : "Hiển thị nội dung")</button>
+        </form>
+        <form asp-area="Admin" asp-controller="AdminFeedback" asp-action="Delete" asp-route-kind="@Model.Item.Kind" asp-route-id="@Model.Item.Id"
+              asp-antiforgery="true" method="post" onsubmit="return confirm('Xóa vĩnh viễn nội dung này? Các trả lời của bình luận sẽ được giữ lại.');">
+            <input type="hidden" name="snapshot" value="@Model.Snapshot" />
+            <button type="submit" class="btn btn-outline-danger">Xóa nội dung</button>
+        </form>
+    </div></div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/admin/css/admin-management.css" asp-append-version="true" />
+}

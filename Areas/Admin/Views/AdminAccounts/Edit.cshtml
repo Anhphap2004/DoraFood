@@ -1,0 +1,43 @@
+@using System.Linq
+@using DoraFood.Areas.Admin.ViewModels
+@model AccountEditInput
+@{ ViewData["Title"] = "Quyền và trạng thái tài khoản"; }
+<div class="container-fluid dm">
+    <div class="dm-form">
+        <a asp-area="Admin" asp-controller="AdminAccounts" asp-action="Details" asp-route-id="@Model.Id"
+           class="btn btn-outline-secondary mb-3">Mở bản mới nhất / Về hồ sơ</a>
+        <form asp-area="Admin" asp-controller="AdminAccounts" asp-action="Edit" asp-route-id="@Model.Id"
+              asp-antiforgery="true" method="post" class="card dm-card">
+            <input asp-for="Version" type="hidden" />
+            <div class="card-body p-4">
+                <h2 class="h5 text-break mb-3">@Model.UserName</h2>
+                <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+                <div class="form-check form-switch my-4">
+                    <input asp-for="IsActive" class="form-check-input" />
+                    <label asp-for="IsActive" class="form-check-label">Cho phép tài khoản hoạt động</label>
+                </div>
+                <fieldset>
+                    <legend class="h6">Vai trò được cấp</legend>
+                    <div class="row g-3">
+                    @foreach (var role in Model.AvailableRoles)
+                    {
+                        <div class="col-sm-6"><div class="border rounded p-3 h-100">
+                            <div class="form-check">
+                                <input type="checkbox" id="role-@role.Id" name="RoleIds" value="@role.Id"
+                                       checked="@Model.RoleIds.Contains(role.Id)" class="form-check-input" />
+                                <label for="role-@role.Id" class="form-check-label">@role.Name <small class="d-block text-body-secondary">@role.Code</small></label>
+                            </div>
+                        </div></div>
+                    }
+                    </div>
+                </fieldset>
+                <p class="small text-body-secondary mt-4 mb-0">Sau khi lưu, người dùng cần đăng nhập lại để nhận quyền mới.</p>
+            </div>
+            <div class="card-footer bg-transparent text-end p-3"><button type="submit" class="btn btn-primary">Lưu thay đổi</button></div>
+        </form>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/admin/css/admin-management.css" asp-append-version="true" />
+}

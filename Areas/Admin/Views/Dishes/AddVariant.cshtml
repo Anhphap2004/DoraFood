@@ -1,20 +1,43 @@
-﻿@model DoraFood.Areas.Admin.ViewModels.DishVariantInput
+@model DoraFood.Areas.Admin.ViewModels.DishVariantInput
 
 @{
     ViewData["Title"] = "Thêm khẩu phần";
 }
+<div class="tp-page tp-page-dishes tp-page-addvariant">
+    <section class="tp-module-intro" aria-label="Hướng dẫn màn hình">
+        <div class="tp-module-icon">
+        <i class="bi bi-plus-circle" aria-hidden="true">
+        </i>
+        </div>
+        <div>
+        <span class="tp-kicker">DORAFOOD · CHĂM CHÚT TỪNG CHI TIẾT</span>
+        <h2>Thêm một lựa chọn cho khách</h2>
+        <p>Thiết lập khẩu phần, đơn vị và giá bán của món ăn.</p>
+        </div>
+        <span class="tp-season-stamp">
+        <i class="bi bi-flower1" aria-hidden="true">
+        </i>Vị xuân sum vầy</span>
+    </section>
+    <div class="tp-workspace"><div class="tp-main">
 
-<div class="card">
-    <div class="card-header">
-        <strong>@Model.DishName</strong>
-    </div>
 
-    <form asp-area="Admin"
+<div class="card tp-card">
+<form asp-area="Admin"
           asp-controller="Dishes"
           asp-action="AddVariant"
           asp-route-id="@Model.DishId"
           method="post">
-        <div class="card-body">
+        <div class="card-body tp-field-grid">
+        <div class="tp-form-section">
+        <span class="tp-section-icon">
+        <i class="bi bi-plus-circle" aria-hidden="true">
+        </i>
+        </span>
+        <div>
+        <h2>Thông tin khẩu phần</h2>
+        <p>@Model.DishName</p>
+        </div>
+        </div>
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
             <div class="mb-3">
@@ -45,7 +68,7 @@
                 <span asp-validation-for="Price" class="text-danger small"></span>
             </div>
 
-            <div class="form-check">
+            <div class="form-check form-switch tp-switch">
                 <input asp-for="IsAvailable" class="form-check-input" />
                 <label asp-for="IsAvailable" class="form-check-label">
                     Đang bán khẩu phần này
@@ -53,8 +76,8 @@
             </div>
         </div>
 
-        <div class="card-footer d-flex gap-2">
-            <button type="submit" class="btn btn-primary">Lưu khẩu phần</button>
+        <div class="card-footer tp-card-footer d-flex gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check2 me-1" aria-hidden="true"></i>Lưu khẩu phần</button>
             <a class="btn btn-outline-secondary"
                href="@Url.Action("Index", "Dishes", new { area = "Admin" })">
                 Về danh sách
@@ -62,3 +85,38 @@
         </div>
     </form>
 </div>
+    </div>
+<aside class="tp-help">
+        <div class="tp-help-card">
+        <span class="tp-help-flower" aria-hidden="true">✿</span>
+        <span class="tp-kicker">GÓC CHUẨN BỊ</span>
+        <h2>Định lượng rõ, phục vụ trọn</h2>
+        <ol>
+        <li>
+        <strong>Mã khẩu phần</strong>
+        <p>Dùng mã dễ phân biệt, ví dụ GA-NUONG-NUA.</p>
+        </li>
+        <li>
+        <strong>Tên & đơn vị</strong>
+        <p>Ví dụ Nửa con, đơn vị Phần hoặc Con.</p>
+        </li>
+        <li>
+        <strong>Giá bán</strong>
+        <p>Nhập giá bằng đồng Việt Nam, không dùng dấu phân cách hàng nghìn.</p>
+        </li>
+        <li>
+        <strong>Trạng thái bán</strong>
+        <p>Tắt tùy chọn đang bán khi chưa sẵn sàng phục vụ khẩu phần này.</p>
+        </li>
+        </ol>
+        <div class="tp-help-wish">
+        <i class="bi bi-cup-hot" aria-hidden="true">
+        </i> Chăm từng chi tiết, trọn từng trải nghiệm.</div>
+        </div>
+        </aside>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/admin/css/admin-tet-pages.css" asp-append-version="true" />
+}

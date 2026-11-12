@@ -1,4 +1,4 @@
-﻿@using System.Globalization
+@using System.Globalization
 @model DoraFood.Areas.Admin.ViewModels.DishListViewModel
 
 @{
@@ -10,9 +10,26 @@
         || Model.Status != "all";
     var indexUrl = Url.Action("Index", "Dishes", new { area = "Admin" });
 }
+<div class="tp-page tp-page-dishes tp-page-index">
+    <section class="tp-module-intro" aria-label="Hướng dẫn màn hình">
+        <div class="tp-module-icon">
+        <i class="bi bi-grid" aria-hidden="true">
+        </i>
+        </div>
+        <div>
+        <span class="tp-kicker">DORAFOOD · CHĂM CHÚT TỪNG CHI TIẾT</span>
+        <h2>Thực đơn được chăm chút mỗi ngày</h2>
+        <p>Quản lý món, ảnh đại diện, khẩu phần và giá bán trong cùng một nơi.</p>
+        </div>
+        <span class="tp-season-stamp">
+        <i class="bi bi-flower1" aria-hidden="true">
+        </i>Vị xuân sum vầy</span>
+    </section>
+
 
 @if (TempData["DishSuccess"] is string success)
 {
+    TempData.Remove("DishSuccess");
     <div class="alert alert-success" role="status">@success</div>
 }
 
@@ -21,8 +38,8 @@
     <div class="alert alert-warning" role="alert">@error</div>
 }
 
-<div class="card">
-    <div class="card-header d-flex flex-wrap justify-content-between
+<div class="card tp-card">
+    <div class="card-header tp-card-header d-flex flex-wrap justify-content-between
         align-items-center gap-2">
         <div>
             <strong>Danh sách món ăn</strong>
@@ -35,7 +52,7 @@
         </a>
     </div>
 
-    <div class="card-body border-bottom">
+    <div class="card-body border-bottom tp-filter-panel">
         <form method="get" action="@indexUrl" class="row g-2 align-items-end">
             <div class="col-lg-4">
                 <label for="dish-keyword" class="form-label">Tìm món</label>
@@ -75,7 +92,7 @@
             </div>
 
             <div class="col-lg-auto d-flex gap-2">
-                <button type="submit" class="btn btn-outline-primary">Lọc</button>
+                <button type="submit" class="btn btn-outline-primary"><i class="bi bi-funnel me-1" aria-hidden="true"></i>Lọc</button>
                 @if (hasFilters)
                 {
                     <a href="@indexUrl" class="btn btn-outline-secondary">
@@ -97,7 +114,7 @@
     else
     {
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table table-hover align-middle mb-0 tp-table">
                 <thead>
                     <tr>
                         <th scope="col">Món ăn</th>
@@ -192,18 +209,14 @@
                                             <input type="hidden" name="page" value="@Model.Page" />
 
                                             <button type="submit"
-                                                    class="btn btn-outline-danger btn-sm">
-                                                Xóa
-                                            </button>
+                                                    class="btn btn-outline-danger btn-sm"><i class="bi bi-trash3 me-1" aria-hidden="true"></i>Xóa</button>
                                         </form>
                                     }
                                     else
                                     {
                                         <button type="button"
                                                 class="btn btn-outline-secondary btn-sm"
-                                                disabled>
-                                            Xóa
-                                        </button>
+                                                disabled><i class="bi bi-trash3 me-1" aria-hidden="true"></i>Xóa</button>
                                     }
                                 </div>
 
@@ -224,7 +237,7 @@
 
         @if (Model.TotalPages > 1)
         {
-            <div class="card-footer d-flex flex-wrap align-items-center gap-2">
+            <div class="card-footer tp-card-footer d-flex flex-wrap align-items-center gap-2">
                 @if (Model.Page > 1)
                 {
                     <a class="btn btn-outline-secondary btn-sm"
@@ -260,6 +273,12 @@
         }
     }
 </div>
+
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/admin/css/admin-tet-pages.css" asp-append-version="true" />
+}
 
 @section Scripts {
     <script src="@Url.Content("~/assets/js/dorafood-dish-details.js")" defer></script>

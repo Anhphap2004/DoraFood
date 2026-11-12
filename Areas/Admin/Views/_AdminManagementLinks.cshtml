@@ -1,0 +1,28 @@
+@{
+    var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+}
+@if (User.IsInRole("ADMIN") || User.IsInRole("MANAGER"))
+{
+    <li class="nav-header">QUẢN LÝ VÀ THỐNG KÊ</li>
+    <li class="nav-item">
+        <a asp-area="Admin" asp-controller="AdminOverview" asp-action="Index"
+           class="nav-link @(currentController == "AdminOverview" ? "active" : "")">
+            <i class="nav-icon bi bi-bar-chart" aria-hidden="true"></i><p>Tổng quan thống kê</p>
+        </a>
+    </li>
+    <li class="nav-item">
+        <a asp-area="Admin" asp-controller="AdminFeedback" asp-action="Index"
+           class="nav-link @(currentController == "AdminFeedback" ? "active" : "")">
+            <i class="nav-icon bi bi-chat-left-text" aria-hidden="true"></i><p>Bình luận và đánh giá</p>
+        </a>
+    </li>
+}
+@if (User.IsInRole("ADMIN"))
+{
+    <li class="nav-item">
+        <a asp-area="Admin" asp-controller="AdminAccounts" asp-action="Index"
+           class="nav-link @(currentController == "AdminAccounts" ? "active" : "")">
+            <i class="nav-icon bi bi-people" aria-hidden="true"></i><p>Quản lý tài khoản</p>
+        </a>
+    </li>
+}

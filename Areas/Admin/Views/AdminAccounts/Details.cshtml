@@ -1,0 +1,51 @@
+@using DoraFood.Areas.Admin.ViewModels
+@model AccountDetailsModel
+@{
+    ViewData["Title"] = "Chi tiết tài khoản";
+    string Show(string? value) => string.IsNullOrWhiteSpace(value) ? "Chưa cập nhật" : value;
+}
+<div class="container-fluid dm">
+    <partial name="_AdminManagementMessages" />
+    <div class="dm-toolbar">
+        <a asp-area="Admin" asp-controller="AdminAccounts" asp-action="Index" class="btn btn-outline-secondary">Về danh sách</a>
+        @if (Model.Account.Id != Model.ActorId)
+        {
+            <a asp-area="Admin" asp-controller="AdminAccounts" asp-action="Edit" asp-route-id="@Model.Account.Id"
+               class="btn btn-primary">Phân quyền / Khóa tài khoản</a>
+        }
+    </div>
+    <div class="row g-4">
+        <div class="col-lg-8">
+            <div class="card dm-card"><div class="card-body p-4">
+                <h2 class="h5 mb-4 text-break">@Model.Account.UserName</h2>
+                <dl class="row g-3 mb-0">
+                    <div class="col-sm-6"><dt>Họ và tên</dt><dd>@Show(Model.FullName)</dd></div>
+                    <div class="col-sm-6"><dt>Email</dt><dd class="text-break">@Show(Model.Account.Email)</dd></div>
+                    <div class="col-sm-6"><dt>Điện thoại</dt><dd>@Show(Model.PhoneNumber)</dd></div>
+                    <div class="col-sm-6"><dt>Ngày sinh</dt><dd>@Show(Model.DateOfBirth)</dd></div>
+                    <div class="col-sm-6"><dt>Giới tính</dt><dd>@Show(Model.Gender)</dd></div>
+                    <div class="col-sm-6"><dt>Email xác thực</dt><dd>@(Model.EmailConfirmed ? "Đã xác thực" : "Chưa xác thực")</dd></div>
+                    <div class="col-sm-6"><dt>Trạng thái</dt><dd>@(Model.Account.IsActive ? "Hoạt động" : "Đã khóa")</dd></div>
+                    <div class="col-sm-6"><dt>Ngày tạo</dt><dd>@Model.Account.CreatedAtUtc.AddHours(7).ToString("dd/MM/yyyy HH:mm")</dd></div>
+                    <div class="col-12"><dt>Vai trò</dt><dd>@string.Join(", ", Model.Account.Roles)</dd></div>
+                </dl>
+            </div></div>
+        </div>
+        @if (Model.Account.Id != Model.ActorId)
+        {
+            <div class="col-lg-4"><div class="card border-danger"><div class="card-body p-4">
+                <h2 class="h5">Xóa tài khoản</h2>
+                <p class="text-body-secondary small">Chỉ xóa được tài khoản chưa được dữ liệu nghiệp vụ tham chiếu. Nếu có đơn hàng hoặc lịch sử liên quan, hãy khóa tài khoản.</p>
+                <form asp-area="Admin" asp-controller="AdminAccounts" asp-action="Delete" asp-route-id="@Model.Account.Id"
+                      asp-antiforgery="true" method="post" onsubmit="return confirm('Xóa vĩnh viễn tài khoản cùng hồ sơ, địa chỉ và token của tài khoản này?');">
+                    <input type="hidden" name="version" value="@Model.Version" />
+                    <button type="submit" class="btn btn-outline-danger">Xóa tài khoản</button>
+                </form>
+            </div></div></div>
+        }
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/admin/css/admin-management.css" asp-append-version="true" />
+}

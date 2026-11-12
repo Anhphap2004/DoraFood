@@ -1,17 +1,44 @@
-﻿@model DoraFood.Areas.Admin.ViewModels.DishInput
+@model DoraFood.Areas.Admin.ViewModels.DishInput
 
 @{
     ViewData["Title"] = "Sửa món ăn";
 }
+<div class="tp-page tp-page-dishes tp-page-edit">
+    <section class="tp-module-intro" aria-label="Hướng dẫn màn hình">
+        <div class="tp-module-icon">
+        <i class="bi bi-pencil-square" aria-hidden="true">
+        </i>
+        </div>
+        <div>
+        <span class="tp-kicker">DORAFOOD · CHĂM CHÚT TỪNG CHI TIẾT</span>
+        <h2>Chăm chút từng món ngon</h2>
+        <p>Cập nhật thông tin và cách hiển thị món trên thực đơn.</p>
+        </div>
+        <span class="tp-season-stamp">
+        <i class="bi bi-flower1" aria-hidden="true">
+        </i>Vị xuân sum vầy</span>
+    </section>
+    <div class="tp-workspace"><div class="tp-main">
 
-<div class="card">
+
+<div class="card tp-card">
     <form asp-area="Admin"
           asp-controller="Dishes"
           asp-action="Edit"
           asp-route-id="@Model.Id"
           method="post">
 
-        <div class="card-body">
+        <div class="card-body tp-field-grid">
+        <div class="tp-form-section">
+        <span class="tp-section-icon">
+        <i class="bi bi-pencil-square" aria-hidden="true">
+        </i>
+        </span>
+        <div>
+        <h2>Điều chỉnh món ăn</h2>
+        <p>Kiểm tra tên, đường dẫn và trạng thái trước khi lưu.</p>
+        </div>
+        </div>
             <div asp-validation-summary="ModelOnly" class="text-danger"></div>
 
             <div class="mb-3">
@@ -58,14 +85,14 @@
                       class="text-danger small"></span>
             </div>
 
-            <div class="form-check mb-2">
+            <div class="form-check form-switch tp-switch mb-2">
                 <input asp-for="IsFeatured" class="form-check-input" />
                 <label asp-for="IsFeatured" class="form-check-label">
                     Món nổi bật
                 </label>
             </div>
 
-            <div class="form-check">
+            <div class="form-check form-switch tp-switch">
                 <input asp-for="IsActive" class="form-check-input" />
                 <label asp-for="IsActive" class="form-check-label">
                     Bật món
@@ -73,8 +100,8 @@
             </div>
         </div>
 
-        <div class="card-footer d-flex gap-2">
-            <button type="submit" class="btn btn-primary">Lưu món ăn</button>
+        <div class="card-footer tp-card-footer d-flex gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check2 me-1" aria-hidden="true"></i>Lưu món ăn</button>
             <a class="btn btn-outline-secondary"
                href="@Url.Action("Index", "Dishes", new { area = "Admin" })">
                 Về danh sách
@@ -82,3 +109,38 @@
         </div>
     </form>
 </div>
+    </div>
+<aside class="tp-help">
+        <div class="tp-help-card">
+        <span class="tp-help-flower" aria-hidden="true">✿</span>
+        <span class="tp-kicker">GÓC CHUẨN BỊ</span>
+        <h2>Một thực đơn dễ chọn, dễ yêu</h2>
+        <ol>
+        <li>
+        <strong>Tên & danh mục</strong>
+        <p>Giữ thông tin nhất quán với thực đơn nhà hàng.</p>
+        </li>
+        <li>
+        <strong>Đường dẫn món</strong>
+        <p>Nếu đổi slug, đường dẫn truy cập món cũng thay đổi.</p>
+        </li>
+        <li>
+        <strong>Món nổi bật</strong>
+        <p>Dùng tùy chọn này cho món muốn giới thiệu đến khách.</p>
+        </li>
+        <li>
+        <strong>Bật món</strong>
+        <p>Trạng thái hiển thị món và trạng thái bán của từng khẩu phần là hai thiết lập riêng.</p>
+        </li>
+        </ol>
+        <div class="tp-help-wish">
+        <i class="bi bi-cup-hot" aria-hidden="true">
+        </i> Chăm từng chi tiết, trọn từng trải nghiệm.</div>
+        </div>
+        </aside>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/admin/css/admin-tet-pages.css" asp-append-version="true" />
+}

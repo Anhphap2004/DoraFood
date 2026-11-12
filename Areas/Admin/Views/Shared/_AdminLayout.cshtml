@@ -1,27 +1,41 @@
 ﻿@using System
 @{
-    var pageTitle = ViewData["Title"] as string ?? "Quản trị";
+    var pageTitle = ViewData["Title"] as string ?? "Quản trị nhà hàng";
     var currentArea = ViewContext.RouteData.Values["area"]?.ToString();
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
     var inAdmin = string.Equals(currentArea, "Admin", StringComparison.OrdinalIgnoreCase);
-    var dashboardActive = inAdmin &&
-        string.Equals(currentController, "Dashboard", StringComparison.OrdinalIgnoreCase);
-    var deliveryActive = inAdmin &&
-        string.Equals(currentController, "DeliveryOrders", StringComparison.OrdinalIgnoreCase);
-
-    var dashboardUrl = Url.Action("Index", "Dashboard", new { area = "Admin" });
-    var deliveryUrl = Url.Action("Index", "DeliveryOrders", new { area = "Admin" });
     var customerUrl = Url.Action("Index", "Home", new { area = "" });
+    var dashboardUrl = Url.Action("Index", "Dashboard", new { area = "Admin" });
+    var bookingUrl = Url.RouteUrl("DoraFoodAdminBookings");
     var userName = User.Identity?.Name ?? "Quản lý";
+    var vnNow = DateTime.UtcNow.AddHours(7);
+    var initials = string.IsNullOrWhiteSpace(userName) ? "D" : userName.Trim().Substring(0, 1).ToUpperInvariant();
+    string Active(string controller) => inAdmin && string.Equals(currentController, controller,
+        StringComparison.OrdinalIgnoreCase) ? "active" : "";
+    var operations = new[]
+    {
+        (Label: "Tổng quan", Controller: "Dashboard", Icon: "bi-grid-1x2"),
+        (Label: "Đơn giao hàng", Controller: "DeliveryOrders", Icon: "bi-truck"),
+        (Label: "Đặt bàn", Controller: "BookingManagement", Icon: "bi-calendar-check"),
+        (Label: "Món ăn", Controller: "Dishes", Icon: "bi-egg-fried"),
+        (Label: "Danh mục món ăn", Controller: "DishCategories", Icon: "bi-collection")
+    };
+    var contentLinks = new[]
+    {
+        (Label: "Bài viết", Controller: "Posts", Action: "Index", Icon: "bi-journal-richtext"),
+        (Label: "Giới thiệu", Controller: "AboutPage", Action: "Edit", Icon: "bi-info-circle"),
+        (Label: "Liên hệ", Controller: "Contacts", Action: "Index", Icon: "bi-envelope"),
+        (Label: "Mục điều hướng", Controller: "NavigationItems", Action: "Index", Icon: "bi-signpost-split")
+    };
 }
 <!doctype html>
 <html lang="vi">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="theme-color" content="#8f232d" />
     <meta name="color-scheme" content="light dark" />
     <title>@pageTitle · DoraFood Admin</title>
-
     <script>
         (() => {
             'use strict';
@@ -61,47 +75,26 @@
         })();
     </script>
 
-    <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/@@fontsource/source-sans-3@5.3.0/index.css"
-          integrity="sha256-5UwXtC6TaPHCAbVQ59waEAqOssHyhn/twyuLRRWszzo="
-          crossorigin="anonymous"
-          media="print"
-          onload="this.media = 'all'" />
-    <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.16.0/styles/overlayscrollbars.min.css"
-          crossorigin="anonymous" />
-    <link rel="stylesheet"
-          href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css"
-          crossorigin="anonymous" />
-    <link rel="stylesheet"
-          href="@Url.Content("~/admin/dist/css/adminlte.css")" />
 
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@fontsource/source-sans-3@5.3.0/index.css" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.16.0/styles/overlayscrollbars.min.css" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" crossorigin="anonymous" />
+    <link rel="stylesheet" href="@Url.Content("~/admin/dist/css/adminlte.css")" />
     @await RenderSectionAsync("Styles", required: false)
+    <link rel="stylesheet" href="~/admin/css/dora-admin-tet.css" asp-append-version="true" />
 </head>
-<body class="layout-fixed sidebar-expand-lg bg-body-tertiary">
+<body class="layout-fixed sidebar-expand-lg bg-body-tertiary dora-admin-tet">
+    <a href="#main-content" class="dt-skip">Đến nội dung chính</a>
     <div class="app-wrapper">
-        <nav class="app-header navbar navbar-expand bg-body"
-             aria-label="Thanh công cụ quản trị">
-            <div class="container-fluid">
-                <ul class="navbar-nav align-items-center">
-                    <li class="nav-item">
-                        <a class="nav-link"
-                           href="#"
-                           role="button"
-                           data-lte-toggle="sidebar"
-                           aria-label="Ẩn hoặc hiện menu quản trị">
-                            <i class="bi bi-list" aria-hidden="true"></i>
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a href="@customerUrl" class="nav-link">
-                            <i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i>
-                            <span>Trang khách hàng</span>
-                        </a>
-                    </li>
-                </ul>
-
-                <ul class="navbar-nav ms-auto align-items-center">
+        <nav class="app-header navbar navbar-expand" aria-label="Thanh công cụ quản trị">
+            <div class="container-fluid gap-2">
+                <div class="d-flex align-items-center gap-2">
+                    <button class="btn dt-icon-btn" type="button" data-lte-toggle="sidebar" aria-label="Ẩn hoặc hiện menu quản trị"><i class="bi bi-list" aria-hidden="true"></i></button>
+                    <div class="dt-header-caption"><strong>DoraFood <span>Workspace</span></strong><small>Chăm từng bữa ăn · Trọn từng trải nghiệm</small></div>
+                </div>
+                <ul class="navbar-nav ms-auto align-items-center gap-1">
+                    <li class="nav-item d-none d-md-block"><a href="@customerUrl" class="nav-link dt-store-link"><i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i>Trang khách hàng</a></li>
+                    <li class="nav-item"><button type="button" id="dt-motion-toggle" class="btn dt-icon-btn" aria-label="Tạm dừng hiệu ứng trang trí" aria-pressed="true" title="Bật hoặc tắt hiệu ứng"><i class="bi bi-stars" aria-hidden="true"></i></button></li>
                     <li class="nav-item dropdown">
                         <a class="nav-link"
                            href="#"
@@ -148,152 +141,81 @@
                             </li>
                         </ul>
                     </li>
-                    <li class="nav-item">
-                        <span class="navbar-text text-break">
-                            <i class="bi bi-person-circle me-1" aria-hidden="true"></i>
-                            @userName
-                        </span>
-                    </li>
+
+                    <li class="nav-item"><div class="dt-user"><span class="dt-avatar" aria-hidden="true">@initials</span><span class="d-none d-sm-block"><strong>@userName</strong><small>Không gian quản trị</small></span></div></li>
                 </ul>
             </div>
         </nav>
-
-        <aside class="app-sidebar bg-body-secondary shadow" data-bs-theme="dark">
+        <aside class="app-sidebar shadow" data-bs-theme="dark">
             <div class="sidebar-brand">
-                <a href="@dashboardUrl" class="brand-link">
-                    <img src="@Url.Content("~/admin/dist/assets/img/AdminLTELogo.png")"
-                         class="brand-image opacity-75 shadow"
-                         alt="" />
-                    <span class="brand-text fw-semibold">DoraFood Admin</span>
-                </a>
+                <a href="@dashboardUrl" class="brand-link dt-brand"><span class="dt-brand-mark"><i class="bi bi-fork-knife" aria-hidden="true"></i></span><span class="brand-text">Dora<span>Food</span><small>RESTAURANT MANAGEMENT</small></span></a>
             </div>
-
             <div class="sidebar-wrapper">
-                <nav class="mt-2" aria-label="Menu quản trị">
+                <div class="dt-sidebar-season"><i class="bi bi-flower1" aria-hidden="true"></i><div><strong>Xuân an khang</strong><span>Vạn sự như ý · Bếp luôn đỏ lửa</span></div></div>
+                <nav aria-label="Menu quản trị">
                     <ul class="nav sidebar-menu flex-column" id="navigation">
-                        <li class="nav-header">QUẢN TRỊ NHÀ HÀNG</li>
-                        <li class="nav-item">
-                            <a href="@dashboardUrl"
-                               class="nav-link @(dashboardActive ? "active" : "")"
-                               aria-current="@(dashboardActive ? "page" : null)">
-                                <i class="nav-icon bi bi-speedometer2" aria-hidden="true"></i>
-                                <p>Tổng quan</p>
-                            </a>
-                        </li>
-                        @if (!string.IsNullOrEmpty(deliveryUrl))
+                        <li class="nav-header">VẬN HÀNH NHÀ HÀNG</li>
+                        @foreach (var item in operations)
                         {
-                            <li class="nav-item">
-                                <a href="@deliveryUrl"
-                                   class="nav-link @(deliveryActive ? "active" : "")"
-                                   aria-current="@(deliveryActive ? "page" : null)">
-                                    <i class="nav-icon bi bi-truck" aria-hidden="true"></i>
-                                    <p>Đơn giao hàng</p>
-                                </a>
-                            </li>
+                            <li class="nav-item"><a href="@(item.Controller == "BookingManagement" ? bookingUrl : Url.Action("Index", item.Controller, new { area = "Admin" }))" class="nav-link @Active(item.Controller)" aria-current="@(Active(item.Controller) == "active" ? "page" : null)"><i class="nav-icon bi @item.Icon" aria-hidden="true"></i><p>@item.Label</p></a></li>
                         }
-                        <li class="nav-item">
-    <a class="nav-link @(inAdmin && currentController == "BookingManagement" ? "active" : "")"
-       href="@Url.RouteUrl("DoraFoodAdminBookings")">
-        <i class="nav-icon bi bi-calendar-check" aria-hidden="true"></i>
-        <p>Đặt bàn</p>
-    </a>
-</li>
-<li class="nav-item">
-    <a class="nav-link @(inAdmin && currentController == "DishCategories" ? "active" : "")"
-       href="@Url.Action("Index", "DishCategories", new { area = "Admin" })">
-        <i class="nav-icon bi bi-list-ul" aria-hidden="true"></i>
-        <p>Danh mục món ăn</p>
-    </a>
-</li>
-          <li class="nav-item">
-    <a class="nav-link @(inAdmin && currentController == "Dishes" ? "active" : "")"
-       href="@Url.Action("Index", "Dishes", new { area = "Admin" })">
-        <i class="nav-icon bi bi-egg-fried" aria-hidden="true"></i>
-        <p>Món ăn</p>
-    </a>
-</li>
-         @if (TempData["DishSuccess"] is string success)
-{
-    <div class="alert alert-success" role="status">@success</div>
-}
-
-<div class="mb-3">
-    <a class="btn btn-primary"
-       href="@Url.Action("Create", "Dishes", new { area = "Admin" })">
-        + Thêm món ăn
-    </a>
-</div>
-         <li class="nav-item">
-    <a class="nav-link @(inAdmin && currentController == "NavigationItems" ? "active" : "")"
-       href="@Url.Action("Index", "NavigationItems", new { area = "Admin" })">
-        <i class="nav-icon bi bi-signpost-split" aria-hidden="true"></i>
-        <p>Mục điều hướng</p>
-    </a>
-</li>
-<li class="nav-item">
-    <a class="nav-link @(inAdmin && currentController == "AboutPage" ? "active" : "")"
-       href="@Url.Action("Edit", "AboutPage", new { area = "Admin" })">
-        <i class="nav-icon bi bi-info-circle" aria-hidden="true"></i>
-        <p>Giới thiệu</p>
-    </a>
-</li>
-<li class="nav-item">
-    <a href="@Url.Action("Index", "Posts", new { area = "Admin" })"
-       class="nav-link">
-        <i class="nav-icon bi bi-journal-text" aria-hidden="true"></i>
-        <p>Bài viết</p>
-    </a>
-</li>
+                        <li class="nav-header">NỘI DUNG & KHÁCH HÀNG</li>
+                        @foreach (var item in contentLinks)
+                        {
+                            <li class="nav-item"><a href="@Url.Action(item.Action, item.Controller, new { area = "Admin" })" class="nav-link @Active(item.Controller)" aria-current="@(Active(item.Controller) == "active" ? "page" : null)"><i class="nav-icon bi @item.Icon" aria-hidden="true"></i><p>@item.Label</p></a></li>
+                        }
+                        @if (User.IsInRole("ADMIN") || User.IsInRole("MANAGER"))
+                        {
+                            <li class="nav-header">KIỂM SOÁT & THỐNG KÊ</li>
+                            <li class="nav-item"><a asp-area="Admin" asp-controller="AdminOverview" asp-action="Index" class="nav-link @Active("AdminOverview")"><i class="nav-icon bi bi-bar-chart-line" aria-hidden="true"></i><p>Thống kê thu chi</p></a></li>
+                            <li class="nav-item"><a asp-area="Admin" asp-controller="AdminFeedback" asp-action="Index" class="nav-link @Active("AdminFeedback")"><i class="nav-icon bi bi-chat-square-text" aria-hidden="true"></i><p>Bình luận & đánh giá</p></a></li>
+                        }
+                        @if (User.IsInRole("ADMIN"))
+                        {
+                            <li class="nav-item"><a asp-area="Admin" asp-controller="AdminAccounts" asp-action="Index" class="nav-link @Active("AdminAccounts")"><i class="nav-icon bi bi-people" aria-hidden="true"></i><p>Tài khoản & vai trò</p></a></li>
+                        }
                     </ul>
                 </nav>
+                <div class="dt-sidebar-note"><span class="dt-note-icon"><i class="bi bi-heart" aria-hidden="true"></i></span><strong>Một mùa sum vầy</strong><p>Từ gian bếp ấm đến những bàn ăn đầy niềm vui.</p><a href="@customerUrl">Ghé trang nhà hàng <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a></div>
             </div>
         </aside>
-
-        <main class="app-main" id="main-content">
+        <main class="app-main" id="main-content" tabindex="-1">
             <div class="app-content-header">
                 <div class="container-fluid">
-                    <h1 class="h3 mb-0">@pageTitle</h1>
+                    <div class="dt-breadcrumb"><a href="@dashboardUrl">Quản trị</a><i class="bi bi-chevron-right" aria-hidden="true"></i><span>@pageTitle</span></div>
+                    <section class="dt-welcome" aria-label="Chào xuân DoraFood" id="dt-welcome">
+                        <div class="dt-petals" aria-hidden="true"><span>✿</span><span>✿</span><span>✿</span><span>✿</span><span>✿</span><span>✿</span><span>✿</span><span>✿</span></div>
+                        <div class="dt-lantern dt-lantern-one" aria-hidden="true"><span>Phúc</span></div><div class="dt-lantern dt-lantern-two" aria-hidden="true"><span>Lộc</span></div>
+                        <div class="dt-blossom" aria-hidden="true"><svg viewBox="0 0 300 210" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M298 198C243 175 255 136 208 126S145 101 137 62M224 139C191 147 169 157 135 140M190 118C192 87 175 51 151 36M153 83C118 94 90 78 67 49M176 144C143 182 103 175 81 172" stroke="#C98948" stroke-width="5" stroke-linecap="round" /><defs><g id="dt-flower" fill="#FFD86E"><ellipse rx="8" ry="14" cy="-10" /><ellipse rx="8" ry="14" cy="-10" transform="rotate(72)" /><ellipse rx="8" ry="14" cy="-10" transform="rotate(144)" /><ellipse rx="8" ry="14" cy="-10" transform="rotate(216)" /><ellipse rx="8" ry="14" cy="-10" transform="rotate(288)" /><circle r="5" fill="#A53827" /></g></defs><g fill="#FFD86E"><use href="#dt-flower" x="137" y="61" /><use href="#dt-flower" x="151" y="36" transform="rotate(12 151 36)" /><use href="#dt-flower" x="67" y="49" /><use href="#dt-flower" x="95" y="78" transform="scale(.95)" /><use href="#dt-flower" x="135" y="140" /><use href="#dt-flower" x="81" y="172" /><use href="#dt-flower" x="208" y="126" transform="rotate(20 208 126)" /></g><g fill="#D7B96A"><ellipse cx="117" cy="108" rx="5" ry="13" transform="rotate(-40 117 108)" /><ellipse cx="178" cy="71" rx="5" ry="12" transform="rotate(-25 178 71)" /></g></svg></div>
+                        <div class="dt-welcome-copy" id="dt-welcome-copy-panel"><span class="dt-eyebrow"><span></span>DORAFOOD · CHÀO XUÂN</span><h2>Gói vị ngon,<br /><em>trao mùa yêu thương.</em></h2><p>Xin chào <strong>@userName</strong>, chúc bạn một ca làm việc thuận lợi.</p><div class="dt-hero-tags"><span><i class="bi bi-flower1" aria-hidden="true"></i>Xuân an khang</span><span><i class="bi bi-cup-hot" aria-hidden="true"></i>Bếp trọn yêu thương</span></div></div>
+                        <button type="button" id="dt-collapse-welcome" class="dt-collapse" aria-expanded="true" aria-controls="dt-welcome-copy-panel" title="Thu gọn lời chào"><i class="bi bi-chevron-up" aria-hidden="true"></i><span>Thu gọn</span></button>
+                    </section>
+                    <div class="dt-page-heading"><div><span class="dt-page-eyebrow">KHÔNG GIAN ĐIỀU HÀNH</span><h1>@pageTitle</h1></div><div class="dt-page-date"><i class="bi bi-calendar3" aria-hidden="true"></i><span id="dt-date">@vnNow.ToString("dd/MM/yyyy")</span><span class="dt-clock" id="dt-clock">@vnNow.ToString("HH:mm")</span></div></div>
+                    <div class="dt-info-grid">
+                        <div class="dt-info-item"><span class="dt-info-icon"><i class="bi bi-clock" aria-hidden="true"></i></span><div><span>Giờ phục vụ</span><strong>10:00–14:00 <b>·</b> 16:00–22:00</strong></div></div>
+                        <div class="dt-info-item"><span class="dt-info-icon dt-info-green"><i class="bi bi-shop" aria-hidden="true"></i></span><div><span id="dt-service-label">Khung giờ phục vụ</span><strong id="dt-service-status">Đang cập nhật giờ Việt Nam</strong></div></div>
+                        <a class="dt-info-item dt-info-link" href="@bookingUrl"><span class="dt-info-icon"><i class="bi bi-calendar2-heart" aria-hidden="true"></i></span><div><span>Điều phối khách đến</span><strong>Xem lịch đặt bàn <i class="bi bi-arrow-up-right" aria-hidden="true"></i></strong></div></a>
+                    </div>
                 </div>
             </div>
-
             <div class="app-content">
                 <div class="container-fluid">
+                    <div class="dt-content-toolbar"><span><i class="bi bi-grid" aria-hidden="true"></i>Nội dung quản lý</span><div><a href="@Url.Action("Create", "Dishes", new { area = "Admin" })" class="dt-quick-link"><i class="bi bi-plus-lg" aria-hidden="true"></i>Thêm món</a><a href="@Url.Action("Index", "DeliveryOrders", new { area = "Admin" })" class="dt-quick-link"><i class="bi bi-truck" aria-hidden="true"></i>Đơn giao hàng</a></div></div>
+                    @if (TempData["DishSuccess"] is string dishSuccess)
+                    {
+                        <div class="alert alert-success" role="status">@dishSuccess</div>
+                    }
                     @RenderBody()
                 </div>
             </div>
         </main>
-
-        <footer class="app-footer">
-            <strong>DoraFood</strong> · Quản trị nhà hàng
-            <a href="https://adminlte.io" class="float-end text-decoration-none">AdminLTE</a>
-        </footer>
+        <footer class="app-footer"><div><strong>DoraFood</strong><span> · Chăm vị ngon, giữ niềm tin.</span></div><span class="dt-footer-wish"><i class="bi bi-flower1" aria-hidden="true"></i> An khang · Thịnh vượng · Sum vầy</span></footer>
     </div>
-
-    <script src="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.16.0/browser/overlayscrollbars.browser.es6.min.js"
-            crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@@popperjs/core@2.11.8/dist/umd/popper.min.js"
-            crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.min.js"
-            crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.16.0/browser/overlayscrollbars.browser.es6.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@@popperjs/core@2.11.8/dist/umd/popper.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.min.js" crossorigin="anonymous"></script>
     <script src="@Url.Content("~/admin/dist/js/adminlte.js")"></script>
-
-    <script>
-        document.addEventListener('DOMContentLoaded', () => {
-            const sidebar = document.querySelector('.sidebar-wrapper');
-            const overlayScrollbars = globalThis.OverlayScrollbarsGlobal?.OverlayScrollbars;
-
-            if (sidebar && overlayScrollbars && window.innerWidth > 992) {
-                overlayScrollbars(sidebar, {
-                    scrollbars: {
-                        theme: 'os-theme-light',
-                        autoHide: 'leave',
-                        clickScroll: true
-                    }
-                });
-            }
-        });
-    </script>
-
+    <script src="~/admin/js/dora-admin-tet.js" asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

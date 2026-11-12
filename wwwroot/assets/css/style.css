@@ -1,3 +1,4 @@
+/* DoraFood Tet: charcoal / white / vermilion. */
 
 /*** Spinner Start ***/
 #spinner {
@@ -99,8 +100,8 @@ h4, h5, h6, .h4, .h5, .h6 {
 
 /* Thanh điều hướng */
 .fapdora-header {
-    background: #fff;
-    border-bottom: 1px solid #f0ebe4;
+    background: #ffffff;
+    border-bottom: 1px solid #f6eae6;
     box-shadow: 0 6px 24px rgba(35, 30, 24, 0.04);
 }
 
@@ -118,13 +119,13 @@ h4, h5, h6, .h4, .h5, .h6 {
         width: 46px;
         height: 46px;
         border-radius: 15px;
-        background: #fbf4e9;
-        color: #9b6a27;
+        background: #fff5df;
+        color: #8c5514;
         font-size: 21px;
     }
 
     .fapdora-header .fapdora-brand-name {
-        color: #242424;
+        color: #241b1b;
         font-family: "Open Sans", sans-serif;
         font-size: 29px;
         font-weight: 700;
@@ -134,8 +135,8 @@ h4, h5, h6, .h4, .h5, .h6 {
 
     .fapdora-header .fapdora-brand-caption {
         margin-top: 4px;
-        color: #79736c;
-        font-size: 9px;
+        color: #514545;
+        font-size: 14px;
         font-weight: 600;
         letter-spacing: 2px;
         line-height: 1.5;
@@ -146,7 +147,7 @@ h4, h5, h6, .h4, .h5, .h6 {
         margin: 2px 0;
         padding: 11px 15px;
         border-radius: 10px;
-        color: #514b44;
+        color: #2f2424;
         font-size: 14px;
         font-weight: 600;
         transition: color 0.2s ease, background-color 0.2s ease;
@@ -156,8 +157,8 @@ h4, h5, h6, .h4, .h5, .h6 {
         .fapdora-header .navbar-nav .nav-link:focus-visible,
         .fapdora-header .navbar-nav .nav-link.active,
         .fapdora-header .navbar-nav .nav-link.show {
-            background: #fbf4e9;
-            color: #8b5e24;
+            background: #fff5df;
+            color: #8c5514;
         }
 
     /* Mũi tên menu dịch vụ */
@@ -171,9 +172,9 @@ h4, h5, h6, .h4, .h5, .h6 {
         min-width: 230px;
         margin-top: 8px;
         padding: 8px;
-        border: 1px solid #f0ebe4;
+        border: 1px solid #f6eae6;
         border-radius: 14px;
-        background: #fff;
+        background: #ffffff;
         box-shadow: 0 16px 40px rgba(35, 30, 24, 0.1);
     }
 
@@ -183,22 +184,22 @@ h4, h5, h6, .h4, .h5, .h6 {
             gap: 10px;
             padding: 12px;
             border-radius: 8px;
-            color: #514b44;
+            color: #2f2424;
             font-size: 14px;
             transition: background-color 0.2s ease, color 0.2s ease;
         }
 
             .fapdora-header .fapdora-dropdown .dropdown-item i {
                 width: 20px;
-                color: #9b6a27;
+                color: #8c5514;
                 text-align: center;
             }
 
             .fapdora-header .fapdora-dropdown .dropdown-item:hover,
             .fapdora-header .fapdora-dropdown .dropdown-item:focus,
             .fapdora-header .fapdora-dropdown .dropdown-item.active {
-                background: #fbf4e9;
-                color: #8b5e24;
+                background: #fff5df;
+                color: #8c5514;
             }
 
     /* Nút tìm kiếm */
@@ -210,16 +211,16 @@ h4, h5, h6, .h4, .h5, .h6 {
         width: 43px;
         height: 43px;
         padding: 0;
-        border: 1px solid #eee7dd;
+        border: 1px solid #f6eae6;
         border-radius: 50%;
-        background: #fff;
-        color: #514b44;
+        background: #ffffff;
+        color: #2f2424;
     }
 
         .fapdora-header .fapdora-search:hover {
-            border-color: #d4a762;
-            background: #fbf4e9;
-            color: #8b5e24;
+            border-color: #8c5514;
+            background: #fff5df;
+            color: #8c5514;
         }
 
     /* Nút đặt bàn */
@@ -234,9 +235,9 @@ h4, h5, h6, .h4, .h5, .h6 {
     /* Nút mở menu trên điện thoại */
     .fapdora-header .fapdora-toggler {
         padding: 10px 13px;
-        border: 1px solid #eee7dd;
+        border: 1px solid #f6eae6;
         border-radius: 10px;
-        color: #8b5e24;
+        color: #8c5514;
     }
 
         .fapdora-header .fapdora-toggler:focus {
@@ -246,7 +247,7 @@ h4, h5, h6, .h4, .h5, .h6 {
     /* Trạng thái khi điều hướng bằng bàn phím */
     .fapdora-header a:focus-visible,
     .fapdora-header button:focus-visible {
-        outline: 3px solid #9b6a27;
+        outline: 3px solid #8c5514;
         outline-offset: 3px;
     }
 
@@ -254,19 +255,19 @@ h4, h5, h6, .h4, .h5, .h6 {
 @media (max-width: 991.98px) {
     .fapdora-header .navbar-collapse {
         margin-top: 14px;
-        border-top: 1px solid #f0ebe4;
+        border-top: 1px solid #f6eae6;
     }
 
     .fapdora-header .fapdora-dropdown {
         min-width: 0;
         margin: 4px 0 8px;
-        background: #fffcf7;
+        background: #fff5df;
         box-shadow: none;
     }
 
     .fapdora-header .fapdora-actions {
         padding-top: 12px;
-        border-top: 1px solid #f0ebe4;
+        border-top: 1px solid #f6eae6;
     }
 }
 
@@ -489,8 +490,8 @@ h4, h5, h6, .h4, .h5, .h6 {
         z-index: 999;
         font-size: 30px;
         font-weight: normal;
-        color: #FFFFFF;
-        background: #000000;
+        color: #ffffff;
+        background: #241b1b;
         opacity: 1;
     }
 /*** Youtube Video End ***/
@@ -604,13 +605,13 @@ h4, h5, h6, .h4, .h5, .h6 {
 /*** FapDora Food Strip Start ***/
 
 .fd-food-strip {
-    --fd-red: #ad1830;
-    --fd-ink: #291b20;
-    --fd-muted: #85777b;
+    --fd-red: #9d1422;
+    --fd-ink: #241b1b;
+    --fd-muted: #514545;
     --fd-gap: 20px;
     padding: 38px 0 20px;
     overflow: hidden;
-    background: radial-gradient( ellipse at 50% 0%, rgba(173, 24, 48, 0.045), transparent 60% ), #fff;
+    background: radial-gradient( ellipse at 50% 0%, rgba(173, 24, 48, 0.045), transparent 60% ), #ffffff;
 }
 
 /* Tiêu đề */
@@ -627,7 +628,7 @@ h4, h5, h6, .h4, .h5, .h6 {
     gap: 12px;
     margin-bottom: 13px;
     color: var(--fd-red);
-    font-size: 9px;
+    font-size: 14px;
     font-weight: 600;
     letter-spacing: 2.5px;
 }
@@ -660,7 +661,7 @@ h4, h5, h6, .h4, .h5, .h6 {
 .fd-food-heading p {
     margin: 13px 0 0;
     color: var(--fd-muted);
-    font-size: 13px;
+    font-size: 14px;
     line-height: 1.7;
 }
 
@@ -685,12 +686,12 @@ h4, h5, h6, .h4, .h5, .h6 {
 
     .fd-food-window::before {
         left: 0;
-        background: linear-gradient(to right, #fff, transparent);
+        background: linear-gradient(to right, #ffffff, transparent);
     }
 
     .fd-food-window::after {
         right: 0;
-        background: linear-gradient(to left, #fff, transparent);
+        background: linear-gradient(to left, #ffffff, transparent);
     }
 
 .fd-food-track {
@@ -715,16 +716,16 @@ h4, h5, h6, .h4, .h5, .h6 {
     margin: 0;
     padding: 7px 7px 0;
     overflow: hidden;
-    border: 1px solid #efe7e9;
+    border: 1px solid #f6eae6;
     border-radius: 17px;
-    background: #fff;
+    background: #ffffff;
     box-shadow: 0 5px 16px rgba(65, 20, 30, 0.045);
     transition: border-color 0.25s ease, box-shadow 0.25s ease, transform 0.25s ease;
 }
 
     .fd-food-card:hover {
         transform: translateY(-4px);
-        border-color: #dca1ac;
+        border-color: #e8b5a8;
         box-shadow: 0 12px 26px rgba(130, 25, 45, 0.1);
     }
 
@@ -733,7 +734,7 @@ h4, h5, h6, .h4, .h5, .h6 {
     height: 165px;
     overflow: hidden;
     border-radius: 11px;
-    background: #f6f1f2;
+    background: #fffaf6;
 }
 
     .fd-food-photo img {
@@ -767,7 +768,7 @@ h4, h5, h6, .h4, .h5, .h6 {
     display: block;
     margin-bottom: 5px;
     color: var(--fd-red);
-    font-size: 8px;
+    font-size: 14px;
     font-weight: 600;
     letter-spacing: 1.25px;
     line-height: 1.5;
@@ -777,7 +778,7 @@ h4, h5, h6, .h4, .h5, .h6 {
     display: block;
     color: var(--fd-ink);
     font-family: "Open Sans", sans-serif;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     line-height: 1.5;
 }
@@ -789,7 +790,7 @@ h4, h5, h6, .h4, .h5, .h6 {
     flex-shrink: 0;
     width: 29px;
     height: 29px;
-    border: 1px solid #f0dce1;
+    border: 1px solid #f9dfd6;
     border-radius: 50%;
     color: var(--fd-red);
     font-size: 14px;
@@ -809,7 +810,7 @@ h4, h5, h6, .h4, .h5, .h6 {
     justify-content: space-between;
     gap: 16px;
     padding-top: 13px;
-    border-top: 1px solid #f2e9ec;
+    border-top: 1px solid #f6eae6;
 }
 
 .fd-food-note {
@@ -817,7 +818,7 @@ h4, h5, h6, .h4, .h5, .h6 {
     align-items: center;
     gap: 8px;
     color: var(--fd-muted);
-    font-size: 11px;
+    font-size: 14px;
 }
 
 .fd-food-dot {
@@ -831,12 +832,12 @@ h4, h5, h6, .h4, .h5, .h6 {
 .fd-food-toggle {
     flex-shrink: 0;
     padding: 7px 15px;
-    border: 1px solid #edd3d9;
+    border: 1px solid #f9dfd6;
     border-radius: 30px;
-    background: #fff;
+    background: #ffffff;
     color: var(--fd-red);
     font-family: "Open Sans", sans-serif;
-    font-size: 11px;
+    font-size: 14px;
     font-weight: 600;
     cursor: pointer;
     transition: background 0.2s ease, color 0.2s ease;
@@ -846,7 +847,7 @@ h4, h5, h6, .h4, .h5, .h6 {
     .fd-food-toggle[aria-pressed="true"] {
         border-color: var(--fd-red);
         background: var(--fd-red);
-        color: #fff;
+        color: #ffffff;
     }
 
     .fd-food-window:focus-visible,
@@ -878,12 +879,12 @@ h4, h5, h6, .h4, .h5, .h6 {
 
     .fd-food-eyebrow {
         gap: 8px;
-        font-size: 8px;
+        font-size: 14px;
         letter-spacing: 1.5px;
     }
 
     .fd-food-heading p {
-        font-size: 12px;
+        font-size: 14px;
     }
 
     .fd-food-card {
@@ -903,11 +904,11 @@ h4, h5, h6, .h4, .h5, .h6 {
     }
 
     .fd-food-name {
-        font-size: 12px;
+        font-size: 14px;
     }
 
     .fd-food-category {
-        font-size: 7px;
+        font-size: 14px;
         letter-spacing: 1px;
     }
 
@@ -917,7 +918,7 @@ h4, h5, h6, .h4, .h5, .h6 {
     }
 
     .fd-food-note {
-        font-size: 10px;
+        font-size: 14px;
     }
 }
 
@@ -947,11 +948,11 @@ h4, h5, h6, .h4, .h5, .h6 {
 /*** DoraFood About Start ***/
 
 .fd-about {
-    --about-red: #ad1830;
-    --about-ink: #291b20;
-    --about-muted: #786d72;
+    --about-red: #9d1422;
+    --about-ink: #241b1b;
+    --about-muted: #514545;
     padding: 72px 0;
-    background: #fff;
+    background: #ffffff;
     font-family: "Open Sans", sans-serif;
 }
 
@@ -969,7 +970,7 @@ h4, h5, h6, .h4, .h5, .h6 {
     right: 32px;
     bottom: 76px;
     left: 34px;
-    border: 1px solid #ead0d6;
+    border: 1px solid #f9dfd6;
     border-radius: 24px;
     pointer-events: none;
 }
@@ -980,7 +981,7 @@ h4, h5, h6, .h4, .h5, .h6 {
     margin: 0;
     overflow: hidden;
     border-radius: 20px;
-    background: #f5edef;
+    background: #fffaf6;
 }
 
     .fd-about-main img {
@@ -1006,7 +1007,7 @@ h4, h5, h6, .h4, .h5, .h6 {
         left: 26px;
         z-index: 1;
         max-width: 240px;
-        color: #fff;
+        color: #ffffff;
         font-size: 16px;
         font-weight: 600;
         line-height: 1.65;
@@ -1015,8 +1016,8 @@ h4, h5, h6, .h4, .h5, .h6 {
         .fd-about-main figcaption span {
             display: block;
             margin-bottom: 8px;
-            color: #f4c9d1;
-            font-size: 9px;
+            color: #f9dfd6;
+            font-size: 14px;
             font-weight: 600;
             letter-spacing: 3px;
         }
@@ -1029,9 +1030,9 @@ h4, h5, h6, .h4, .h5, .h6 {
     width: 190px;
     height: 155px;
     overflow: hidden;
-    border: 7px solid #fff;
+    border: 7px solid #ffffff;
     border-radius: 20px;
-    background: #f5edef;
+    background: #fffaf6;
     box-shadow: 0 14px 32px rgba(70, 20, 35, 0.12);
 }
 
@@ -1055,10 +1056,10 @@ h4, h5, h6, .h4, .h5, .h6 {
     width: 138px;
     height: 138px;
     padding: 14px;
-    border: 5px solid #fff;
+    border: 5px solid #ffffff;
     border-radius: 50%;
     background: var(--about-red);
-    color: #fff;
+    color: #ffffff;
     text-align: center;
     box-shadow: 0 10px 26px rgba(173, 24, 48, 0.17);
 }
@@ -1069,12 +1070,12 @@ h4, h5, h6, .h4, .h5, .h6 {
     }
 
     .fd-about-seal span {
-        font-size: 10px;
+        font-size: 14px;
         opacity: 0.85;
     }
 
     .fd-about-seal strong {
-        font-size: 11px;
+        font-size: 14px;
         font-weight: 600;
         line-height: 1.5;
     }
@@ -1091,7 +1092,7 @@ h4, h5, h6, .h4, .h5, .h6 {
     gap: 10px;
     margin-bottom: 16px;
     color: var(--about-red);
-    font-size: 10px;
+    font-size: 14px;
     font-weight: 700;
     letter-spacing: 2px;
 }
@@ -1138,8 +1139,8 @@ h4, h5, h6, .h4, .h5, .h6 {
     display: grid;
     gap: 19px;
     padding: 23px 0;
-    border-top: 1px solid #f0e6e9;
-    border-bottom: 1px solid #f0e6e9;
+    border-top: 1px solid #f6eae6;
+    border-bottom: 1px solid #f6eae6;
 }
 
 .fd-about-value {
@@ -1155,9 +1156,9 @@ h4, h5, h6, .h4, .h5, .h6 {
     flex-shrink: 0;
     width: 42px;
     height: 42px;
-    border: 1px solid #f1dce1;
+    border: 1px solid #f9dfd6;
     border-radius: 13px;
-    background: #fff6f8;
+    background: #fff0eb;
     color: var(--about-red);
     font-size: 17px;
 }
@@ -1174,7 +1175,7 @@ h4, h5, h6, .h4, .h5, .h6 {
 .fd-about-value p {
     margin: 0;
     color: var(--about-muted);
-    font-size: 12px;
+    font-size: 14px;
     line-height: 1.8;
 }
 
@@ -1184,7 +1185,7 @@ h4, h5, h6, .h4, .h5, .h6 {
     gap: 13px;
     margin-top: 22px;
     color: var(--about-muted);
-    font-size: 12px;
+    font-size: 14px;
     line-height: 1.8;
 }
 
@@ -1256,7 +1257,7 @@ h4, h5, h6, .h4, .h5, .h6 {
         }
 
         .fd-about-seal strong {
-            font-size: 9px;
+            font-size: 14px;
         }
 
     .fd-about-lead {
@@ -1264,7 +1265,7 @@ h4, h5, h6, .h4, .h5, .h6 {
     }
 
     .fd-about-description {
-        font-size: 13px;
+        font-size: 14px;
     }
 }
 

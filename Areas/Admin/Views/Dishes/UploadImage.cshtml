@@ -1,22 +1,45 @@
-﻿@model DoraFood.Areas.Admin.ViewModels.DishImageInput
+@model DoraFood.Areas.Admin.ViewModels.DishImageInput
 
 @{
     ViewData["Title"] = "Tải ảnh món ăn";
 }
+<div class="tp-page tp-page-dishes tp-page-uploadimage">
+    <section class="tp-module-intro" aria-label="Hướng dẫn màn hình">
+        <div class="tp-module-icon">
+        <i class="bi bi-image" aria-hidden="true">
+        </i>
+        </div>
+        <div>
+        <span class="tp-kicker">DORAFOOD · CHĂM CHÚT TỪNG CHI TIẾT</span>
+        <h2>Hình đẹp, món thêm hấp dẫn</h2>
+        <p>Tải ảnh từ máy và xem trước trước khi lưu làm ảnh chính.</p>
+        </div>
+        <span class="tp-season-stamp">
+        <i class="bi bi-flower1" aria-hidden="true">
+        </i>Vị xuân sum vầy</span>
+    </section>
+    <div class="tp-workspace"><div class="tp-main">
 
-<div class="card">
-    <div class="card-header">
-        <strong>@Model.DishName</strong>
-    </div>
 
-    <form asp-area="Admin"
+<div class="card tp-card">
+<form asp-area="Admin"
           asp-controller="Dishes"
           asp-action="UploadImage"
           asp-route-id="@Model.DishId"
           method="post"
           enctype="multipart/form-data">
 
-        <div class="card-body">
+        <div class="card-body tp-upload-body">
+        <div class="tp-form-section">
+        <span class="tp-section-icon">
+        <i class="bi bi-image" aria-hidden="true">
+        </i>
+        </span>
+        <div>
+        <h2>Ảnh món ăn</h2>
+        <p>@Model.DishName</p>
+        </div>
+        </div>
             <div asp-validation-summary="ModelOnly"
                  class="text-danger mb-2"></div>
 
@@ -60,8 +83,8 @@
             </div>
         </div>
 
-        <div class="card-footer d-flex gap-2">
-            <button type="submit" class="btn btn-primary">Lưu ảnh chính</button>
+        <div class="card-footer tp-card-footer d-flex gap-2">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-image me-1" aria-hidden="true"></i>Lưu ảnh chính</button>
             <a class="btn btn-outline-secondary"
                href="@Url.Action("Index", "Dishes", new { area = "Admin" })">
                 Về danh sách
@@ -69,6 +92,38 @@
         </div>
     </form>
 </div>
+    </div>
+<aside class="tp-help">
+        <div class="tp-help-card">
+        <span class="tp-help-flower" aria-hidden="true">✿</span>
+        <span class="tp-kicker">GÓC CHUẨN BỊ</span>
+        <h2>Một tấm ảnh kể vị ngon</h2>
+        <ol>
+        <li>
+        <strong>Định dạng ảnh</strong>
+        <p>Chọn JPG hoặc PNG, dung lượng tối đa 5 MB.</p>
+        </li>
+        <li>
+        <strong>Góc chụp gợi ý</strong>
+        <p>Ưu tiên ảnh rõ món, đủ sáng, màu sắc tự nhiên.</p>
+        </li>
+        <li>
+        <strong>Xem trước</strong>
+        <p>Ảnh vừa chọn chỉ được cập nhật vào hệ thống sau khi bấm lưu.</p>
+        </li>
+        </ol>
+        <div class="tp-help-wish">
+        <i class="bi bi-cup-hot" aria-hidden="true">
+        </i> Chăm từng chi tiết, trọn từng trải nghiệm.</div>
+        </div>
+        </aside>
+    </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/admin/css/admin-tet-pages.css" asp-append-version="true" />
+}
+
 @section Scripts {
     <script>
         (() => {

@@ -1,8 +1,24 @@
-﻿@model System.Collections.Generic.IReadOnlyList<DoraFood.Areas.Admin.ViewModels.NavigationItemRow>
+@model System.Collections.Generic.IReadOnlyList<DoraFood.Areas.Admin.ViewModels.NavigationItemRow>
 
 @{
     ViewData["Title"] = "Mục điều hướng";
 }
+<div class="tp-page tp-page-navigationitems tp-page-index">
+    <section class="tp-module-intro" aria-label="Hướng dẫn màn hình">
+        <div class="tp-module-icon">
+        <i class="bi bi-signpost" aria-hidden="true">
+        </i>
+        </div>
+        <div>
+        <span class="tp-kicker">DORAFOOD · CHĂM CHÚT TỪNG CHI TIẾT</span>
+        <h2>Sắp xếp hành trình khám phá</h2>
+        <p>Quản lý nhóm menu, mục cha, đường dẫn và trạng thái hiển thị.</p>
+        </div>
+        <span class="tp-season-stamp">
+        <i class="bi bi-flower1" aria-hidden="true">
+        </i>Vị xuân sum vầy</span>
+    </section>
+
 @if (TempData["NavigationSuccess"] is string success)
 {
     <div class="alert alert-success" role="status">@success</div>
@@ -17,8 +33,8 @@
         + Tạo mục điều hướng
     </a>
 </div>
-<div class="card">
-    <div class="card-header">
+<div class="card tp-card">
+    <div class="card-header tp-card-header">
         <strong>Danh sách mục điều hướng</strong>
         <span class="text-body-secondary ms-2">@Model.Count mục</span>
     </div>
@@ -32,7 +48,7 @@
     else
     {
         <div class="table-responsive">
-            <table class="table table-hover align-middle mb-0">
+            <table class="table table-hover align-middle mb-0 tp-table">
                 <thead>
                     <tr>
                         <th scope="col">Menu</th>
@@ -85,9 +101,7 @@
 
                                     <button type="submit"
                                             class="btn btn-outline-danger btn-sm"
-                                            aria-label="Xóa mục @item.Label">
-                                        Xóa
-                                    </button>
+                                            aria-label="Xóa mục @item.Label"><i class="bi bi-trash3 me-1" aria-hidden="true"></i>Xóa</button>
                                 </form>
                             </td>
                         </tr>
@@ -97,3 +111,8 @@
         </div>
     }
 </div>
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/admin/css/admin-tet-pages.css" asp-append-version="true" />
+}

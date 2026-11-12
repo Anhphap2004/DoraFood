@@ -1,0 +1,187 @@
+/* DORAFOOD TET — nạp cuối, THAY dorafood-vivid.css. */
+:root{--tet-red:#bb1726;--tet-red-deep:#941321;--tet-black:#211a1a;--tet-text:#342929;--tet-muted:#514545;--tet-gold:#d9b268;--tet-line:#ead6d0}
+body,.df-site,.df-home,.df-menu,.fd-food-strip,.fd-about,.df-dish-page,.df-cart-page,.dpf{
+--dp-red:var(--tet-red)!important;--dp-red-deep:var(--tet-red-deep)!important;--dp-ink:var(--tet-black)!important;--dp-muted:var(--tet-muted)!important;--dp-line:var(--tet-line)!important;--dp-soft:#fff5ef!important;--dp-gold:#85500f!important;
+--df-red:var(--tet-red)!important;--df-red-dark:var(--tet-red-deep)!important;--df-ink:var(--tet-black)!important;--df-muted:var(--tet-muted)!important;--df-border:var(--tet-line)!important;--df-line:var(--tet-line)!important;--df-tint:#fff6f0!important;
+--pf-red:var(--tet-red)!important;--pf-red-deep:var(--tet-red-deep)!important;--pf-ink:var(--tet-black)!important;--pf-muted:var(--tet-muted)!important;--pf-line:var(--tet-line)!important;
+--bs-primary:var(--tet-red)!important;--bs-primary-rgb:187,23,38!important;--bs-secondary:var(--tet-black)!important;
+color:var(--tet-text);font-family:'Open Sans','Segoe UI',Arial,sans-serif;font-size:16px;font-weight:500;line-height:1.7}
+body{background:#fffaf7}
+body :is(h1,h2,h3,h4,h5,h6,.h1,.h2,.h3,.h4,.h5,.h6){font-family:'Open Sans','Segoe UI',Arial,sans-serif!important;font-weight:700!important}
+body :is(.text-muted,.text-secondary,.text-black-50,.text-body){color:#514545!important}
+body .text-primary,body .text-danger{color:#b01424!important}body .text-success{color:#18633f!important}
+body :is(small,.small,.form-text){font-size:14px!important}
+body :is(a,button,input,textarea,select,summary):focus-visible{outline:3px solid #aa1626;outline-offset:3px}
+body ::selection{background:#f4c5c6;color:#641019}
+/* Nút và form vừa tay; các nút icon giữ hình vuông. */
+body .btn{min-height:42px;padding-top:10px;padding-bottom:10px;font-size:15px!important;font-weight:600;line-height:1.5}
+body .btn.btn-primary{background:linear-gradient(125deg,#cd202e,#aa1324)!important;border-color:#ad1424!important;color:#fff!important;box-shadow:0 4px 13px #a814241a}
+body .btn.btn-primary:hover{background:#951220!important;color:#fff!important}
+body .btn-outline-primary{border-color:#bb1726;color:#a61523}body .btn-outline-primary:hover{background:#bb1726;border-color:#bb1726;color:#fff!important}
+body .btn-outline-secondary{border-color:#92817c;color:#342929}body .btn-outline-secondary:hover{background:#292020;border-color:#292020;color:#fff!important}
+body .btn-secondary{background:#292020;border-color:#292020;color:#fff}
+body :is(.btn-sm,.btn-group-sm>.btn){min-height:36px;padding:7px 12px;font-size:14px!important}
+body :is(.btn-square,.btn-sm-square,.btn-md-square,.btn-lg-square){padding:0}
+body :is(.form-control,.form-select){min-height:44px;padding:10px 13px;border-color:#cebcb6;border-radius:9px;background-color:#fff;color:#2a2020;font-size:16px!important;line-height:1.5}
+body textarea.form-control{min-height:100px;resize:vertical}
+body :is(.form-control,.form-select):focus{border-color:#bb1726;box-shadow:0 0 0 3px #bb172615}
+body :is(.form-label,.form-check-label){font-size:15px!important;font-weight:600;color:#3f3030}
+body .form-text{color:#5a4a45!important;line-height:1.65}
+body :is(input,textarea)::placeholder{color:#6a5d58;opacity:1}
+body :is(input[type=checkbox],input[type=radio]){accent-color:#bb1726}
+body .badge{font-size:13px!important;font-weight:600;line-height:1.5}
+body .bg-primary{background:#b21625!important;color:#fff!important}
+body .bg-primary :is(.text-dark,.text-muted,.text-secondary,.text-body){color:#fff5df!important}
+body .table{color:#342929;font-size:15px}body .table>:not(caption)>*>*{padding:13px 14px}body .table thead{color:#6b151d;background:#fff0e7}
+/* Navbar luôn mở, trắng xen dải đen và mục chọn đỏ. */
+.df-site .df-announcement{background:#221b1b;color:#fff1d9;font-size:13px!important;border-bottom:1px solid #d9b268}
+.df-site .df-announcement a{color:#f4d28f!important;font-size:13px!important}.df-site .df-small-diamond{color:#f4c966!important}
+.df-site .df-site-header{background:#fff;border-bottom-color:#d9bdb5}.df-site .df-brandbar{flex-wrap:wrap;min-height:84px}
+.df-site .df-brand-word{color:#241b1b!important}.df-site .df-brand-word>span{color:#bb1726!important}
+.df-site .df-brand-symbol{background:#fff8ee;border-color:#c4a069;color:#b11724}
+.df-site .df-brand-tagline{color:#7b3028!important;font-size:12px!important;letter-spacing:1.2px}
+.df-site .df-brand-message>span{font-size:12px!important;color:#9b1b24!important;letter-spacing:1px}.df-site .df-brand-message strong{color:#413333!important;font-size:14px!important}
+.df-site .df-header-actions{flex-wrap:wrap;justify-content:flex-end;gap:15px}
+.df-site .df-login-link,.df-site .df-user-button{color:#3c2929!important;font-size:14px!important}
+.df-site .df-header-search{background:#fff3ec;color:#a91b26!important}
+.df-site .df-reserve-link{min-height:42px;padding:10px 17px;border-color:#a91423;background:linear-gradient(125deg,#ce2330,#a91423);color:#fff!important;font-size:15px!important}
+.df-site .df-reserve-link>span{color:#fff!important}.df-site .df-reserve-link:hover{background:#951220}
+.df-site .df-primary-navigation{background:#fff;border-top-color:#efdfd8}
+.df-site .df-mainmenu .nav-link{padding:12px 16px!important;font-size:15px!important;font-weight:700;color:#342525!important}
+.df-site .df-mainmenu .nav-link:hover{background:#fff0e9;color:#aa1423!important}
+.df-site .df-mainmenu .nav-link.active,.df-site .df-mainmenu .nav-link.show{background:#bb1726!important;color:#fff!important;border-radius:7px 7px 0 0!important}
+.df-site .df-mainmenu .nav-link.active::before,.df-site .df-mainmenu .nav-link.show::before{background:#f0cd83}
+.df-site .df-site-header .dropdown-menu{background:#fff;border-color:#e4c8bd}
+.df-site .df-site-header .dropdown-item{font-size:14px!important;color:#403030!important}
+.df-site .df-site-header .dropdown-item:hover,.df-site .df-site-header .dropdown-item:focus{background:#fff0e8;color:#a71523!important}
+.df-site .df-site-header .dropdown-item.active{background:#b21625;color:#fff!important}
+.df-site .df-user-intro>span{color:#8e2027!important;font-size:12px!important}.df-site .df-user-intro strong{color:#342525!important;font-size:14px!important}
+.df-site .df-site-header .df-logout{color:#a71523!important}
+.df-site .df-quick-search-field{background:#fffaf5;border-color:#d9bbae}
+.df-site .df-quick-search-field input,.df-site .df-quick-results a{font-size:16px!important;color:#342929!important}
+.df-site .df-quick-results a:hover{background:#fff0e8;color:#a71523!important}
+.df-site .df-search-modal h2{font-size:25px}.df-site .df-search-modal p{font-size:15px!important;color:#514545!important}
+/* Trang chủ và dải món nhỏ: họa tiết nền, không che nội dung. */
+.df-site .fd-food-strip{background:url('../img/tet-blossom.svg') right -28px top -5px/250px auto no-repeat,linear-gradient(110deg,#fffaf4,#fff 57%,#fff1eb);padding-top:32px}
+.df-site .df-premium-label,.df-site .fd-about-eyebrow{color:#a81623!important;font-size:13px!important;letter-spacing:1px;font-weight:700}
+.df-site .fd-food-strip .fd-food-heading h1{font-size:clamp(30px,3.2vw,44px);color:#241b1b;line-height:1.32}.df-site .fd-food-heading h1 em{color:#bb1726}
+.df-site .fd-food-heading>p,.df-site .fd-about-description,.df-site .fd-about-lead{color:#453636!important;font-size:16px!important}
+.df-site .df-editorial-box{background:url('../img/tet-blossom.svg') right -45px top -35px/210px no-repeat,linear-gradient(135deg,#cb202c,#9e1421);border-color:#b17a38}
+.df-site .df-editorial-box h2{color:#fff!important;font-size:21px}
+.df-site .df-editorial-box p,.df-site .df-editorial-box a,.df-site .df-editorial-kicker{color:#fff1d9!important;font-size:14px!important}
+.df-site .df-editorial-mark{color:#f2cf83!important}.df-site .df-editorial-box a{border-top-color:#efc98b6b}
+.df-site .df-premium-button,.df-site .df-home .df-button-red{background:linear-gradient(125deg,#cb202c,#a91423);color:#fff!important;font-size:15px!important;border-color:#aa1423}
+.df-site .df-premium-text-link,.df-site .df-home .df-text-link{color:#a71523!important;font-size:15px!important}
+.df-site .fd-food-card{background:#fff;border-color:#e4c7bb;box-shadow:0 6px 18px #8c22150b}.df-site .fd-food-card:nth-child(2n){background:#fff8ef;border-color:#d9bc8b}
+.df-site .fd-food-category{color:#a81623!important;font-size:13px!important;letter-spacing:.6px}.df-site .fd-food-name{color:#2c2121!important;font-size:16px!important;font-weight:700}
+.df-site .fd-food-card figcaption{min-height:81px}.df-site .fd-food-note{color:#514545!important;font-size:14px!important}
+.df-site .fd-food-toggle{background:#fff;border-color:#c57573;color:#aa1423!important;min-height:38px;font-size:14px!important}
+.df-site .fd-food-toggle:hover,.df-site .fd-food-toggle[aria-pressed=true]{background:#aa1423;color:#fff!important}
+.df-site .df-home-paths-grid{border-color:#dfc2b5}.df-site .df-home-paths-grid>a{background:#fff}.df-site .df-home-paths-grid>a:nth-child(2){background:#fff4e8}.df-site .df-home-paths-grid>a:hover{background:#ffede7}
+.df-site .df-home-paths-grid h2{color:#2c2121!important;font-size:16px!important}.df-site .df-home-paths-grid p{color:#514545!important;font-size:14px!important}.df-site .df-path-icon{color:#ae1725;background:#ffebe5}
+.df-site .fd-about-seal{background:linear-gradient(135deg,#c8202d,#9c1421);border-color:#fff}.df-site .fd-about-seal span,.df-site .fd-about-seal strong{color:#fff7e6!important}.df-site .fd-about-seal strong{font-size:12px!important}
+.df-site .fd-about-main figcaption{color:#fff!important}.df-site .fd-about-main figcaption>span{color:#f5d399!important}
+.df-site .fd-about-value h3{color:#352525!important;font-size:17px!important}.df-site .fd-about-value p,.df-site .fd-about-signoff{color:#514545!important;font-size:15px!important}
+.df-site .fd-about .fd-about-content h2{font-size:clamp(27px,2.5vw,36px)}
+.df-site .df-home .df-section-head p,.df-site .df-home .df-experience-note p{color:#514545!important;font-size:16px!important}.df-site .df-home .df-experience{background:#fff4e8;border-color:#ead2bc}
+/* Thẻ trắng / đen / đỏ xen kẽ. Màu chữ đi cùng màu nền. */
+.df-site .df-home .df-service-card:nth-child(4n+1),.df-site .df-home .df-service-card:nth-child(4n+4){background:#fff;border-color:#e1c4b8}
+.df-site .df-home .df-service-card:nth-child(4n+2){background:#241d1d;border-color:#44312b}
+.df-site .df-home .df-service-card:nth-child(4n+3){background:linear-gradient(130deg,#c41c2a,#9e1320);border-color:#b78447}
+.df-site .df-home .df-service-card h3{color:#2b2020!important;font-size:18px!important}.df-site .df-home .df-service-card p{color:#514545!important;font-size:15px!important}
+.df-site .df-home .df-service-card:nth-child(4n+2) :is(h3,p,.df-text-link),.df-site .df-home .df-service-card:nth-child(4n+3) :is(h3,p,.df-text-link){color:#fff7e8!important}
+.df-site .df-home .df-service-card:nth-child(4n+2) .df-service-top i,.df-site .df-home .df-service-card:nth-child(4n+3) .df-service-top i{background:#ffffff12;border:1px solid #d9b26866;color:#f1cb83}
+.df-site .df-home .df-service-top>span{color:#a46d25}.df-site .df-home .df-service-card:nth-child(4n+2) .df-service-top>span,.df-site .df-home .df-service-card:nth-child(4n+3) .df-service-top>span{color:#f1cb83}
+.df-site .df-home .df-filter button{font-size:15px!important;color:#4b3030;border-color:#d9bdb2}
+.df-site .df-home .df-filter button:hover,.df-site .df-home .df-filter button[aria-pressed=true]{background:#b21625;border-color:#b21625;color:#fff!important}
+.df-site .df-home .df-event-card h3{color:#fff!important;font-size:18px}.df-site .df-home .df-event-card>div>span{color:#f6d399!important;letter-spacing:.6px}
+.df-site .df-home .df-person h3{color:#2c2121!important;font-size:17px}.df-site .df-home .df-person p{color:#514545!important;font-size:15px!important}
+.df-site .df-home .df-feedback-shell{background:#fff4e8;border-color:#e3c6ab}.df-site .df-home .df-feedback-shell p{color:#514545!important;font-size:15px!important}.df-site .df-home .df-feedback-empty{color:#514545!important;font-size:14px!important}
+.df-site .df-home .df-journal-card{background:#fff;border-color:#e0c4b6}.df-site .df-home .df-journal-card:nth-child(3n+2){background:#241d1d;border-color:#44312b}
+.df-site .df-home .df-journal-card:nth-child(3n+2) :is(h3,p,summary,.df-eyebrow){color:#fff1da!important}.df-site .df-home .df-journal-card:nth-child(3n+2) summary{border-color:#ffffff30}
+.df-site .df-home .df-journal-body details p{font-size:15px!important}
+.df-site .df-guide-grid article{background:#fff;border-color:#dfc4b6;border-top:3px solid #b61928}.df-site .df-guide-grid article:nth-child(2){border-top-color:#241d1d}.df-site .df-guide-grid article:nth-child(3){border-top-color:#b78335}
+.df-site .df-guide-grid h3{color:#302222!important;font-size:18px}.df-site .df-guide-grid p,.df-site .df-faq-intro>p,.df-site .df-faq-list details>div{color:#514545!important;font-size:15px!important}
+.df-site .df-faq-list summary{color:#382525!important;font-size:16px!important}.df-site .df-faq-list details[open] summary{color:#aa1423!important}
+/* Form trắng sáng, cỡ nhập liệu 16px, cao 44px. */
+.df-site .df-home .df-booking-shell{border-color:#dcbcae;box-shadow:0 8px 24px #7a20100a}
+.df-site .df-home .df-booking-story::after{background:linear-gradient(150deg,#901421f5,#301b20cb)}.df-site .df-home .df-booking-story h2{font-size:clamp(28px,3vw,40px);color:#fff!important}
+.df-site .df-home .df-booking-story p,.df-site .df-home .df-booking-story .df-eyebrow{color:#fff1da!important}
+.df-site .df-home .df-booking-form-wrap{background:#fff;padding:32px}.df-site .df-home .df-booking-form-wrap h2{font-size:24px}
+.df-site .df-home .df-field label{font-size:15px!important;color:#342929!important;font-weight:600}
+.df-site .df-home .df-field :is(input,select,textarea){min-height:44px;padding:10px 12px;border-color:#cebcb6;font-size:16px!important;color:#2b2020;background:#fff}
+.df-site .df-home .df-field textarea{min-height:90px}.df-site .df-home .df-booking-submit{min-height:44px;padding-block:12px;font-size:15px!important}
+.df-site .df-home .df-form-hint{font-size:14px!important;color:#5a4a45!important}.df-site .df-home .df-form-grid{gap:16px}
+/* Menu: danh mục đen, thẻ trắng, món nổi bật đỏ. */
+.df-site .df-menu-hero{background:url('../img/tet-blossom.svg') right 15px top/230px no-repeat,linear-gradient(110deg,#fff8f0,#fff 60%,#fff0e8)}
+.df-site .df-menu h1{font-size:clamp(32px,3.5vw,46px);line-height:1.28}
+.df-site .df-menu-hero-note{background:url('../img/tet-blossom.svg') right -45px top -40px/180px no-repeat,#ac1423;border-color:#bf8f48}
+.df-site .df-menu-hero-note strong{color:#fff!important;font-size:27px}.df-site .df-menu-hero-note>span:not(.df-menu-note-symbol),.df-site .df-menu-hero-note p{color:#fff1da!important;font-size:14px!important}.df-site .df-menu-note-symbol{color:#f1ce87!important}
+.df-site .df-menu-intro{color:#514545!important;font-size:16px!important}.df-site .df-menu-service-notes{color:#4b3430!important;font-size:14px!important}
+.df-site .df-menu-search{border-color:#d6b4a9;border-radius:12px;padding:17px 20px;box-shadow:0 6px 20px #9b14200a;background:#fff}
+.df-site .df-menu-search-label{color:#372525!important;font-size:16px!important}.df-site .df-menu-search input{font-size:16px!important;color:#2b2020}.df-site .df-menu-search button{min-height:42px;font-size:15px!important;color:#fff!important;background:#b21625}
+.df-site .df-menu-sidebar{background:#241d1d;border-color:#4b342a}.df-site .df-menu-sidebar h2{color:#fff!important}.df-site .df-menu-small-label{color:#f0cc8b!important;font-size:12px!important}
+.df-site .df-menu-category{color:#fff1de!important;font-size:15px!important}.df-site .df-menu-category:hover{background:#3b2925;color:#fff!important}.df-site .df-menu-category.is-active{background:#bc1a28;border-color:#bc1a28;color:#fff!important}.df-site .df-menu-category.is-active>span{color:#fff!important}.df-site .df-menu-category>span:last-child{color:#f1cf8f}
+.df-site .df-menu-sidebar-note{border-top-color:#755441}.df-site .df-menu-sidebar-note strong,.df-site .df-menu-sidebar-note p{color:#fff1de!important;font-size:14px!important}.df-site .df-menu-sidebar-note i{color:#eec77e}
+.df-site .df-menu-toolbar p{color:#514545!important;font-size:14px!important}.df-site .df-menu-sort :is(label,select,button){font-size:14px!important;color:#413030}
+.df-site .df-menu-card{background:#fff;border-color:#dfc4b6;border-radius:10px 20px 10px 20px;box-shadow:0 5px 18px #5d1b1408}
+.df-site .df-menu-card-category{color:#a71523!important;font-size:13px!important;letter-spacing:.7px}.df-site .df-menu-card h3{color:#292020!important;font-size:20px!important;line-height:1.5}.df-site .df-menu-card-description{color:#514545!important;font-size:15px!important}
+.df-site .df-menu-featured{color:#fff!important;background:#b21625!important;font-size:13px!important}
+.df-site .df-menu-portions strong{color:#342929;font-size:15px!important}.df-site .df-menu-portions small{color:#5a4a45!important;font-size:14px!important}.df-site .df-menu-price{color:#b01424!important;font-size:21px!important;font-weight:700}.df-site .df-menu-price small{color:#b01424!important}
+.df-site .df-menu-allergen{background:#fff4d9;color:#704313!important;border:1px solid #e6cb8c;font-size:14px!important}
+.df-site .df-menu-pagination>a,.df-site .df-menu-pagination>span{min-width:38px;min-height:38px;font-size:15px}.df-site .df-menu-pagination a.is-current{background:#b21625;border-color:#b21625;color:#fff!important}.df-site .df-menu-footnote{color:#514545!important;font-size:14px!important}
+/* Chi tiết món, đánh giá và giỏ hàng. */
+.df-dish-page,.df-cart-page{background:#fffaf6;color:#342929;font-family:'Open Sans','Segoe UI',Arial,sans-serif}
+.df-dish-title{font-size:clamp(30px,3.4vw,43px);color:#2b2020;line-height:1.3}.df-dish-breadcrumb,.df-dish-intro,.df-dish-description{color:#514545!important;font-size:16px!important}
+.df-dish-eyebrow,.df-cart-eyebrow{color:#a81523!important;font-size:13px!important;letter-spacing:1px}.df-dish-badge{background:#fff0d5;border:1px solid #e4c58c;color:#744814;font-size:14px}
+.df-dish-panel,.df-cart-items{background:#fff;border-color:#dec4b8}.df-dish-panel h2,.df-cart-summary h2{font-size:23px;color:#332525!important}
+.df-dish-variants small{color:#5a4a45!important;font-size:14px}.df-dish-variants>li>span{color:#ad1524!important;font-size:20px}
+.df-dish-allergen{background:#fff2d8;color:#704313;border-left-color:#ac762a;font-size:15px}
+.df-review-form{background:#fff7ef;border-color:#dfc3b5}.df-review-form h3{color:#332525!important}
+.df-review-rating-options label{color:#44302b;background:#fff;border-color:#ceb5a4;font-size:15px}.df-review-rating-options label:has(input:checked){color:#a71422;border-color:#b21625;background:#ffece6}
+.df-review-stars{color:#86500e}.df-review-average{color:#ad1524}.df-review-item time{color:#5a4a45!important;font-size:14px}.df-review-body{color:#413030;font-size:16px}
+.df-cart-heading h1{font-size:clamp(28px,3.1vw,40px);color:#2b2020}.df-cart-back{color:#a71523;font-size:15px;font-weight:600}.df-cart-item h2{color:#342525!important;font-size:19px}
+.df-cart-quantity input{min-height:40px;font-size:16px}.df-cart-quantity label,.df-cart-remove{font-size:14px}.df-cart-remove{color:#a71523}.df-cart-line-total{color:#ad1524;font-size:19px}.df-cart-line-total span{color:#5a4a45!important;font-size:14px}
+.df-cart-summary{background:#fff8ee;border-color:#d5b382}.df-cart-summary-total strong{color:#ac1423;font-size:26px}
+/* Tương thích hồ sơ có CSS nhúng. */
+.dpf{background:#fffaf6}.dpf .dpf-page-description,.dpf .dpf-identity-note{color:#514545!important;font-size:15px!important}.dpf .dpf-hero{border-color:#dbbbb1}.dpf .dpf-hero::before{background:linear-gradient(90deg,#b71927,#d9b268,#2b2020)}
+.dpf .dpf-hero-main{background:url('../img/tet-blossom.svg') right -20px top -30px/180px no-repeat,linear-gradient(115deg,#fff,#fff7ef)}
+.dpf .dpf-eyebrow{color:#a71523!important;font-size:13px!important;letter-spacing:1px}.dpf .dpf-name{color:#2b2020!important;font-size:clamp(21px,2.1vw,27px)}.dpf .dpf-handle{color:#514545!important;font-size:14px!important}
+.dpf .dpf-primary-button{min-height:43px;padding:10px 18px;background:#b21625;color:#fff!important;font-size:15px!important}.dpf .dpf-avatar-link,.dpf .dpf-hero-action-note{color:#a71523!important;font-size:13px!important}
+.dpf .dpf-summary{background:#fff8ef}.dpf .dpf-summary-label{color:#5a4a45!important;font-size:13px!important}.dpf .dpf-summary-value{color:#3a2828!important;font-size:14px!important}.dpf .dpf-summary-value.is-verified{color:#18633f!important}
+.dpf .dpf-card-title{color:#342525!important;font-size:18px!important}.dpf .dpf-card-subtitle{color:#5a4a45!important;font-size:14px!important}.dpf .dpf-info-field dt{color:#5a4a45!important;font-size:14px!important}.dpf .dpf-info-field dd{color:#2c2121!important;font-size:16px!important}.dpf .dpf-info-field dd.is-empty{color:#66504b!important;font-size:15px!important}
+.dpf .dpf-badge{font-size:13px!important}.dpf .dpf-badge-verified{background:#edf8ef;color:#18633f;border-color:#b9dbc3}.dpf .dpf-badge-pending{background:#fff2d8;color:#704313;border-color:#e6ce9e}
+.dpf .dpf-info-footer{color:#5a3b2b!important;background:#fff3e3;font-size:14px!important}.dpf .dpf-shortcut-title{color:#342525!important;font-size:15px!important}.dpf .dpf-shortcut-description{color:#5a4a45!important;font-size:14px!important}.dpf .dpf-shortcut:hover .dpf-shortcut-title{color:#a71523!important}.dpf .dpf-shortcut-icon{color:#a71523;background:#fff0e9;border-color:#e5c2b5}
+.dpf .dpf-completion{background:url('../img/tet-blossom.svg') right -60px top -40px/180px no-repeat,#241d1d;border-color:#5d4031}
+.dpf .dpf-completion-heading h2{color:#fff7e9!important;font-size:15px!important}.dpf .dpf-completion-heading strong{color:#f2cc84!important}.dpf .dpf-completion-text{color:#fff0d9!important;font-size:14px!important}
+.dpf .dpf-progress{background:#594238}.dpf .dpf-progress::-webkit-progress-bar{background:#594238}.dpf .dpf-progress::-webkit-progress-value{background:linear-gradient(90deg,#d52332,#e9c17a)}.dpf .dpf-progress::-moz-progress-bar{background:#d9b268}
+.dpf .dpf-missing-fields li{background:#382a25;border-color:#7a5c43;color:#ffe7b9!important;font-size:13px!important}.dpf .dpf-breadcrumb,.dpf .dpf-breadcrumb a,.dpf .dpf-page-footnote{color:#5a4a45!important;font-size:13px!important}
+/* Footer đen than, câu mời đỏ, đèn lồng rất nhẹ ở khoảng trống. */
+.df-site .df-site-footer{background:url('../img/tet-blossom.svg') right bottom 80px/250px no-repeat,#211a1a}
+.df-site .df-footer-invitation{position:relative;background:#a61523;border-bottom:1px solid #d9b268;padding:36px 30px;border-radius:0 0 18px 18px;isolation:isolate}
+.df-site .df-footer-invitation::before{content:'';position:absolute;inset:10px 22px auto auto;width:62px;height:95px;background:url('../img/tet-lantern.svg') center/contain no-repeat;opacity:.16;z-index:-1;pointer-events:none}
+.df-site .df-footer-invitation .df-overline{color:#ffe0a6!important;font-size:12px!important;letter-spacing:1.2px}.df-site .df-site-footer h2{color:#fff!important;font-size:clamp(27px,2.8vw,37px)}.df-site .df-site-footer h2 span{color:#ffe0a6!important}.df-site .df-site-footer h3{color:#fff!important;font-size:16px!important}
+.df-site .df-footer-invitation p,.df-site .df-footer-brand p,.df-site .df-footer-links a,.df-site .df-footer-contact p,.df-site .df-footer-contact a,.df-site .df-footer-bottom,.df-site .df-footer-bottom a{color:#fff0da!important;font-size:14px!important}
+.df-site .df-site-footer .df-brand-word{color:#fff!important}.df-site .df-site-footer .df-brand-word>span{color:#efc781!important}.df-site .df-site-footer .df-brand-tagline,.df-site .df-footer-signature{color:#edc985!important;font-size:12px!important;letter-spacing:1px}
+.df-site .df-footer-links a:hover{color:#fff!important}.df-site .df-footer-button{min-height:44px;padding:12px 20px;color:#3e241a!important;background:#f2d18f;border-color:#f2d18f;font-size:15px!important}.df-site .df-footer-button:hover{background:#ffe4ae;color:#3e241a!important}.df-site .df-footer-strip img{opacity:1}
+.df-site .df-site-footer :is(.text-body,.text-muted,.text-secondary,.text-black-50),.df-site .df-home .df-booking-story :is(.text-body,.text-muted,.text-secondary){color:#fff0da!important}body .text-white-50{color:#fff1da!important;opacity:1}
+/* Template cũ và các trạng thái hover. */
+.fapdora-header .navbar-nav .nav-link{font-size:15px!important;color:#342525!important}.fapdora-header .navbar-nav .nav-link.active{color:#fff!important;background:#b21625}
+.service-item:hover .service-content-icon :is(i,p,h4){color:#fff!important}.service-item:hover .service-content-icon a.btn-primary{color:#a71523!important;background:#fff!important}.menu .nav-item a.active .text-dark{color:#fff!important}
+@media(max-width:1050px){.df-site .df-header-actions{gap:12px}.df-site .df-mainmenu .nav-link{padding:11px 14px!important}.df-site .df-home .df-booking-form-wrap{padding:27px}.dpf .dpf-side{grid-template-columns:1fr}}
+@media(max-width:767.98px){.df-site .df-announcement-inner{flex-wrap:wrap;justify-content:center;gap:3px 14px;padding-block:6px;text-align:center}.df-site .df-brandbar{gap:14px 10px}.df-site .df-brand-tagline{font-size:11px!important;letter-spacing:.7px}.df-site .df-mainmenu .nav-link{padding:10px 12px!important;font-size:14px!important}.df-site .df-primary-navigation .df-navigation-inner{padding-block:3px}.df-site .df-reserve-link{padding:10px 14px;min-height:42px;font-size:14px!important}.df-site .df-editorial-box{display:block;padding:23px}.df-site .df-editorial-box a{max-width:none;margin-top:14px;padding-top:12px;border-top:1px solid #efc98b6b}.df-site .df-editorial-box p{margin-top:10px}.df-site .df-home-intro{grid-template-columns:1fr}.df-site .df-menu-search-field{flex-wrap:wrap;gap:10px}.df-site .df-menu-search input{flex:1;min-width:140px}.df-site .df-menu-layout{display:block}.df-site .df-menu-sidebar{position:static}.df-site .df-menu-categories{overflow-x:auto}.df-site .df-menu-category{border-color:#745241}.df-site .df-home .df-booking-form-wrap{padding:24px 20px}.df-site .df-footer-invitation{padding:29px 22px;gap:23px}.df-site .df-footer-button{white-space:normal}}
+@media(max-width:575.98px){.df-site .df-shell{width:calc(100% - 28px)}.df-site .df-header-actions{flex-wrap:wrap;justify-content:flex-end}.df-site .df-user-button{max-width:145px}.df-site .fd-food-strip .fd-food-heading h1{font-size:32px}.df-site .fd-food-card figcaption{min-height:87px}.df-site .fd-food-bottom{flex-wrap:wrap;gap:12px}.df-site .fd-food-note{max-width:none;flex:1 1 200px}.df-site .df-menu-grid{grid-template-columns:1fr}.df-site .df-menu-sort>div{flex-wrap:wrap}.df-site .df-menu-sort select{max-width:100%}.df-site .df-menu-card h3{font-size:19px!important}.df-site .df-menu-portions li{flex-wrap:wrap}.df-site .df-home .df-form-grid{gap:14px}.dpf .dpf-hero-main{padding:22px 18px}.dpf .dpf-hero-actions{flex-wrap:wrap}.dpf .dpf-summary-item>div{flex-wrap:wrap;gap:4px 12px}.dpf .dpf-summary-value{text-align:left}.dpf .dpf-hero-action-note{max-width:none}.df-cart-item{grid-template-columns:64px minmax(0,1fr);gap:12px}.df-cart-item img{width:64px;height:64px}.df-cart-item h2{font-size:18px}.df-cart-line-total{white-space:normal}}
+@media(prefers-reduced-motion:reduce){.df-site .df-reserve-link,.df-site .df-menu-card,.dpf .dpf-primary-button{transition:none!important}}
+/* Các thành phần Bootstrap dùng ở form tài khoản / thanh toán khác. */
+body .card{border-color:#e0c9bf;background:#fff}
+body .card-body{font-size:16px}
+body .accordion-button{min-height:46px;font-size:16px;color:#342929}
+body .accordion-button:not(.collapsed){background:#fff0e7;color:#9d1422;box-shadow:inset 0 -1px 0 #ead6d0}
+body .nav-pills .nav-link.active{background:#b21625;color:#fff}
+body .page-item.active .page-link{background:#b21625;border-color:#b21625;color:#fff}
+body .page-link{color:#a71523}
+body .badge.bg-warning{color:#422006}
+body .badge.bg-info{color:#163845}
+.df-site .border-primary{border-color:#c97d75!important}
+body .list-group-item.active{background:#b21625;border-color:#b21625;color:#fff}
+@media(max-width:575.98px){.df-site .fd-about-seal{width:128px;height:128px;padding:12px}}

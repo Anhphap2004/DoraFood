@@ -1,0 +1,14 @@
+.dm { max-width: 1480px; margin-inline: auto; padding-bottom: 2rem; }
+.dm .dm-card { border: 0; box-shadow: 0 .15rem .7rem rgba(0,0,0,.07); border-radius: .75rem; overflow: hidden; }
+.dm .dm-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1.25rem; }
+.dm .dm-table { min-width: 740px; }
+.dm .table th, .dm .table td { padding: .9rem 1rem; }
+.dm .dm-empty { padding: 3rem 1rem; text-align: center; color: var(--bs-secondary-color, #6c757d); }
+.dm .dm-form { max-width: 860px; margin-inline: auto; }
+.dm .dm-label { font-size: .875rem; color: var(--bs-secondary-color, #6c757d); margin-bottom: .5rem; }
+.dm .dm-value { font-size: clamp(1.35rem, 2vw, 1.8rem); font-weight: 700; line-height: 1.3; overflow-wrap: anywhere; margin-bottom: .4rem; }
+.dm .dm-body { white-space: pre-wrap; line-height: 1.75; }
+.dm .dm-snippet { max-width: 380px; white-space: pre-line; }
+.dm .dm-scroll { max-height: 520px; }
+.dm dl dt { font-size: .85rem; font-weight: 400; color: var(--bs-secondary-color, #6c757d); }
+.dm dl dd { overflow-wrap: anywhere; margin-top: .3rem; }

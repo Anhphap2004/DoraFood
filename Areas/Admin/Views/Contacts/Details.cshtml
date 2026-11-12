@@ -1,0 +1,153 @@
+﻿@model DoraFood.Models.ContactMessage
+
+@{
+    ViewData["Title"] = "Chi tiết liên hệ";
+
+    var (statusLabel, badgeClass) = Model.Status switch
+    {
+        "NEW" => ("Mới", "text-bg-primary"),
+        "PROCESSING" => ("Đang xử lý", "text-bg-warning"),
+        "CLOSED" => ("Đã xử lý", "text-bg-success"),
+        _ => ("Chưa xác định", "text-bg-secondary")
+    };
+}
+
+<div class="container-fluid">
+    @if (TempData["ContactSuccess"] is string successMessage)
+    {
+        <div class="alert alert-success" role="status">
+            @successMessage
+        </div>
+    }
+
+    @if (TempData["ContactError"] is string errorMessage)
+    {
+        <div class="alert alert-warning" role="alert">
+            @errorMessage
+        </div>
+    }
+
+    <div class="d-flex flex-wrap align-items-center
+        justify-content-between gap-3 mb-4">
+        <a asp-area="Admin"
+           asp-controller="Contacts"
+           asp-action="Index"
+           class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>
+            Về danh sách
+        </a>
+
+        <div class="d-flex flex-wrap align-items-center gap-2">
+            <span class="badge @badgeClass">@statusLabel</span>
+
+            @if (Model.Status == "NEW")
+            {
+                <form asp-area="Admin"
+                      asp-controller="Contacts"
+                      asp-action="ChangeStatus"
+                      asp-route-id="@Model.Id"
+                      asp-antiforgery="true"
+                      method="post"
+                      class="m-0">
+                    <input type="hidden" name="expectedStatus" value="NEW" />
+                    <input type="hidden" name="targetStatus" value="PROCESSING" />
+
+                    <button type="submit" class="btn btn-primary">
+                        Tiếp nhận
+                    </button>
+                </form>
+            }
+            else if (Model.Status == "PROCESSING")
+            {
+                <form asp-area="Admin"
+                      asp-controller="Contacts"
+                      asp-action="ChangeStatus"
+                      asp-route-id="@Model.Id"
+                      asp-antiforgery="true"
+                      method="post"
+                      class="m-0">
+                    <input type="hidden" name="expectedStatus" value="PROCESSING" />
+                    <input type="hidden" name="targetStatus" value="CLOSED" />
+
+                    <button type="submit" class="btn btn-success">
+                        Đánh dấu đã xử lý
+                    </button>
+                </form>
+            }
+
+            <form asp-area="Admin"
+                  asp-controller="Contacts"
+                  asp-action="Delete"
+                  asp-route-id="@Model.Id"
+                  asp-antiforgery="true"
+                  method="post"
+                  class="m-0"
+                  onsubmit="return confirm('Xóa vĩnh viễn liên hệ này?');">
+                <input type="hidden"
+                       name="expectedStatus"
+                       value="@Model.Status" />
+
+                <button type="submit" class="btn btn-outline-danger">
+                    Xóa liên hệ
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="row g-4">
+        <div class="col-lg-4">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h2 class="h5 mb-4">Thông tin liên hệ</h2>
+
+                    <dl class="mb-0">
+                        <dt class="small text-body-secondary mb-1">Họ và tên</dt>
+                        <dd class="fw-semibold text-break mb-3">
+                            @Model.FullName
+                        </dd>
+
+                        <dt class="small text-body-secondary mb-1">Email</dt>
+                        <dd class="text-break mb-3">
+                            @(string.IsNullOrWhiteSpace(Model.Email)
+                                ? "Không cung cấp"
+                                : Model.Email)
+                        </dd>
+
+                        <dt class="small text-body-secondary mb-1">Số điện thoại</dt>
+                        <dd class="mb-3">
+                            @(string.IsNullOrWhiteSpace(Model.PhoneNumber)
+                                ? "Không cung cấp"
+                                : Model.PhoneNumber)
+                        </dd>
+
+                        <dt class="small text-body-secondary mb-1">Ngày gửi</dt>
+                        <dd class="mb-3">
+                            @(Model.CreatedAtUtc.AddHours(7)
+                                .ToString("dd/MM/yyyy HH:mm"))
+                        </dd>
+
+                        <dt class="small text-body-secondary mb-1">
+                            Người tiếp nhận
+                        </dt>
+                        <dd class="text-break mb-0">
+                            @(Model.AssignedToNavigation?.UserName ?? "Chưa phân công")
+                        </dd>
+                    </dl>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-8">
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+                    <h2 class="h4 text-break mb-4">@Model.Subject</h2>
+
+                    <div class="text-break"
+                         style="white-space: pre-wrap;">
+                        @Model.Body
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

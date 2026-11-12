@@ -1,12 +1,13 @@
+/* DoraFood Tet: charcoal / white / vermilion. */
 /* Scoped styles for the standalone DoraFood menu. No global Bootstrap overrides. */
 .df-menu {
-    --df-red: #b92032;
-    --df-red-dark: #8e1424;
-    --df-ink: #29252a;
-    --df-muted: #777077;
-    --df-border: #ece6e8;
+    --df-red: #c51b29;
+    --df-red-dark: #9d1422;
+    --df-ink: #241b1b;
+    --df-muted: #514545;
+    --df-border: #f6eae6;
     color: var(--df-ink);
-    background: #fff;
+    background: #ffffff;
     font-family: Inter,"Segoe UI",Arial,sans-serif;
     padding-bottom: 48px
 }
@@ -29,7 +30,7 @@
     }
 
         .df-menu a:focus-visible, .df-menu button:focus-visible, .df-menu input:focus-visible, .df-menu select:focus-visible {
-            outline: 3px solid #b9203266;
+            outline: 3px solid #c51b2966;
             outline-offset: 4px
         }
 
@@ -41,7 +42,7 @@
     }
 
 .df-menu-hero {
-    background: linear-gradient(112deg,#fff9f8 0%,#fff 65%);
+    background: linear-gradient(112deg,#ffffff 0%,#ffffff 65%);
     border-bottom: 1px solid var(--df-border);
     position: relative;
     overflow: hidden
@@ -58,7 +59,7 @@
 .df-menu-breadcrumb {
     display: flex;
     gap: 12px;
-    font-size: 12px;
+    font-size: 14px;
     color: var(--df-muted);
     margin-bottom: 30px
 }
@@ -72,7 +73,7 @@
     align-items: center;
     gap: 10px;
     color: var(--df-red);
-    font-size: 11px;
+    font-size: 14px;
     font-weight: 750;
     letter-spacing: 2px;
     margin-bottom: 18px !important
@@ -119,7 +120,7 @@
 }
 
 .df-menu-hero-note > span:not(.df-menu-note-symbol) {
-    font-size: 10px;
+    font-size: 14px;
     letter-spacing: 2px;
     color: var(--df-muted);
     font-weight: 700
@@ -134,7 +135,7 @@
 }
 
 .df-menu-hero-note p {
-    font-size: 12px;
+    font-size: 14px;
     line-height: 1.8;
     color: var(--df-muted)
 }
@@ -148,10 +149,10 @@
     align-items: center;
     gap: 30px;
     padding: 21px 25px;
-    background: #fff;
+    background: #ffffff;
     border: 1px solid var(--df-border);
     border-radius: 16px;
-    box-shadow: 0 8px 30px #3f1e2a04;
+    box-shadow: 0 8px 30px #241b1b04;
     margin-bottom: 44px
 }
 
@@ -170,7 +171,7 @@
 }
 
     .df-menu-search-field > i {
-        color: #a69ca1;
+        color: #514545;
         font-size: 15px
     }
 
@@ -185,17 +186,17 @@
 }
 
     .df-menu-search input::placeholder {
-        color: #a1989f
+        color: #514545
     }
 
 .df-menu-search button {
     flex-shrink: 0;
     border: 0;
     border-radius: 9px;
-    color: #fff;
+    color: #ffffff;
     background: var(--df-red);
     padding: 12px 20px;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 650;
     cursor: pointer
 }
@@ -215,7 +216,7 @@
 }
 
 .df-menu-small-label {
-    font-size: 9px;
+    font-size: 14px;
     letter-spacing: 1.5px;
     color: var(--df-muted);
     font-weight: 700;
@@ -241,27 +242,27 @@
     justify-content: space-between;
     gap: 10px;
     padding: 13px 15px;
-    color: #72696f;
+    color: #514545;
     border: 1px solid transparent;
     border-radius: 10px;
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 550
 }
 
     .df-menu-category > span:last-child {
         font-size: 16px;
-        color: #a79b9f
+        color: #514545
     }
 
     .df-menu-category:hover {
-        background: #fcf7f7;
+        background: #fff0eb;
         color: var(--df-red)
     }
 
     .df-menu-category.is-active {
         color: var(--df-red);
-        background: #fff1f1;
-        border-color: #f5d9dd;
+        background: #fff0eb;
+        border-color: #f9dfd6;
         font-weight: 700
     }
 
@@ -271,7 +272,7 @@
 
     .df-menu-category.is-child {
         margin-left: 10px;
-        font-size: 12px
+        font-size: 14px
     }
 
 .df-menu-sidebar-note {
@@ -288,12 +289,12 @@
     }
 
     .df-menu-sidebar-note strong {
-        font-size: 13px;
+        font-size: 14px;
         font-weight: 650
     }
 
     .df-menu-sidebar-note p {
-        font-size: 12px;
+        font-size: 14px;
         line-height: 1.85;
         color: var(--df-muted);
         margin-top: 9px
@@ -314,7 +315,7 @@
     }
 
     .df-menu-toolbar p {
-        font-size: 12px;
+        font-size: 14px;
         color: var(--df-muted);
         margin-top: 9px
     }
@@ -324,7 +325,7 @@
 }
 
     .df-menu-sort label {
-        font-size: 10px;
+        font-size: 14px;
         color: var(--df-muted);
         display: block;
         margin-bottom: 5px
@@ -338,16 +339,16 @@
     .df-menu-sort select {
         border: 1px solid var(--df-border);
         border-radius: 7px;
-        background: #fff;
+        background: #ffffff;
         color: var(--df-ink);
-        font-size: 11px;
+        font-size: 14px;
         padding: 9px 24px 9px 10px;
         max-width: 170px
     }
 
     .df-menu-sort button {
-        font-size: 10px;
-        background: #fff;
+        font-size: 14px;
+        background: #ffffff;
         border: 1px solid var(--df-border);
         padding: 8px;
         border-radius: 7px;
@@ -356,7 +357,7 @@
     }
 
         .df-menu-sort button:hover {
-            background: #fff5f5
+            background: #fff0eb
         }
 
 .df-menu-grid {
@@ -370,19 +371,19 @@
     border: 1px solid var(--df-border);
     border-radius: 15px;
     overflow: hidden;
-    background: #fff;
+    background: #ffffff;
     transition: box-shadow .2s,border-color .2s
 }
 
     .df-menu-card:hover {
-        border-color: #e4c7cd;
-        box-shadow: 0 12px 30px #6923310c
+        border-color: #dfc8c2;
+        box-shadow: 0 12px 30px #9d14220c
     }
 
 .df-menu-card-media {
     position: relative;
     aspect-ratio: 4/3;
-    background: #faf4f2;
+    background: #fff0eb;
     overflow: hidden
 }
 
@@ -406,9 +407,9 @@
     color: var(--df-red);
     border-radius: 6px;
     padding: 7px 9px;
-    font-size: 10px;
+    font-size: 14px;
     font-weight: 700;
-    box-shadow: 0 3px 12px #00000006
+    box-shadow: 0 3px 12px #241b1b06
 }
 
     .df-menu-featured span {
@@ -420,7 +421,7 @@
 }
 
 .df-menu-card-category {
-    font-size: 9px;
+    font-size: 14px;
     font-weight: 750;
     letter-spacing: 1.3px;
     text-transform: uppercase;
@@ -438,7 +439,7 @@
 }
 
 .df-menu-card-description {
-    font-size: 12px;
+    font-size: 14px;
     line-height: 1.75;
     color: var(--df-muted);
     margin-top: 10px !important;
@@ -474,13 +475,13 @@
 
     .df-menu-portions strong {
         display: block;
-        font-size: 11px;
+        font-size: 14px;
         font-weight: 600;
         overflow-wrap: anywhere
     }
 
     .df-menu-portions small {
-        font-size: 10px;
+        font-size: 14px;
         color: var(--df-muted)
     }
 
@@ -493,14 +494,14 @@
 }
 
     .df-menu-price small {
-        font-size: 12px;
+        font-size: 14px;
         margin-left: 3px;
         color: var(--df-red)
     }
 
 .df-menu-allergen {
-    color: #807075;
-    font-size: 10px;
+    color: #514545;
+    font-size: 14px;
     line-height: 1.6;
     margin-top: 9px !important
 }
@@ -511,9 +512,9 @@
     }
 
 .df-menu-empty {
-    border: 1px dashed #e5ced4;
+    border: 1px dashed #dfc8c2;
     border-radius: 16px;
-    background: #fffbfb;
+    background: #ffffff;
     text-align: center;
     padding: 65px 22px
 }
@@ -531,7 +532,7 @@
     }
 
     .df-menu-empty p {
-        font-size: 13px;
+        font-size: 14px;
         color: var(--df-muted);
         line-height: 1.9;
         margin-top: 12px
@@ -541,10 +542,10 @@
         display: inline-block;
         margin-top: 23px;
         background: var(--df-red);
-        color: #fff;
+        color: #ffffff;
         padding: 12px 18px;
         border-radius: 9px;
-        font-size: 12px
+        font-size: 14px
     }
 
         .df-menu-empty a span {
@@ -568,7 +569,7 @@
         height: 35px;
         padding-inline: 7px;
         border-radius: 8px;
-        font-size: 12px
+        font-size: 14px
     }
 
     .df-menu-pagination a {
@@ -584,12 +585,12 @@
         .df-menu-pagination a.is-current {
             background: var(--df-red);
             border-color: var(--df-red);
-            color: #fff
+            color: #ffffff
         }
 
     .df-menu-pagination .is-disabled {
-        color: #c9c0c4;
-        border: 1px solid #f3eff0
+        color: #dfc8c2;
+        border: 1px solid #fffaf6
     }
 
 .df-menu-ellipsis {
@@ -600,7 +601,7 @@
     margin-top: 28px !important;
     padding-top: 18px;
     border-top: 1px solid var(--df-border);
-    font-size: 10px;
+    font-size: 14px;
     line-height: 1.9;
     color: var(--df-muted)
 }
@@ -636,7 +637,7 @@
         }
 
     .df-menu-search-label {
-        font-size: 13px
+        font-size: 14px
     }
 }
 
@@ -660,7 +661,7 @@
     }
 
     .df-menu-intro {
-        font-size: 13px
+        font-size: 14px
     }
 
     .df-menu-hero-note {
@@ -680,7 +681,7 @@
     .df-menu-search-label {
         display: block;
         margin-bottom: 9px;
-        font-size: 13px
+        font-size: 14px
     }
 
     .df-menu-search-field {
@@ -688,11 +689,11 @@
     }
 
     .df-menu-search input {
-        font-size: 12px
+        font-size: 14px
     }
 
     .df-menu-search button {
-        font-size: 11px;
+        font-size: 14px;
         padding: 11px 12px
     }
 
@@ -725,7 +726,7 @@
         flex-shrink: 0;
         white-space: nowrap;
         padding: 10px 14px;
-        font-size: 12px;
+        font-size: 14px;
         border: 1px solid var(--df-border);
         margin-left: 0
     }
@@ -739,7 +740,7 @@
     }
 
     .df-menu-toolbar p {
-        font-size: 11px
+        font-size: 14px
     }
 
     .df-menu-toolbar {
@@ -763,17 +764,17 @@
     }
 
     .df-menu-card-category {
-        font-size: 8px;
+        font-size: 14px;
         letter-spacing: .8px
     }
 
     .df-menu-card-description {
-        font-size: 11px;
+        font-size: 14px;
         -webkit-line-clamp: 2
     }
 
     .df-menu-featured {
-        font-size: 9px;
+        font-size: 14px;
         padding: 6px 7px;
         left: 8px;
         top: 8px
@@ -789,7 +790,7 @@
     }
 
     .df-menu-portions strong {
-        font-size: 10px
+        font-size: 14px
     }
 }
 
@@ -831,11 +832,11 @@
     }
 
     .df-menu-portions strong {
-        font-size: 12px
+        font-size: 14px
     }
 
     .df-menu-card-description {
-        font-size: 12px
+        font-size: 14px
     }
 }
 

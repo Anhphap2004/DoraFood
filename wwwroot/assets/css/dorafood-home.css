@@ -1,13 +1,14 @@
+/* DoraFood Tet: charcoal / white / vermilion. */
 /* DoraFood: chỉ áp dụng cho phần trang chủ sau About. */
 .df-home {
-    --df-red: #ad1830;
-    --df-red-dark: #861126;
-    --df-ink: #291b20;
-    --df-muted: #786d72;
-    --df-line: #eee3e6;
-    --df-tint: #fcf7f8;
+    --df-red: #9d1422;
+    --df-red-dark: #9d1422;
+    --df-ink: #241b1b;
+    --df-muted: #514545;
+    --df-line: #f6eae6;
+    --df-tint: #fff0eb;
     color: var(--df-ink);
-    background: #fff;
+    background: #ffffff;
     font-family: 'Open Sans',sans-serif;
     font-size: 14px;
     line-height: 1.7
@@ -67,7 +68,7 @@
     }
 
     .df-home :is(a,button,input,select,textarea,summary):focus-visible, .df-booking-dialog button:focus-visible {
-        outline: 3px solid #ad1830;
+        outline: 3px solid #9d1422;
         outline-offset: 4px
     }
 
@@ -91,14 +92,14 @@
 
         .df-home .df-section-head p {
             margin-bottom: 0;
-            font-size: 13px
+            font-size: 14px
         }
 
     .df-home .df-eyebrow, .df-booking-dialog .df-eyebrow {
         display: block;
         margin-bottom: 12px;
-        color: #ad1830;
-        font-size: 9px;
+        color: #9d1422;
+        font-size: 14px;
         line-height: 1.6;
         font-weight: 700;
         letter-spacing: 2px;
@@ -111,7 +112,7 @@
         justify-content: space-between;
         gap: 18px;
         color: var(--df-red);
-        font-size: 12px;
+        font-size: 14px;
         font-weight: 700
     }
 
@@ -130,7 +131,7 @@
         border: 1px solid transparent;
         border-radius: 30px;
         font-family: 'Open Sans',sans-serif;
-        font-size: 12px;
+        font-size: 14px;
         font-weight: 700;
         line-height: 1.6;
         text-decoration: none;
@@ -139,24 +140,24 @@
     }
 
     .df-home .df-button-red, .df-booking-dialog .df-button-red {
-        background: #ad1830;
-        color: #fff
+        background: #9d1422;
+        color: #ffffff
     }
 
         .df-home .df-button-red:hover, .df-booking-dialog .df-button-red:hover {
-            background: #861126
+            background: #9d1422
         }
 
     .df-home .df-button-outline {
-        border-color: #dcaeb8;
+        border-color: #e8b5a8;
         color: var(--df-red);
-        background: #fff
+        background: #ffffff
     }
 
         .df-home .df-button-outline:hover {
             background: var(--df-red);
             border-color: var(--df-red);
-            color: #fff
+            color: #ffffff
         }
     /* Thay số liệu mẫu bằng lời dẫn ngắn. */
     .df-home .df-experience {
@@ -180,12 +181,12 @@
 
     .df-home .df-experience-note {
         position: relative;
-        border-left: 1px solid #e5c6ce;
+        border-left: 1px solid #f9dfd6;
         padding-left: 35px
     }
 
         .df-home .df-experience-note p {
-            font-size: 13px;
+            font-size: 14px;
             margin-bottom: 6px
         }
 
@@ -193,7 +194,7 @@
         position: absolute;
         top: 0;
         right: 0;
-        color: #ad1830;
+        color: #9d1422;
         font-size: 21px
     }
 
@@ -211,7 +212,7 @@
         padding: 26px 23px;
         border: 1px solid var(--df-line);
         border-radius: 18px;
-        background: #fff;
+        background: #ffffff;
         transition: transform .25s ease,box-shadow .25s ease,border-color .25s ease;
         display: flex;
         flex-direction: column
@@ -219,8 +220,8 @@
 
         .df-home .df-service-card:hover {
             transform: translateY(-5px);
-            border-color: #dab0ba;
-            box-shadow: 0 15px 35px #6b11200d
+            border-color: #e8b5a8;
+            box-shadow: 0 15px 35px #9d14220d
         }
 
     .df-home .df-service-top {
@@ -235,20 +236,20 @@
             place-items: center;
             width: 46px;
             height: 46px;
-            background: #fbf0f3;
+            background: #fff0eb;
             border-radius: 14px;
             font-size: 19px;
             color: var(--df-red)
         }
 
         .df-home .df-service-top > span {
-            color: #e6cbd2;
+            color: #f9dfd6;
             font-size: 25px;
             font-weight: 600
         }
 
     .df-home .df-service-card p {
-        font-size: 12px;
+        font-size: 14px;
         line-height: 1.85;
         flex: 1
     }
@@ -263,18 +264,18 @@
 
         .df-home .df-filter button {
             padding: 9px 19px;
-            border: 1px solid #e9dce0;
+            border: 1px solid #f6eae6;
             border-radius: 30px;
-            background: #fff;
-            color: #74636a;
-            font-size: 12px;
+            background: #ffffff;
+            color: #514545;
+            font-size: 14px;
             cursor: pointer;
             transition: background .2s ease,color .2s ease
         }
 
             .df-home .df-filter button[aria-pressed=true], .df-home .df-filter button:hover {
                 background: var(--df-red);
-                color: #fff;
+                color: #ffffff;
                 border-color: var(--df-red)
             }
     /* Sự kiện */
@@ -290,14 +291,14 @@
         height: 300px;
         overflow: hidden;
         border-radius: 17px;
-        background: #e8dce0
+        background: #f6eae6
     }
 
         .df-home .df-event-card::after {
             position: absolute;
             inset: 0;
             content: '';
-            background: linear-gradient(transparent 30%,#210b16d9)
+            background: linear-gradient(transparent 30%,#241b1bd9)
         }
 
         .df-home .df-event-card img {
@@ -321,14 +322,14 @@
 
             .df-home .df-event-card > div > span {
                 display: block;
-                font-size: 8px;
+                font-size: 14px;
                 letter-spacing: 1.8px;
-                color: #f3beca;
+                color: #f9dfd6;
                 margin-bottom: 8px
             }
 
         .df-home .df-event-card h3 {
-            color: #fff;
+            color: #ffffff;
             font-size: 17px;
             margin: 0
         }
@@ -344,8 +345,8 @@
         height: 32px;
         border-radius: 50%;
         border: 1px solid #ffffff66;
-        color: #fff;
-        background: #3b102944
+        color: #ffffff;
+        background: #9d142244
     }
     /* Thực đơn */
     .df-home .df-menu-grid {
@@ -358,12 +359,12 @@
         overflow: hidden;
         border: 1px solid var(--df-line);
         border-radius: 17px;
-        background: #fff;
+        background: #ffffff;
         transition: box-shadow .2s ease
     }
 
         .df-home .df-dish:hover {
-            box-shadow: 0 12px 28px #6b11200f
+            box-shadow: 0 12px 28px #9d14220f
         }
 
     .df-home .df-dish-photo {
@@ -371,7 +372,7 @@
         margin: 7px 7px 0;
         border-radius: 11px;
         overflow: hidden;
-        background: #f5edef
+        background: #fffaf6
     }
 
     .df-home .df-dish img {
@@ -390,7 +391,7 @@
     }
 
         .df-home .df-dish-body .df-eyebrow {
-            font-size: 8px;
+            font-size: 14px;
             margin-bottom: 5px
         }
 
@@ -407,7 +408,7 @@
         padding-top: 11px;
         border-top: 1px solid var(--df-line);
         color: var(--df-muted);
-        font-size: 10px
+        font-size: 14px
     }
 
         .df-home .df-dish-link:hover {
@@ -422,7 +423,7 @@
         gap: 18px;
         margin-top: 30px;
         color: var(--df-muted);
-        font-size: 12px
+        font-size: 14px
     }
     /* Đặt bàn */
     .df-home .df-booking {
@@ -433,16 +434,16 @@
         display: grid;
         grid-template-columns: .8fr 1.2fr;
         overflow: hidden;
-        border: 1px solid #eedfe3;
+        border: 1px solid #f6eae6;
         border-radius: 24px;
-        background: #fff
+        background: #ffffff
     }
 
     .df-home .df-booking-story {
         position: relative;
         isolation: isolate;
         min-height: 550px;
-        background: #861126
+        background: #9d1422
     }
 
         .df-home .df-booking-story > img {
@@ -459,7 +460,7 @@
             inset: 0;
             content: '';
             z-index: -1;
-            background: linear-gradient(155deg,#6b0d23f0,#4d0b20a3)
+            background: linear-gradient(155deg,#9d1422f0,#9d1422a3)
         }
 
         .df-home .df-booking-story > div {
@@ -472,26 +473,26 @@
         }
 
         .df-home .df-booking-story .df-eyebrow {
-            color: #ffc8d4;
-            font-size: 9px
+            color: #f9dfd6;
+            font-size: 14px
         }
 
         .df-home .df-booking-story h2 {
-            color: #fff;
+            color: #ffffff;
             font-size: clamp(30px,3.3vw,47px);
             line-height: 1.3;
             margin: 12px 0 22px
         }
 
         .df-home .df-booking-story p {
-            color: #f3dce3;
-            font-size: 13px;
+            color: #f9dfd6;
+            font-size: 14px;
             line-height: 1.9
         }
 
     .df-home .df-booking-mark {
         margin-top: 25px;
-        color: #f5c0cd;
+        color: #f9dfd6;
         font-size: 36px
     }
 
@@ -505,7 +506,7 @@
         }
 
         .df-home .df-booking-form-wrap > p {
-            font-size: 12px;
+            font-size: 14px;
             margin-bottom: 24px
         }
 
@@ -525,7 +526,7 @@
 
     .df-home .df-field label {
         display: block;
-        font-size: 11px;
+        font-size: 14px;
         font-weight: 600;
         margin-bottom: 6px
     }
@@ -540,11 +541,11 @@
         min-width: 0;
         min-height: 43px;
         padding: 10px 12px;
-        border: 1px solid #e8dde0;
+        border: 1px solid #f6eae6;
         border-radius: 9px;
-        background: #fff;
+        background: #ffffff;
         color: var(--df-ink);
-        font-size: 12px;
+        font-size: 14px;
         line-height: 1.5
     }
 
@@ -554,7 +555,7 @@
     }
 
         .df-home .df-field input:focus, .df-home .df-field select:focus, .df-home .df-field textarea:focus {
-            border-color: #ad1830
+            border-color: #9d1422
         }
 
     .df-home .df-booking-submit {
@@ -563,28 +564,28 @@
     }
 
     .df-home .df-form-hint {
-        font-size: 10px;
+        font-size: 14px;
         margin: 10px 0 0 !important;
         line-height: 1.7
     }
 
 .df-booking-dialog {
-    --df-ink: #291b20;
+    --df-ink: #241b1b;
     width: min(520px,calc(100% - 32px));
     max-height: 85vh;
     overflow: auto;
     margin: auto;
     padding: 28px;
-    border: 1px solid #ead5dc;
+    border: 1px solid #dfc8c2;
     border-radius: 20px;
-    background: #fff;
-    color: #291b20;
+    background: #ffffff;
+    color: #241b1b;
     font-family: 'Open Sans',sans-serif;
-    box-shadow: 0 30px 90px #200a2440
+    box-shadow: 0 30px 90px #2c202040
 }
 
     .df-booking-dialog::backdrop {
-        background: #210e1a99
+        background: #241b1b99
     }
 
 .df-dialog-top {
@@ -596,8 +597,8 @@
 
     .df-dialog-top button {
         border: 0;
-        background: #fbf0f3;
-        color: #ad1830;
+        background: #fff0eb;
+        color: #9d1422;
         border-radius: 50%;
         width: 32px;
         height: 32px;
@@ -615,13 +616,13 @@
     display: grid;
     grid-template-columns: 110px minmax(0,1fr);
     gap: 10px;
-    font-size: 12px;
+    font-size: 14px;
     line-height: 1.7
 }
 
 .df-booking-dialog dt {
     font-weight: 600;
-    color: #786d72
+    color: #514545
 }
 
 .df-booking-dialog dd {
@@ -632,9 +633,9 @@
 
 .df-preview-note {
     padding: 13px;
-    background: #fcf3f5;
-    color: #862239;
-    font-size: 12px;
+    background: #fff0eb;
+    color: #9d1422;
+    font-size: 14px;
     line-height: 1.7;
     border-radius: 10px
 }
@@ -652,7 +653,7 @@
 .df-home .df-person-photo {
     height: 260px;
     overflow: hidden;
-    background: #f5edef;
+    background: #fffaf6;
     border-radius: 17px
 }
 
@@ -668,7 +669,7 @@
 }
 
 .df-home .df-person .df-eyebrow {
-    font-size: 8px;
+    font-size: 14px;
     margin-bottom: 7px
 }
 
@@ -677,7 +678,7 @@
 }
 
 .df-home .df-person p {
-    font-size: 12px;
+    font-size: 14px;
     margin: 0
 }
 /* Khu vực đánh giá: không tạo lời chứng thực giả */
@@ -704,7 +705,7 @@
 
     .df-home .df-feedback-shell p {
         max-width: 470px;
-        font-size: 13px
+        font-size: 14px
     }
 
 .df-home .df-feedback-symbol {
@@ -714,18 +715,18 @@
     font-family: Georgia,serif;
     font-size: 210px;
     line-height: 1;
-    color: #f1dbe1;
+    color: #f9dfd6;
     pointer-events: none
 }
 
 .df-home .df-feedback-empty {
-    font-size: 11px;
-    color: #8a777d
+    font-size: 14px;
+    color: #514545
 }
 
 .df-home .df-feedback-aside {
     position: relative;
-    border-left: 1px solid #e8cbd3;
+    border-left: 1px solid #f9dfd6;
     padding-left: 40px
 }
 
@@ -752,14 +753,14 @@
     overflow: hidden;
     border: 1px solid var(--df-line);
     border-radius: 18px;
-    background: #fff
+    background: #ffffff
 }
 
     .df-home .df-journal-card > img {
         width: 100%;
         height: 205px;
         object-fit: cover;
-        background: #f5edef
+        background: #fffaf6
     }
 
 .df-home .df-journal-body {
@@ -767,7 +768,7 @@
 }
 
     .df-home .df-journal-body .df-eyebrow {
-        font-size: 8px;
+        font-size: 14px;
         letter-spacing: 1.4px
     }
 
@@ -785,7 +786,7 @@
         padding: 12px 0 0;
         border-top: 1px solid var(--df-line);
         color: var(--df-red);
-        font-size: 12px;
+        font-size: 14px;
         font-weight: 600;
         cursor: pointer
     }
@@ -803,7 +804,7 @@
     }
 
     .df-home .df-journal-body details p {
-        font-size: 12px;
+        font-size: 14px;
         line-height: 1.9;
         margin: 16px 0 0
     }
@@ -944,7 +945,7 @@
 
         .df-home .df-filter button {
             padding: 8px 13px;
-            font-size: 11px
+            font-size: 14px
         }
 
     .df-home .df-events-grid {
@@ -967,7 +968,7 @@
         }
 
         .df-home .df-event-card > div > span {
-            font-size: 7px;
+            font-size: 14px;
             letter-spacing: 1px
         }
 
@@ -990,7 +991,7 @@
         }
 
     .df-home .df-dish-link {
-        font-size: 9px;
+        font-size: 14px;
         align-items: flex-start
     }
 
@@ -1024,11 +1025,11 @@
     }
 
     .df-home .df-person h3 {
-        font-size: 13px
+        font-size: 14px
     }
 
     .df-home .df-person p {
-        font-size: 11px
+        font-size: 14px
     }
 
     .df-home .df-feedback {
@@ -1042,7 +1043,7 @@
 
     .df-home .df-feedback-aside {
         border-left: 0;
-        border-top: 1px solid #e8cbd3;
+        border-top: 1px solid #f9dfd6;
         padding: 20px 0 0
     }
 

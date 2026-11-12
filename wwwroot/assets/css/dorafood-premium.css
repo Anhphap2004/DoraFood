@@ -1,16 +1,17 @@
-﻿/* DoraFood Premium. Nạp cuối cùng, sau CSS gốc và CSS trang. */
+/* DoraFood Tet: charcoal / white / vermilion. */
+/* DoraFood Premium. Nạp cuối cùng, sau CSS gốc và CSS trang. */
 .df-site {
-    --dp-red: #a71930;
-    --dp-red-deep: #7c1024;
-    --dp-ink: #2b2026;
-    --dp-muted: #796c73;
-    --dp-line: #ecdee3;
-    --dp-soft: #fcf7f7;
-    --dp-gold: #a98755;
+    --dp-red: #9d1422;
+    --dp-red-deep: #9d1422;
+    --dp-ink: #241b1b;
+    --dp-muted: #514545;
+    --dp-line: #f6eae6;
+    --dp-soft: #fff0eb;
+    --dp-gold: #514545;
     --df-sticky-offset: 142px;
-    --bs-primary: #a71930;
+    --bs-primary: #9d1422;
     --bs-primary-rgb: 167,25,48;
-    background: #fff;
+    background: #ffffff;
     color: var(--dp-ink);
     font-family: 'Open Sans',Arial,sans-serif;
     font-size: 14px;
@@ -27,8 +28,8 @@
     }
 
     .df-site ::selection {
-        background: #f2ced9;
-        color: #721125
+        background: #f9dfd6;
+        color: #9d1422
     }
 
     .df-site .text-primary {
@@ -40,29 +41,29 @@
     }
 
     .df-site .border-primary {
-        border-color: #dca9b5 !important
+        border-color: #e8b5a8 !important
     }
 
     .df-site .btn.btn-primary {
         background: var(--dp-red);
         border-color: var(--dp-red);
-        color: #fff
+        color: #ffffff
     }
 
         .df-site .btn.btn-primary:hover {
             background: var(--dp-red-deep) !important;
-            color: #fff !important
+            color: #ffffff !important
         }
 
     .df-site .btn-outline-primary {
-        border-color: #d4a4b0;
+        border-color: #e8b5a8;
         color: var(--dp-red)
     }
 
         .df-site .btn-outline-primary:hover {
             background: var(--dp-red);
             border-color: var(--dp-red);
-            color: #fff
+            color: #ffffff
         }
 
     .df-site .df-shell {
@@ -83,9 +84,9 @@
         padding: 11px 20px;
         border-radius: 0 0 10px 10px;
         background: var(--dp-red);
-        color: #fff;
+        color: #ffffff;
         text-decoration: none;
-        font-size: 13px
+        font-size: 14px
     }
 
         .df-site .df-skip-link:focus {
@@ -93,7 +94,7 @@
         }
 
     .df-site :is(.df-site-header,.df-site-footer,.df-search-modal) :is(a,button,input):focus-visible {
-        outline: 3px solid #d87589;
+        outline: 3px solid #c51b29;
         outline-offset: 3px
     }
 
@@ -102,9 +103,9 @@
     }
 
     .df-site .df-announcement {
-        background: #78172c;
-        color: #f9e5eb;
-        font-size: 10px;
+        background: #9d1422;
+        color: #fff0eb;
+        font-size: 14px;
         line-height: 1.6;
         letter-spacing: .2px
     }
@@ -118,13 +119,13 @@
     }
 
     .df-site .df-small-diamond {
-        color: #dfbf8e;
-        font-size: 10px;
+        color: #d9b268;
+        font-size: 14px;
         margin-right: 8px
     }
 
     .df-site .df-announcement a {
-        color: #fff;
+        color: #ffffff;
         font-weight: 600
     }
 
@@ -136,14 +137,14 @@
         position: sticky;
         top: 0;
         z-index: 1020;
-        background: #fff;
+        background: #ffffff;
         border-bottom: 1px solid var(--dp-line);
-        box-shadow: 0 5px 25px #4f182508;
+        box-shadow: 0 5px 25px #9d142208;
         transition: box-shadow .2s ease
     }
 
         .df-site .df-site-header.is-scrolled {
-            box-shadow: 0 7px 30px #4f182516
+            box-shadow: 0 7px 30px #9d142216
         }
 
     .df-site .df-brandbar {
@@ -169,9 +170,9 @@
         place-items: center;
         width: 45px;
         height: 51px;
-        border: 1px solid #d7b995;
+        border: 1px solid #d9b268;
         border-radius: 17px 17px 6px 6px;
-        background: #fff9f4;
+        background: #fff5df;
         color: var(--dp-red);
         font-size: 20px
     }
@@ -183,12 +184,12 @@
             right: 15px;
             height: 1px;
             content: '';
-            background: #d5b68c
+            background: #d9b268
         }
 
     .df-site .df-brand-word {
         display: block;
-        color: #2c2026;
+        color: #241b1b;
         font-size: 29px;
         line-height: 1.2;
         font-weight: 800;
@@ -200,7 +201,7 @@
         }
 
         .df-site .df-brand-word sup {
-            font-size: 9px;
+            font-size: 14px;
             position: relative;
             top: -13px;
             margin-left: 4px;
@@ -209,9 +210,9 @@
 
     .df-site .df-brand-tagline {
         display: block;
-        color: #927581;
+        color: #514545;
         letter-spacing: 2.5px;
-        font-size: 8px;
+        font-size: 14px;
         font-weight: 600;
         line-height: 1.6;
         margin-top: 5px
@@ -225,17 +226,17 @@
 
         .df-site .df-brand-message > span {
             display: block;
-            color: #9a767f;
-            font-size: 8px;
+            color: #514545;
+            font-size: 14px;
             font-weight: 600;
             letter-spacing: 1.6px;
             margin-bottom: 4px
         }
 
         .df-site .df-brand-message strong {
-            font-size: 12px;
+            font-size: 14px;
             font-weight: 500;
-            color: #746169
+            color: #514545
         }
 
     .df-site .df-header-actions {
@@ -251,14 +252,14 @@
         height: 36px;
         border: 0;
         border-radius: 50%;
-        background: #fff;
-        color: #69505c;
+        background: #ffffff;
+        color: #514545;
         font-size: 14px;
         cursor: pointer
     }
 
         .df-site .df-header-search:hover {
-            background: #fcf0f4;
+            background: #fff0eb;
             color: var(--dp-red)
         }
 
@@ -266,8 +267,8 @@
         display: flex;
         align-items: center;
         gap: 8px;
-        color: #59424d;
-        font-size: 12px;
+        color: #514545;
+        font-size: 14px;
         font-weight: 600;
         white-space: nowrap
     }
@@ -285,11 +286,11 @@
         border-radius: 8px 20px 8px 20px;
         background: var(--dp-red);
         border: 1px solid var(--dp-red);
-        color: #fff;
-        font-size: 12px;
+        color: #ffffff;
+        font-size: 14px;
         font-weight: 600;
         white-space: nowrap;
-        box-shadow: 0 6px 16px #a719301a;
+        box-shadow: 0 6px 16px #9d14221a;
         transition: background .2s ease
     }
 
@@ -303,12 +304,12 @@
         .df-site .df-reserve-link:hover {
             background: var(--dp-red-deep);
             border-color: var(--dp-red-deep);
-            color: #fff
+            color: #ffffff
         }
 
     .df-site .df-primary-navigation {
-        border-top: 1px solid #f5edf0;
-        background: #fff
+        border-top: 1px solid #fffaf6;
+        background: #ffffff
     }
 
     .df-site .df-navigation-inner {
@@ -354,8 +355,8 @@
             padding: 14px 17px !important;
             border-radius: 0 !important;
             background: transparent;
-            color: #6a515c;
-            font-size: 13px;
+            color: #514545;
+            font-size: 14px;
             font-weight: 600;
             line-height: 1.6;
             white-space: nowrap;
@@ -375,7 +376,7 @@
 
             .df-site .df-mainmenu .nav-link:hover, .df-site .df-mainmenu .nav-link.active, .df-site .df-mainmenu .nav-link.show {
                 color: var(--dp-red);
-                background: #fdf6f8
+                background: #fff0eb
             }
 
                 .df-site .df-mainmenu .nav-link.active::before, .df-site .df-mainmenu .nav-link.show::before {
@@ -383,7 +384,7 @@
                 }
 
     .df-site .df-site-header .dropdown-toggle::after {
-        font-size: 9px;
+        font-size: 14px;
         vertical-align: middle;
         margin-left: 7px
     }
@@ -395,8 +396,8 @@
         padding: 8px;
         border: 1px solid var(--dp-line);
         border-radius: 13px;
-        background: #fff;
-        box-shadow: 0 16px 40px #46202e18
+        background: #ffffff;
+        box-shadow: 0 16px 40px #9d142218
     }
 
         .df-site .df-site-header .dropdown-menu:not(.show) {
@@ -417,16 +418,16 @@
         border: 0;
         border-radius: 8px;
         background: transparent;
-        color: #66505c;
+        color: #514545;
         font-family: inherit;
-        font-size: 12px;
+        font-size: 14px;
         line-height: 1.6;
         white-space: normal;
         overflow-wrap: anywhere
     }
 
         .df-site .df-site-header .dropdown-item:hover, .df-site .df-site-header .dropdown-item:focus, .df-site .df-site-header .dropdown-item.active {
-            background: #fcf1f4;
+            background: #fff0eb;
             color: var(--dp-red)
         }
 
@@ -436,7 +437,7 @@
         }
 
     .df-site .df-site-header .dropdown-divider {
-        border-top-color: #f1e3e8;
+        border-top-color: #f6eae6;
         margin: 6px 3px
     }
 
@@ -448,9 +449,9 @@
         padding: 8px 0;
         border: 0;
         background: transparent;
-        color: #5b4350;
+        color: #514545;
         font-family: inherit;
-        font-size: 12px;
+        font-size: 14px;
         font-weight: 600;
         cursor: pointer
     }
@@ -471,16 +472,16 @@
 
         .df-site .df-user-intro > span {
             display: block;
-            font-size: 8px;
+            font-size: 14px;
             font-weight: 600;
             letter-spacing: 1.3px;
-            color: #9d7a87;
+            color: #514545;
             margin-bottom: 5px
         }
 
         .df-site .df-user-intro strong {
             display: block;
-            font-size: 12px;
+            font-size: 14px;
             font-weight: 600;
             overflow-wrap: anywhere
         }
@@ -507,10 +508,10 @@
     }
 
     .df-site #searchModal .modal-content {
-        border: 1px solid #e6d0d9;
+        border: 1px solid #dfc8c2;
         border-radius: 21px;
-        background: #fff;
-        box-shadow: 0 35px 90px #33101d33
+        background: #ffffff;
+        box-shadow: 0 35px 90px #9d142233
     }
 
     .df-site .df-search-modal .modal-header {
@@ -520,7 +521,7 @@
 
     .df-site .df-overline {
         display: block;
-        font-size: 9px;
+        font-size: 14px;
         font-weight: 700;
         letter-spacing: 2px;
         color: var(--dp-red);
@@ -541,7 +542,7 @@
     }
 
     .df-site .df-search-modal p {
-        font-size: 12px;
+        font-size: 14px;
         color: var(--dp-muted);
         line-height: 1.8
     }
@@ -551,8 +552,8 @@
         align-items: center;
         gap: 12px;
         padding: 0 15px;
-        background: #fcf8f9;
-        border: 1px solid #dfcad2;
+        background: #ffffff;
+        border: 1px solid #dfc8c2;
         border-radius: 11px;
         color: var(--dp-red)
     }
@@ -566,7 +567,7 @@
             outline: none;
             background: transparent;
             font: inherit;
-            font-size: 13px;
+            font-size: 14px;
             color: var(--dp-ink)
         }
 
@@ -585,7 +586,7 @@
         gap: 10px;
         margin: 17px 0 12px;
         color: var(--dp-red);
-        font-size: 12px;
+        font-size: 14px;
         font-weight: 600;
         text-decoration: none
     }
@@ -603,24 +604,24 @@
             gap: 18px;
             border-radius: 8px;
             padding: 11px;
-            color: #65505a;
-            font-size: 13px;
+            color: #514545;
+            font-size: 14px;
             text-decoration: none;
             overflow-wrap: anywhere
         }
 
             .df-site .df-quick-results a:hover {
                 color: var(--dp-red);
-                background: #fcf0f4
+                background: #fff0eb
             }
 
             .df-site .df-quick-results a > span:last-child {
-                color: #a77d8d
+                color: #514545
             }
     /* Trang chủ: nội dung rõ, không banner ảnh quá lớn. */
     .df-site .fd-food-strip {
         padding: 36px 0 18px;
-        background: linear-gradient(115deg,#fffaf7,#fff 50%,#fff8f9)
+        background: linear-gradient(115deg,#fff0eb,#ffffff 50%,#ffffff)
     }
 
     .df-site .df-home-intro {
@@ -642,7 +643,7 @@
         align-items: center;
         gap: 10px;
         margin-bottom: 14px;
-        font-size: 9px;
+        font-size: 14px;
         line-height: 1.6;
         letter-spacing: 1.8px;
         font-weight: 700;
@@ -672,7 +673,7 @@
     }
 
     .df-site .fd-food-heading > p {
-        font-size: 13px;
+        font-size: 14px;
         line-height: 1.9;
         margin: 16px 0 20px;
         color: var(--dp-muted)
@@ -695,8 +696,8 @@
         border: 1px solid var(--dp-red);
         border-radius: 7px 19px 7px 19px;
         background: var(--dp-red);
-        color: #fff;
-        font-size: 12px;
+        color: #ffffff;
+        font-size: 14px;
         font-weight: 600;
         text-decoration: none;
         transition: background .2s ease
@@ -704,7 +705,7 @@
 
         .df-site .df-premium-button:hover {
             background: var(--dp-red-deep);
-            color: #fff
+            color: #ffffff
         }
 
     .df-site .df-premium-text-link {
@@ -712,7 +713,7 @@
         align-items: center;
         gap: 16px;
         color: var(--dp-red);
-        font-size: 12px;
+        font-size: 14px;
         font-weight: 600;
         text-decoration: none
     }
@@ -724,12 +725,12 @@
     .df-site .df-editorial-box {
         position: relative;
         padding: 25px 27px 20px;
-        border: 1px solid #b82d46;
+        border: 1px solid #c51b29;
         border-radius: 8px 38px 8px 38px;
-        background: linear-gradient(135deg,#b8243e,#7e1328);
-        color: #fff;
+        background: linear-gradient(135deg,#c51b29,#9d1422);
+        color: #ffffff;
         overflow: hidden;
-        box-shadow: 0 12px 30px #9c1a3014
+        box-shadow: 0 12px 30px #9d142214
     }
 
         .df-site .df-editorial-box::after {
@@ -748,14 +749,14 @@
         position: absolute;
         right: 25px;
         top: 20px;
-        color: #e3c191;
+        color: #d9b268;
         font-size: 21px
     }
 
     .df-site .df-editorial-kicker {
         display: block;
-        color: #f6cdd7;
-        font-size: 8px;
+        color: #f9dfd6;
+        font-size: 14px;
         letter-spacing: 2px;
         margin-bottom: 20px
     }
@@ -767,12 +768,12 @@
         letter-spacing: -.6px;
         line-height: 1.6;
         margin: 0 0 12px;
-        color: #fff
+        color: #ffffff
     }
 
     .df-site .df-editorial-box p {
-        font-size: 10px;
-        color: #edc5cf;
+        font-size: 14px;
+        color: #f9dfd6;
         line-height: 1.8;
         margin: 0 0 18px
     }
@@ -784,9 +785,9 @@
         gap: 10px;
         padding-top: 13px;
         border-top: 1px solid #ffffff2b;
-        font-size: 10px;
+        font-size: 14px;
         font-weight: 600;
-        color: #fff;
+        color: #ffffff;
         text-decoration: none
     }
     /* Các ảnh bằng nhau; vòng chạy liền mạch. */
@@ -810,10 +811,10 @@
         width: 236px;
         height: auto;
         padding: 6px 6px 0;
-        border: 1px solid #e8d8de;
+        border: 1px solid #dfc8c2;
         border-radius: 15px;
-        background: #fff;
-        box-shadow: 0 7px 20px #61303d08
+        background: #ffffff;
+        box-shadow: 0 7px 20px #2f242408
     }
 
     .df-site .fd-food-photo {
@@ -827,13 +828,13 @@
     }
 
     .df-site .fd-food-category {
-        font-size: 8px;
+        font-size: 14px;
         color: var(--dp-red);
         letter-spacing: 1px
     }
 
     .df-site .fd-food-name {
-        font-size: 12px;
+        font-size: 14px;
         color: var(--dp-ink);
         font-weight: 600
     }
@@ -842,34 +843,34 @@
         width: 25px;
         height: 25px;
         color: var(--dp-gold);
-        border-color: #eadac4
+        border-color: #d9b268
     }
 
     .df-site .fd-food-bottom {
         padding-top: 13px;
-        border-top: 1px solid #ecdee3
+        border-top: 1px solid #f6eae6
     }
 
     .df-site .fd-food-note {
-        font-size: 10px;
-        color: #8b717c
+        font-size: 14px;
+        color: #514545
     }
 
     .df-site .fd-food-toggle {
         color: var(--dp-red);
-        border-color: #dcb9c4;
-        background: #fff
+        border-color: #dfc8c2;
+        background: #ffffff
     }
 
         .df-site .fd-food-toggle:hover, .df-site .fd-food-toggle[aria-pressed=true] {
             background: var(--dp-red);
-            color: #fff;
+            color: #ffffff;
             border-color: var(--dp-red)
         }
     /* Gợi ý khám phá dưới dải ảnh */
     .df-site .df-home-paths {
         padding: 21px 0 8px;
-        background: #fff
+        background: #ffffff
     }
 
     .df-site .df-home-paths-grid {
@@ -896,7 +897,7 @@
             }
 
             .df-site .df-home-paths-grid > a:hover {
-                background: #fff8fa
+                background: #ffffff
             }
 
     .df-site .df-path-icon {
@@ -906,13 +907,13 @@
         width: 38px;
         height: 38px;
         border-radius: 11px;
-        background: #fbf0f2;
+        background: #fff0eb;
         color: var(--dp-red);
         font-size: 15px
     }
 
     .df-site .df-home-paths-grid h2 {
-        font-size: 12px;
+        font-size: 14px;
         font-weight: 700 !important;
         line-height: 1.6;
         margin: 0 0 4px;
@@ -920,7 +921,7 @@
     }
 
     .df-site .df-home-paths-grid p {
-        font-size: 10px;
+        font-size: 14px;
         color: var(--dp-muted);
         line-height: 1.7;
         margin: 0
@@ -928,7 +929,7 @@
 
     .df-site .df-path-arrow {
         margin-left: auto;
-        color: #b1838f;
+        color: #514545;
         font-size: 17px
     }
     /* About & các section đang có */
@@ -948,18 +949,18 @@
 
     .df-site .fd-about-seal {
         background: var(--dp-red);
-        box-shadow: 0 10px 30px #a719301c
+        box-shadow: 0 10px 30px #9d14221c
     }
 
     .df-site .fd-about-outline {
-        border-color: #dfc8b0
+        border-color: #d9b268
     }
 
     .df-site .df-home {
-        --df-red: #a71930;
-        --df-red-dark: #7c1024;
-        --df-ink: #2b2026;
-        --df-tint: #fcf6f6
+        --df-red: #9d1422;
+        --df-red-dark: #9d1422;
+        --df-ink: #241b1b;
+        --df-tint: #fff0eb
     }
 
         .df-site .df-home .df-section {
@@ -968,31 +969,31 @@
 
         .df-site .df-home .df-service-card {
             border-radius: 8px 24px 8px 24px;
-            border-color: #eddee3;
-            box-shadow: 0 6px 24px #602b3905
+            border-color: #f6eae6;
+            box-shadow: 0 6px 24px #9d142205
         }
 
         .df-site .df-home .df-service-top > span {
-            color: #c4aa80
+            color: #8c5514
         }
 
         .df-site .df-home .df-filter button[aria-pressed=true] {
-            box-shadow: 0 4px 12px #9b18301f
+            box-shadow: 0 4px 12px #9d14221f
         }
     /* Trang thực đơn SQL: giữ nguyên tìm kiếm / sắp xếp / phân trang */
     .df-site .df-menu {
-        --df-red: #a71930;
-        --df-red-dark: #7c1024;
-        --df-ink: #2b2026;
-        --df-muted: #796c73;
-        --df-border: #ecdee3;
+        --df-red: #9d1422;
+        --df-red-dark: #9d1422;
+        --df-ink: #241b1b;
+        --df-muted: #514545;
+        --df-border: #f6eae6;
         font-family: 'Open Sans',Arial,sans-serif;
-        background: #fff
+        background: #ffffff
     }
 
     .df-site .df-menu-hero {
-        background: linear-gradient(115deg,#fff7f5,#fff 58%,#fdf1f3);
-        border-bottom-color: #e9dbe0
+        background: linear-gradient(115deg,#fff0eb,#ffffff 58%,#fff0eb);
+        border-bottom-color: #f6eae6
     }
 
     .df-site .df-menu-hero-inner {
@@ -1003,7 +1004,7 @@
 
     .df-site .df-menu-breadcrumb {
         margin-bottom: 22px;
-        font-size: 11px
+        font-size: 14px
     }
 
     .df-site .df-menu h1 {
@@ -1015,39 +1016,39 @@
 
     .df-site .df-menu-eyebrow {
         margin-bottom: 14px !important;
-        font-size: 9px;
+        font-size: 14px;
         letter-spacing: 2px
     }
 
     .df-site .df-menu-intro {
-        font-size: 13px;
+        font-size: 14px;
         line-height: 1.9;
         margin-top: 17px !important
     }
 
     .df-site .df-menu-hero-note {
         flex: 0 0 255px;
-        border: 1px solid #b52a43;
+        border: 1px solid #c51b29;
         border-radius: 8px 32px 8px 32px;
         padding: 24px;
-        background: linear-gradient(135deg,#b8243e,#7e1328);
-        color: #fff;
+        background: linear-gradient(135deg,#c51b29,#9d1422);
+        color: #ffffff;
         text-align: left;
-        box-shadow: 0 10px 28px #a7193012
+        box-shadow: 0 10px 28px #9d142212
     }
 
     .df-site .df-menu-note-symbol {
         position: absolute;
         right: 23px;
         top: 20px;
-        color: #e3c191;
+        color: #d9b268;
         font-size: 23px;
         margin: 0
     }
 
     .df-site .df-menu-hero-note > span:not(.df-menu-note-symbol) {
-        color: #f0c6d1;
-        font-size: 8px;
+        color: #f9dfd6;
+        font-size: 14px;
         letter-spacing: 1.6px
     }
 
@@ -1066,8 +1067,8 @@
     }
 
     .df-site .df-menu-hero-note p {
-        color: #f4d7e0;
-        font-size: 11px;
+        color: #f9dfd6;
+        font-size: 14px;
         line-height: 1.8
     }
 
@@ -1077,9 +1078,9 @@
         gap: 16px;
         flex-wrap: wrap;
         padding-block: 16px;
-        border-bottom: 1px solid #f0e4e9;
-        color: #8c6b78;
-        font-size: 11px
+        border-bottom: 1px solid #f6eae6;
+        color: #514545;
+        font-size: 14px
     }
 
         .df-site .df-menu-service-notes i {
@@ -1093,10 +1094,10 @@
 
     .df-site .df-menu-search {
         padding: 17px 20px;
-        border-color: #e7cbd5;
+        border-color: #f9dfd6;
         border-radius: 12px;
-        background: #fff;
-        box-shadow: 0 7px 26px #811d3208;
+        background: #ffffff;
+        box-shadow: 0 7px 26px #9d142208;
         margin-bottom: 32px
     }
 
@@ -1107,7 +1108,7 @@
         }
 
         .df-site .df-menu-search input {
-            font-size: 13px
+            font-size: 14px
         }
 
     .df-site .df-menu-sidebar {
@@ -1117,7 +1118,7 @@
         padding: 20px 15px;
         border: 1px solid var(--dp-line);
         border-radius: 15px;
-        background: #fff;
+        background: #ffffff;
         max-height: calc(100dvh - var(--df-sticky-offset) - 35px);
         overflow: auto
     }
@@ -1133,20 +1134,20 @@
     }
 
     .df-site .df-menu-category {
-        font-size: 12px;
+        font-size: 14px;
         padding: 12px;
         border-radius: 8px;
-        color: #77616c
+        color: #514545
     }
 
         .df-site .df-menu-category.is-active {
-            background: #a71930;
-            color: #fff;
-            border-color: #a71930
+            background: #9d1422;
+            color: #ffffff;
+            border-color: #9d1422
         }
 
             .df-site .df-menu-category.is-active > span:last-child {
-                color: #f2cad5
+                color: #f9dfd6
             }
 
     .df-site .df-menu-sidebar-note {
@@ -1155,7 +1156,7 @@
     }
 
         .df-site .df-menu-sidebar-note p {
-            font-size: 11px
+            font-size: 14px
         }
 
     .df-site .df-menu-toolbar {
@@ -1168,13 +1169,13 @@
         }
 
     .df-site .df-menu-sort select {
-        font-size: 11px;
+        font-size: 14px;
         min-height: 38px
     }
 
     .df-site .df-menu-sort button {
         min-height: 38px;
-        border-color: #d7afbc;
+        border-color: #dfc8c2;
         color: var(--dp-red)
     }
 
@@ -1186,15 +1187,15 @@
     .df-site .df-menu-card {
         display: flex;
         flex-direction: column;
-        border-color: #ecdee3;
+        border-color: #f6eae6;
         border-radius: 9px 22px 9px 22px;
-        background: #fff;
-        box-shadow: 0 6px 20px #5a203006
+        background: #ffffff;
+        box-shadow: 0 6px 20px #9d142206
     }
 
         .df-site .df-menu-card:hover {
-            border-color: #cc8b9d;
-            box-shadow: 0 16px 35px #65192b12;
+            border-color: #c51b29;
+            box-shadow: 0 16px 35px #9d142212;
             transform: translateY(-3px)
         }
 
@@ -1202,15 +1203,15 @@
         aspect-ratio: 4/3;
         margin: 6px 6px 0;
         border-radius: 5px 17px 5px 17px;
-        background: #faf1f1
+        background: #fff0eb
     }
 
     .df-site .df-menu-featured {
         border-radius: 5px;
-        background: #a71930ed;
-        color: #fff;
+        background: #9d1422ed;
+        color: #ffffff;
         padding: 7px 10px;
-        font-size: 9px;
+        font-size: 14px;
         backdrop-filter: blur(5px)
     }
 
@@ -1229,12 +1230,12 @@
     }
 
     .df-site .df-menu-card-category {
-        font-size: 8px;
+        font-size: 14px;
         letter-spacing: 1.1px
     }
 
     .df-site .df-menu-card-description {
-        font-size: 12px;
+        font-size: 14px;
         line-height: 1.8;
         margin-bottom: 14px !important
     }
@@ -1252,21 +1253,21 @@
     .df-site .df-menu-allergen {
         padding: 9px 10px;
         border-radius: 7px;
-        background: #fcf4ef;
-        color: #836247;
-        font-size: 10px
+        background: #fff0eb;
+        color: #514545;
+        font-size: 14px
     }
 
     .df-site .df-menu-pagination a.is-current {
         background: var(--dp-red);
         border-color: var(--dp-red);
-        box-shadow: 0 4px 12px #9b18301f
+        box-shadow: 0 4px 12px #9d14221f
     }
     /* Nội dung bổ sung: gợi ý và điều cần biết */
     .df-site .df-dining-guide {
         padding: 56px 0;
-        background: #fcf6f6;
-        border-block: 1px solid #f0e2e7
+        background: #fff0eb;
+        border-block: 1px solid #f6eae6
     }
 
     .df-site .df-guide-heading {
@@ -1292,7 +1293,7 @@
 
         .df-site .df-guide-heading > p {
             max-width: 270px;
-            font-size: 12px;
+            font-size: 14px;
             line-height: 1.9;
             color: var(--dp-muted);
             margin: 0
@@ -1308,14 +1309,14 @@
             display: flex;
             flex-direction: column;
             padding: 25px;
-            border: 1px solid #ead9e0;
+            border: 1px solid #f6eae6;
             border-radius: 14px;
-            background: #fff
+            background: #ffffff
         }
 
     .df-site .df-guide-number {
         display: block;
-        color: #b08b55;
+        color: #8c5514;
         font-size: 27px;
         font-weight: 600;
         line-height: 1;
@@ -1332,7 +1333,7 @@
     }
 
     .df-site .df-guide-grid p {
-        font-size: 12px;
+        font-size: 14px;
         line-height: 1.9;
         color: var(--dp-muted);
         margin: 0 0 21px;
@@ -1343,10 +1344,10 @@
         display: flex;
         justify-content: space-between;
         gap: 10px;
-        border-top: 1px solid #f1e5e9;
+        border-top: 1px solid #f6eae6;
         padding-top: 13px;
         color: var(--dp-red);
-        font-size: 11px;
+        font-size: 14px;
         font-weight: 600;
         text-decoration: none
     }
@@ -1364,7 +1365,7 @@
 
     .df-site .df-faq-intro > p {
         max-width: 300px;
-        font-size: 13px;
+        font-size: 14px;
         line-height: 1.9;
         color: var(--dp-muted);
         margin: 18px 0 22px
@@ -1386,8 +1387,8 @@
             gap: 20px;
             cursor: pointer;
             padding: 19px 0;
-            color: #59414c;
-            font-size: 13px;
+            color: #514545;
+            font-size: 14px;
             font-weight: 600;
             list-style: none
         }
@@ -1414,14 +1415,14 @@
         .df-site .df-faq-list details > div {
             padding: 0 24px 20px 0;
             color: var(--dp-muted);
-            font-size: 12px;
+            font-size: 14px;
             line-height: 1.95
         }
     /* Footer đỏ trầm với nội dung rõ ràng */
     .df-site .df-site-footer {
         padding: 0 0 23px;
-        background: linear-gradient(125deg,#3e1523,#541526 60%,#3d1322);
-        color: #e4cbd5
+        background: linear-gradient(125deg,#241b1b,#9d1422 60%,#9d1422);
+        color: #dfc8c2
     }
 
     .df-site .df-footer-invitation {
@@ -1434,8 +1435,8 @@
     }
 
         .df-site .df-footer-invitation .df-overline {
-            color: #d5b685;
-            font-size: 8px;
+            color: #d9b268;
+            font-size: 14px;
             margin-bottom: 12px;
             letter-spacing: 2px
         }
@@ -1446,17 +1447,17 @@
         font-weight: 600 !important;
         line-height: 1.35;
         letter-spacing: -1px;
-        color: #fff;
+        color: #ffffff;
         margin: 0 0 13px
     }
 
         .df-site .df-site-footer h2 span {
-            color: #e9b8c8
+            color: #e8b5a8
         }
 
     .df-site .df-footer-invitation p {
-        font-size: 12px;
-        color: #cfadb9;
+        font-size: 14px;
+        color: #dfc8c2;
         line-height: 1.8;
         margin: 0;
         max-width: 450px
@@ -1468,18 +1469,18 @@
         justify-content: space-between;
         gap: 40px;
         padding: 14px 21px;
-        border: 1px solid #d8b488;
+        border: 1px solid #d9b268;
         border-radius: 7px 20px 7px 20px;
-        color: #f4e3c7;
-        font-size: 12px;
+        color: #fff5df;
+        font-size: 14px;
         font-weight: 600;
         text-decoration: none;
         white-space: nowrap
     }
 
         .df-site .df-footer-button:hover {
-            background: #f4e3c7;
-            color: #5c182b
+            background: #fff5df;
+            color: #9d1422
         }
 
         .df-site .df-footer-button > span {
@@ -1503,48 +1504,48 @@
     .df-site .df-site-footer .df-brand-symbol {
         width: 38px;
         height: 44px;
-        border-color: #a4806d;
+        border-color: #514545;
         background: #ffffff05;
-        color: #e5c190;
+        color: #d9b268;
         font-size: 17px
     }
 
     .df-site .df-site-footer .df-brand-word {
         font-size: 26px;
-        color: #fff
+        color: #ffffff
     }
 
         .df-site .df-site-footer .df-brand-word > span {
-            color: #e9b8c8
+            color: #e8b5a8
         }
 
     .df-site .df-site-footer .df-brand-tagline {
-        font-size: 7px;
-        color: #b998a6;
+        font-size: 14px;
+        color: #514545;
         letter-spacing: 2px
     }
 
     .df-site .df-footer-brand p {
-        font-size: 12px;
-        color: #c9a5b3;
+        font-size: 14px;
+        color: #dfc8c2;
         line-height: 1.9;
         margin: 18px 0 13px
     }
 
     .df-site .df-footer-signature {
         display: block;
-        font-size: 8px;
+        font-size: 14px;
         letter-spacing: 1.3px;
-        color: #d2b584;
+        color: #d9b268;
         line-height: 1.8
     }
 
     .df-site .df-site-footer h3 {
         font-family: 'Open Sans',Arial,sans-serif !important;
-        font-size: 12px;
+        font-size: 14px;
         font-weight: 600 !important;
         line-height: 1.7;
-        color: #f6e9ed;
+        color: #fff0eb;
         margin: 4px 0 20px
     }
 
@@ -1555,31 +1556,31 @@
         gap: 20px;
         margin-bottom: 12px;
         max-width: 230px;
-        color: #c9a5b3;
-        font-size: 11px
+        color: #dfc8c2;
+        font-size: 14px
     }
 
         .df-site .df-footer-links a:hover {
-            color: #fff
+            color: #ffffff
         }
 
         .df-site .df-footer-links a > span {
-            color: #ab7c8f
+            color: #514545
         }
 
     .df-site .df-footer-contact p {
         display: flex;
         align-items: flex-start;
         gap: 10px;
-        color: #c9a5b3;
-        font-size: 11px;
+        color: #dfc8c2;
+        font-size: 14px;
         line-height: 1.9;
         margin: 0 0 13px;
         overflow-wrap: anywhere
     }
 
     .df-site .df-footer-contact i {
-        color: #d2b584;
+        color: #d9b268;
         width: 14px;
         flex-shrink: 0;
         margin-top: 5px
@@ -1603,7 +1604,7 @@
             aspect-ratio: 2/1;
             object-fit: cover;
             border-radius: 8px;
-            background: #6b3a4e;
+            background: #514545;
             opacity: .9
         }
 
@@ -1615,16 +1616,16 @@
         gap: 14px;
         padding-top: 21px;
         border-top: 1px solid #ffffff1a;
-        color: #b990a0;
-        font-size: 10px
+        color: #514545;
+        font-size: 14px
     }
 
         .df-site .df-footer-bottom a {
-            color: #ddbecc
+            color: #dfc8c2
         }
 
             .df-site .df-footer-bottom a:hover {
-                color: #fff
+                color: #ffffff
             }
 
         .df-site .df-footer-bottom > a span {
@@ -1683,7 +1684,7 @@
 
     .df-site .df-mainmenu .nav-link {
         padding: 12px 13px !important;
-        font-size: 12px
+        font-size: 14px
     }
 
     .df-site .df-header-actions {
@@ -1709,7 +1710,7 @@
     }
 
     .df-site .fd-food-heading > p {
-        font-size: 12px
+        font-size: 14px
     }
 
     .df-site .df-home-intro-actions {
@@ -1717,7 +1718,7 @@
     }
 
     .df-site .df-premium-button, .df-site .df-premium-text-link {
-        font-size: 11px
+        font-size: 14px
     }
 
     .df-site .df-home-paths-grid {
@@ -1758,7 +1759,7 @@
         }
 
         .df-site .df-guide-grid p {
-            font-size: 11px
+            font-size: 14px
         }
 
     .df-site .df-footer-columns, .df-site .df-footer-columns.has-contact {
@@ -1800,7 +1801,7 @@
     }
 
     .df-site .df-brand-tagline {
-        font-size: 7px;
+        font-size: 14px;
         letter-spacing: 1.7px
     }
 
@@ -1814,7 +1815,7 @@
 
     .df-site .df-reserve-link {
         padding: 9px 13px;
-        font-size: 11px;
+        font-size: 14px;
         min-height: 40px
     }
 
@@ -1827,12 +1828,12 @@
         }
 
     .df-site .df-login-link {
-        font-size: 11px;
+        font-size: 14px;
         gap: 6px
     }
 
     .df-site .df-user-button {
-        font-size: 11px;
+        font-size: 14px;
         max-width: 132px
     }
 
@@ -1851,7 +1852,7 @@
 
     .df-site .df-mainmenu .nav-link {
         padding: 10px 11px !important;
-        font-size: 11px
+        font-size: 14px
     }
 
         .df-site .df-mainmenu .nav-link::before {
@@ -1916,7 +1917,7 @@
     }
 
     .df-site .fd-food-note {
-        font-size: 9px;
+        font-size: 14px;
         max-width: 65%
     }
 
@@ -1982,7 +1983,7 @@
     }
 
     .df-site .df-menu-service-notes {
-        font-size: 10px;
+        font-size: 14px;
         gap: 9px;
         padding-block: 13px
     }
@@ -2039,7 +2040,7 @@
         }
 
         .df-site .df-guide-grid p {
-            font-size: 12px
+            font-size: 14px
         }
 
     .df-site .df-guide-number {
@@ -2099,7 +2100,7 @@
     }
 
     .df-site .df-announcement {
-        font-size: 8px
+        font-size: 14px
     }
 
     .df-site .df-announcement-inner {
@@ -2108,7 +2109,7 @@
     }
 
     .df-site .df-announcement a {
-        font-size: 8px;
+        font-size: 14px;
         white-space: nowrap
     }
 
@@ -2129,7 +2130,7 @@
     .df-site .df-header-search {
         width: 30px;
         height: 32px;
-        font-size: 12px
+        font-size: 14px
     }
 
     .df-site .df-login-link > i {
@@ -2137,14 +2138,14 @@
     }
 
     .df-site .df-login-link {
-        font-size: 10px
+        font-size: 14px
     }
 
     .df-site .df-reserve-link {
         gap: 6px;
         min-height: 35px;
         padding: 8px 11px;
-        font-size: 10px;
+        font-size: 14px;
         border-radius: 7px 15px 7px 15px
     }
 
@@ -2159,14 +2160,14 @@
     }
 
     .df-site .df-brand-tagline {
-        font-size: 6px;
+        font-size: 14px;
         letter-spacing: 1.6px
     }
 
     .df-site .df-user-button {
         max-width: 109px;
         gap: 5px;
-        font-size: 10px
+        font-size: 14px
     }
 
         .df-site .df-user-button > span {
@@ -2174,11 +2175,11 @@
         }
 
     .df-site .df-site-header .dropdown-menu {
-        font-size: 12px
+        font-size: 14px
     }
 
     .df-site .df-mainmenu .nav-link {
-        font-size: 11px;
+        font-size: 14px;
         padding: 10px 12px !important
     }
 
@@ -2201,7 +2202,7 @@
             margin-top: 14px;
             padding-top: 12px;
             border-top: 1px solid #ffffff2b;
-            font-size: 10px
+            font-size: 14px
         }
 
         .df-site .df-editorial-box p {
@@ -2209,7 +2210,7 @@
         }
 
     .df-site .df-premium-label {
-        font-size: 8px;
+        font-size: 14px;
         letter-spacing: 1.2px
     }
 
@@ -2257,7 +2258,7 @@
 
     .df-site .df-menu-search button {
         padding: 11px 13px;
-        font-size: 11px
+        font-size: 14px
     }
 
     .df-site .df-menu-toolbar h2 {
@@ -2265,7 +2266,7 @@
     }
 
     .df-site .df-footer-bottom {
-        font-size: 9px;
+        font-size: 14px;
         gap: 12px
     }
 

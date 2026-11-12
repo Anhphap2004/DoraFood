@@ -1,0 +1,194 @@
+﻿@model DoraFood.Areas.Admin.ViewModels.ContactMessagesViewModel
+
+@{
+    ViewData["Title"] = "Quản lý liên hệ";
+}
+
+<div class="container-fluid">
+    @if (TempData["ContactSuccess"] is string successMessage)
+    {
+        <div class="alert alert-success" role="status">
+            @successMessage
+        </div>
+    }
+
+    @if (TempData["ContactError"] is string errorMessage)
+    {
+        <div class="alert alert-warning" role="alert">
+            @errorMessage
+        </div>
+    }
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent py-3">
+            <strong>@Model.TotalMessages liên hệ</strong>
+        </div>
+
+        <div class="card-body">
+            <form asp-area="Admin"
+                  asp-controller="Contacts"
+                  asp-action="Index"
+                  method="get"
+                  class="row g-3 align-items-end">
+
+                <div class="col-lg-6">
+                    <label for="keyword" class="form-label">Tìm liên hệ</label>
+                    <input id="keyword"
+                           name="keyword"
+                           value="@Model.Keyword"
+                           maxlength="200"
+                           class="form-control"
+                           placeholder="Họ tên, email, số điện thoại hoặc chủ đề" />
+                </div>
+
+                <div class="col-lg-3">
+                    <label for="status" class="form-label">Trạng thái</label>
+                    <select id="status" name="status" class="form-select">
+                        <option value="">Tất cả trạng thái</option>
+                        <option value="NEW" selected="@(Model.Status == "NEW")">
+                            Mới
+                        </option>
+                        <option value="PROCESSING"
+                                selected="@(Model.Status == "PROCESSING")">
+                            Đang xử lý
+                        </option>
+                        <option value="CLOSED" selected="@(Model.Status == "CLOSED")">
+                            Đã xử lý
+                        </option>
+                    </select>
+                </div>
+
+                <div class="col-lg-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-primary">Tìm kiếm</button>
+
+                    <a asp-area="Admin"
+                       asp-controller="Contacts"
+                       asp-action="Index"
+                       class="btn btn-outline-secondary">
+                        Xóa lọc
+                    </a>
+                </div>
+            </form>
+        </div>
+
+        @if (Model.Messages.Count == 0)
+        {
+            <div class="card-body border-top text-center text-body-secondary py-5">
+                Không tìm thấy liên hệ phù hợp.
+            </div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col" class="ps-3">Người gửi</th>
+                            <th scope="col">Chủ đề</th>
+                            <th scope="col">Trạng thái</th>
+                            <th scope="col" class="text-nowrap">Ngày gửi</th>
+                            <th scope="col" class="text-end pe-3">Thao tác</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        @foreach (var message in Model.Messages)
+                        {
+                            var (statusLabel, badgeClass) = message.Status switch
+                            {
+                                "NEW" => ("Mới", "text-bg-primary"),
+                                "PROCESSING" => ("Đang xử lý", "text-bg-warning"),
+                                "CLOSED" => ("Đã xử lý", "text-bg-success"),
+                                _ => ("Chưa xác định", "text-bg-secondary")
+                            };
+
+                            <tr>
+                                <td class="ps-3">
+                                    <div class="fw-semibold text-break">
+                                        @message.FullName
+                                    </div>
+
+                                    @if (!string.IsNullOrWhiteSpace(message.Email))
+                                    {
+                                        <div class="small text-body-secondary text-break">
+                                            @message.Email
+                                        </div>
+                                    }
+
+                                    @if (!string.IsNullOrWhiteSpace(message.PhoneNumber))
+                                    {
+                                        <div class="small text-body-secondary">
+                                            @message.PhoneNumber
+                                        </div>
+                                    }
+                                </td>
+
+                                <td class="text-break">@message.Subject</td>
+
+                                <td>
+                                    <span class="badge @badgeClass">
+                                        @statusLabel
+                                    </span>
+                                </td>
+
+                                <td class="text-nowrap">
+                                    @(message.CreatedAtUtc.AddHours(7)
+                                        .ToString("dd/MM/yyyy HH:mm"))
+                                </td>
+
+                                <td class="text-end pe-3">
+                                    <a asp-area="Admin"
+                                       asp-controller="Contacts"
+                                       asp-action="Details"
+                                       asp-route-id="@message.Id"
+                                       class="btn btn-sm btn-outline-primary text-nowrap">
+                                        Xem chi tiết
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+
+        @if (Model.TotalPages > 1)
+        {
+            <nav class="card-footer bg-transparent d-flex flex-wrap
+                justify-content-between align-items-center gap-2 py-3"
+                 aria-label="Phân trang liên hệ">
+
+                <span class="small text-body-secondary">
+                    Trang @Model.PageNumber / @Model.TotalPages
+                </span>
+
+                <div class="d-flex gap-2">
+                    @if (Model.PageNumber > 1)
+                    {
+                        <a asp-area="Admin"
+                           asp-controller="Contacts"
+                           asp-action="Index"
+                           asp-route-keyword="@Model.Keyword"
+                           asp-route-status="@Model.Status"
+                           asp-route-pageNumber="@(Model.PageNumber - 1)"
+                           class="btn btn-sm btn-outline-secondary">
+                            Trang trước
+                        </a>
+                    }
+
+                    @if (Model.PageNumber < Model.TotalPages)
+                    {
+                        <a asp-area="Admin"
+                           asp-controller="Contacts"
+                           asp-action="Index"
+                           asp-route-keyword="@Model.Keyword"
+                           asp-route-status="@Model.Status"
+                           asp-route-pageNumber="@(Model.PageNumber + 1)"
+                           class="btn btn-sm btn-outline-secondary">
+                            Trang sau
+                        </a>
+                    }
+                </div>
+            </nav>
+        }
+    </div>
+</div>

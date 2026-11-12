@@ -1,10 +1,26 @@
-﻿@using System.Globalization
+@using System.Globalization
 @model DoraFood.Areas.Admin.ViewModels.DishVariantsViewModel
 
 @{
     ViewData["Title"] = "Quản lý khẩu phần";
     var culture = CultureInfo.GetCultureInfo("vi-VN");
 }
+<div class="tp-page tp-page-dishes tp-page-variants">
+    <section class="tp-module-intro" aria-label="Hướng dẫn màn hình">
+        <div class="tp-module-icon">
+        <i class="bi bi-layout-split" aria-hidden="true">
+        </i>
+        </div>
+        <div>
+        <span class="tp-kicker">DORAFOOD · CHĂM CHÚT TỪNG CHI TIẾT</span>
+        <h2>Khẩu phần & giá bán</h2>
+        <p>Điều chỉnh giá và trạng thái phục vụ của từng lựa chọn.</p>
+        </div>
+        <span class="tp-season-stamp">
+        <i class="bi bi-flower1" aria-hidden="true">
+        </i>Vị xuân sum vầy</span>
+    </section>
+
 
 <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
     <div>
@@ -38,16 +54,18 @@
 
 @if (Model.Variants.Count == 0)
 {
-    <div class="card">
-        <div class="card-body">Món này chưa có khẩu phần.</div>
+    <div class="card tp-card">
+        <div class="card-body tp-variant-form">Món này chưa có khẩu phần.</div>
     </div>
 }
 
+<div class="tp-variants-grid">
 @foreach (var variant in Model.Variants)
 {
-    <div class="card mb-3">
-        <div class="card-header">
+    <div class="card mb-3 tp-card">
+        <div class="card-header tp-card-header">
             <strong>@variant.Name</strong>
+            <span class="badge rounded-pill @(variant.IsAvailable ? "text-bg-success" : "text-bg-secondary") ms-2">@(variant.IsAvailable ? "Đang bán" : "Tạm ngừng")</span>
             <span class="text-body-secondary ms-2">
                 @variant.Sku · @variant.SellingUnit
             </span>
@@ -58,13 +76,13 @@
               asp-action="UpdateVariant"
               asp-route-id="@Model.DishId"
               method="post"
-              class="card-body">
+              class="card-body tp-variant-form">
 
             <input type="hidden" name="variantId" value="@variant.Id" />
             <input type="hidden" name="version" value="@variant.Version" />
 
             <div class="row g-3 align-items-end">
-                <div class="col-md-5">
+                <div class="col-sm-6">
                     <label for="price-@variant.Id" class="form-label">
                         Giá bán (₫)
                     </label>
@@ -81,7 +99,7 @@
                     </div>
                 </div>
 
-                <div class="col-md-4">
+                <div class="col-sm-6">
                     <label for="available-@variant.Id" class="form-label">
                         Trạng thái bán
                     </label>
@@ -97,14 +115,12 @@
                     </select>
                 </div>
 
-                <div class="col-md-3">
-                    <button type="submit" class="btn btn-primary">
-                        Lưu thay đổi
-                    </button>
+                <div class="col-12 text-end">
+                    <button type="submit" class="btn btn-primary"><i class="bi bi-check2 me-1" aria-hidden="true"></i>Lưu thay đổi</button>
                 </div>
             </div>
         </form>
-        <div class="card-footer d-flex flex-wrap justify-content-between
+        <div class="card-footer tp-card-footer d-flex flex-wrap justify-content-between
             align-items-center gap-2">
 
             @if (variant.CanDelete)
@@ -123,9 +139,7 @@
                     <input type="hidden" name="variantId" value="@variant.Id" />
                     <input type="hidden" name="version" value="@variant.Version" />
 
-                    <button type="submit" class="btn btn-outline-danger btn-sm">
-                        Xóa khẩu phần
-                    </button>
+                    <button type="submit" class="btn btn-outline-danger btn-sm"><i class="bi bi-trash3 me-1" aria-hidden="true"></i>Xóa khẩu phần</button>
                 </form>
             }
             else
@@ -146,13 +160,19 @@
                     Có thể chọn Tạm ngừng bán.
                 </span>
 
-                <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
-                    Xóa khẩu phần
-                </button>
+                <button type="button" class="btn btn-outline-secondary btn-sm" disabled><i class="bi bi-trash3 me-1" aria-hidden="true"></i>Xóa khẩu phần</button>
             }
         </div>
     </div>
 }
+</div>
+
+</div>
+
+@section Styles {
+    <link rel="stylesheet" href="~/admin/css/admin-tet-pages.css" asp-append-version="true" />
+}
+
 @section Scripts {
     <script>
         document.querySelectorAll("form[data-delete-variant]").forEach(form => {
