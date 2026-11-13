@@ -1,0 +1,254 @@
+﻿@using System.Globalization
+@model DoraFood.ViewModels.MyVouchersViewModel
+
+@{
+    ViewData["Title"] = "Ưu đãi của tôi";
+
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+
+    string Money(decimal amount) =>
+        amount.ToString("#,##0.##", culture) + " ₫";
+}
+
+<section class="df-vouchers py-5">
+    <div class="container">
+        <a asp-area=""
+           asp-controller="Profile"
+           asp-action="Index"
+           class="text-decoration-none">
+            ← Về trang cá nhân
+        </a>
+
+        <div class="df-vouchers__heading mt-4">
+            <div>
+                <span class="df-vouchers__eyebrow">
+                    DORAFOOD DÀNH CHO ANH
+                </span>
+
+                <h1 class="h3 fw-bold mb-0">
+                    Ưu đãi của tôi
+                </h1>
+            </div>
+
+            <p>
+                Có @Model.TotalVouchers ưu đãi còn thời hạn và lượt sử dụng.
+                Sao chép mã để áp dụng khi thanh toán.
+            </p>
+        </div>
+
+        @if (Model.Vouchers.Count == 0)
+        {
+            <div class="card border-0 shadow-sm">
+                <div class="card-body text-center py-5">
+                    <h2 class="h5 mb-3">
+                        Chưa có ưu đãi khả dụng
+                    </h2>
+
+                    <p class="text-muted mb-4">
+                        Hiện chưa có mã còn thời hạn và lượt sử dụng
+                        phù hợp với tài khoản của anh.
+                    </p>
+
+                    <a asp-area=""
+                       asp-controller="Menu"
+                       asp-action="Index"
+                       class="btn btn-danger rounded-pill px-4">
+                        Khám phá thực đơn
+                    </a>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="df-vouchers__grid">
+                @foreach (var voucher in Model.Vouchers)
+                {
+                    var discountLabel =
+                        voucher.DiscountType == "PERCENT"
+                            ? $"Giảm {voucher.DiscountValue.ToString("0.##", culture)}%"
+                            : $"Giảm {Money(voucher.DiscountValue)}";
+
+                    <article class="df-voucher">
+                        <div class="df-voucher__image">
+                            @if (!string.IsNullOrWhiteSpace(voucher.ImageUrl))
+                            {
+                                <img src="@Url.Content(voucher.ImageUrl)"
+                                     alt="@(voucher.ImageAlt ?? voucher.Name)"
+                                     width="1200"
+                                     height="675"
+                                     loading="lazy"
+                                     decoding="async" />
+                            }
+                            else
+                            {
+                                <div class="d-flex align-items-center
+                                            justify-content-center h-100 p-4">
+                                    <span class="fw-bold text-danger">
+                                        ƯU ĐÃI DORAFOOD
+                                    </span>
+                                </div>
+                            }
+
+                            <span class="df-voucher__badge">
+                                @discountLabel
+                            </span>
+                        </div>
+
+                        <div class="df-voucher__body">
+                            <p class="df-voucher__expiry">
+                                Hết hạn:
+                                @voucher.EndsAtUtc.AddHours(7)
+                                    .ToString("dd/MM/yyyy HH:mm")
+                            </p>
+
+                            <h3>@voucher.Name</h3>
+
+                            <div class="d-flex flex-wrap gap-2 mb-3">
+                                <span class="badge bg-light text-dark border">
+                                    Anh đã dùng:
+                                    @voucher.UsedByCustomer.ToString("N0", culture)
+                                    lượt
+                                </span>
+
+                                <span class="badge bg-success">
+                                    @if (voucher.AvailableUses.HasValue)
+                                    {
+                                        <span>
+                                            Còn tối đa
+                                            @voucher.AvailableUses.Value.ToString("N0", culture)
+                                            lượt
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span>Không giới hạn lượt</span>
+                                    }
+                                </span>
+                            </div>
+
+                            <ul class="df-voucher__conditions">
+                                <li>
+                                    @if (voucher.MinimumOrder > 0)
+                                    {
+                                        <span>
+                                            Đơn từ @Money(voucher.MinimumOrder).
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span>
+                                            Không yêu cầu giá trị đơn tối thiểu.
+                                        </span>
+                                    }
+                                </li>
+
+                                @if (voucher.DiscountType == "PERCENT"
+                                    && voucher.MaxDiscount.HasValue)
+                                {
+                                    <li>
+                                        Giảm tối đa
+                                        @Money(voucher.MaxDiscount.Value).
+                                    </li>
+                                }
+
+                                @if (voucher.PerCustomerLimit.HasValue)
+                                {
+                                    <li>
+                                        Giới hạn mỗi khách:
+                                        @voucher.PerCustomerLimit.Value lượt.
+                                    </li>
+                                }
+
+                                @if (voucher.GlobalRemaining.HasValue)
+                                {
+                                    <li>
+                                        Toàn chương trình còn
+                                        @voucher.GlobalRemaining.Value.ToString("N0", culture)
+                                        lượt.
+                                    </li>
+                                }
+                            </ul>
+
+                            <div class="df-voucher__actions">
+                                <div class="df-voucher__codebox">
+                                    <input type="text"
+                                           value="@voucher.Code"
+                                           readonly
+                                           spellcheck="false"
+                                           aria-label="Mã giảm giá @voucher.Code"
+                                           data-voucher-code />
+
+                                    <button type="button"
+                                            data-voucher-copy>
+                                        Sao chép mã
+                                    </button>
+                                </div>
+
+                                <p class="df-voucher__status"
+                                   role="status"
+                                   aria-live="polite"
+                                   data-voucher-status></p>
+
+                                <a asp-area=""
+                                   asp-controller="Menu"
+                                   asp-action="Index"
+                                   class="df-voucher__menu">
+                                    Chọn món để sử dụng
+                                    <span aria-hidden="true">→</span>
+                                </a>
+                            </div>
+                        </div>
+                    </article>
+                }
+            </div>
+
+            <p class="small text-muted mt-4">
+                Lượt sử dụng chung có thể thay đổi khi khách khác đặt đơn.
+                Đơn đã hủy được hoàn lượt.
+                Điều kiện áp dụng được kiểm tra lại khi thanh toán.
+            </p>
+
+            @if (Model.TotalPages > 1)
+            {
+                <nav aria-label="Phân trang ưu đãi"
+                     class="d-flex flex-wrap justify-content-center
+                            align-items-center gap-3 mt-4">
+
+                    @if (Model.PageNumber > 1)
+                    {
+                        <a asp-route="DoraFood.MyVouchers"
+                           asp-route-pageNumber="@(Model.PageNumber - 1)"
+                           class="btn btn-outline-secondary btn-sm">
+                            Trang trước
+                        </a>
+                    }
+
+                    <span class="small">
+                        Trang @Model.PageNumber / @Model.TotalPages
+                    </span>
+
+                    @if (Model.PageNumber < Model.TotalPages)
+                    {
+                        <a asp-route="DoraFood.MyVouchers"
+                           asp-route-pageNumber="@(Model.PageNumber + 1)"
+                           class="btn btn-outline-secondary btn-sm">
+                            Trang sau
+                        </a>
+                    }
+                </nav>
+            }
+        }
+    </div>
+</section>
+
+@section Styles {
+    <link rel="stylesheet"
+          href="~/assets/css/voucher-promotions.css"
+          asp-append-version="true" />
+}
+
+@section Scripts {
+    <script src="~/assets/js/voucher-promotions.js"
+            asp-append-version="true"
+            defer></script>
+}

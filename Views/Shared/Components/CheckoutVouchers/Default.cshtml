@@ -1,0 +1,183 @@
+﻿@using System.Collections.Generic
+@using System.Globalization
+@model List<DoraFood.ViewComponents.CheckoutVouchersViewComponent.VoucherOption>
+
+@{
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+    var subtotal = ViewData["Subtotal"] is decimal amount ? amount : 0m;
+
+    string Money(decimal value) =>
+        value.ToString("#,##0.##", culture) + " ₫";
+
+    var hasBestChoice =
+        Model.Count > 0 && Model[0].IsBestChoice;
+}
+
+<div class="modal fade"
+     id="checkout-voucher-modal"
+     tabindex="-1"
+     aria-labelledby="checkout-voucher-title"
+     aria-hidden="true">
+
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="modal-title h5"
+                    id="checkout-voucher-title">
+                    Chọn mã giảm giá
+                </h2>
+
+                <button type="button"
+                        class="btn-close"
+                        data-bs-dismiss="modal"
+                        aria-label="Đóng"></button>
+            </div>
+
+            <div class="modal-body">
+                <p class="small text-muted">
+                    Tiền món hiện tại:
+                    <strong>@Money(subtotal)</strong>.
+                    Chọn mã rồi bấm “Kiểm tra thông tin” để áp dụng.
+                </p>
+
+                @if (hasBestChoice)
+                {
+                    <div class="alert alert-success" role="status">
+                        Gợi ý mã
+                        <strong>@Model[0].Voucher.Code</strong>,
+                        dự kiến giảm
+                        <strong>@Money(Model[0].EstimatedDiscount)</strong>.
+                        Anh vẫn có thể chọn mã khác bên dưới.
+                    </div>
+                }
+
+                @if (Model.Count == 0)
+                {
+                    <div class="alert alert-light border mb-0">
+                        Chưa có voucher còn thời hạn và lượt sử dụng
+                        cho tài khoản của anh.
+                    </div>
+                }
+                else
+                {
+                    @foreach (var option in Model)
+                    {
+                        var voucher = option.Voucher;
+
+                        var discountLabel =
+                            voucher.DiscountType == "PERCENT"
+                                ? $"Giảm {voucher.DiscountValue.ToString("0.##", culture)}%"
+                                : $"Giảm {Money(voucher.DiscountValue)}";
+
+                        <article class="border rounded-3 p-3 mb-3
+                            @(option.IsBestChoice ? "border-success" : "")">
+
+                            @if (option.IsBestChoice)
+                            {
+                                <div class="mb-3">
+                                    <span class="badge bg-success">
+                                        Tiết kiệm nhất
+                                    </span>
+                                </div>
+                            }
+
+                            <div class="d-flex align-items-start gap-3">
+                                @if (!string.IsNullOrWhiteSpace(voucher.ImageUrl))
+                                {
+                                    <img src="@Url.Content(voucher.ImageUrl)"
+                                         alt="@(voucher.ImageAlt ?? voucher.Name)"
+                                         width="88"
+                                         height="66"
+                                         loading="lazy"
+                                         class="rounded flex-shrink-0 d-none d-sm-block"
+                                         style="object-fit: cover;" />
+                                }
+
+                                <div class="flex-grow-1"
+                                     style="min-width: 0;">
+                                    <div class="d-flex flex-wrap
+                                        justify-content-between gap-2">
+                                        <strong class="text-danger">
+                                            @discountLabel
+                                        </strong>
+
+                                        <span class="badge bg-light text-dark border"
+                                              style="white-space: normal;">
+                                            @voucher.Code
+                                        </span>
+                                    </div>
+
+                                    <h3 class="h6 text-break mt-2 mb-2">
+                                        @voucher.Name
+                                    </h3>
+
+                                    <div class="small text-muted">
+                                        Đơn tối thiểu:
+                                        @Money(voucher.MinimumOrder).
+
+                                        @if (voucher.DiscountType == "PERCENT"
+                                            && voucher.MaxDiscount.HasValue)
+                                        {
+                                            <span>
+                                                Giảm tối đa
+                                                @Money(voucher.MaxDiscount.Value).
+                                            </span>
+                                        }
+                                    </div>
+
+                                    <div class="small text-muted mt-1">
+                                        Hết hạn:
+                                        @voucher.EndsAtUtc.AddHours(7)
+                                        .ToString("dd/MM/yyyy HH:mm")
+                                    </div>
+
+                                    @if (option.CanUse)
+                                    {
+                                        <div class="d-flex flex-wrap
+                                            justify-content-between
+                                            align-items-center gap-2 mt-3">
+                                            <span class="small text-success">
+                                                Dự kiến giảm
+                                                <strong>
+                                                    @Money(option.EstimatedDiscount)
+                                                </strong>
+                                            </span>
+
+                                            <button type="button"
+                                                    class="btn btn-sm btn-danger"
+                                                    data-checkout-select-voucher
+                                                    data-code="@voucher.Code"
+                                                    data-bs-dismiss="modal">
+                                                Chọn mã
+                                            </button>
+                                        </div>
+                                    }
+                                    else
+                                    {
+                                        <p class="small text-danger mt-3 mb-0">
+                                            @option.UnavailableReason
+                                        </p>
+                                    }
+                                </div>
+                            </div>
+                        </article>
+                    }
+                }
+
+                <p class="small text-muted mt-3 mb-0">
+                    Danh sách được ưu tiên theo số tiền giảm dự kiến
+                    và hiển thị tối đa 20 mã.
+                    Anh có thể nhập mã khác trực tiếp vào ô mã giảm giá.
+                </p>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button"
+                        class="btn btn-outline-secondary"
+                        data-bs-dismiss="modal">
+                    Đóng
+                </button>
+            </div>
+        </div>
+    </div>
+</div>

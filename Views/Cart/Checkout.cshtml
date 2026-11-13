@@ -261,13 +261,27 @@
                             Nhập mã ưu đãi
                         </label>
 
-                        <input asp-for="Input.VoucherCode"
-                               class="form-control text-uppercase"
-                               maxlength="50"
-                               autocomplete="off"
-                               spellcheck="false"
-                               placeholder="Ví dụ: TET2027"
-                               aria-describedby="checkout-voucher-help" />
+                        <div class="input-group">
+                            <input asp-for="Input.VoucherCode"
+                                   class="form-control text-uppercase"
+                                   maxlength="50"
+                                   autocomplete="off"
+                                   spellcheck="false"
+                                   placeholder="Ví dụ: TET2027"
+                                   aria-describedby="checkout-voucher-help" />
+
+                            <button type="button"
+                                    class="btn btn-outline-danger"
+                                    data-bs-toggle="modal"
+                                    data-bs-target="#checkout-voucher-modal">
+                                Chọn mã giảm giá
+                            </button>
+                        </div>
+
+                        <div id="checkout-voucher-selection-status"
+                             class="small text-success mt-2"
+                             role="status"
+                             aria-live="polite"></div>
 
                         <span asp-validation-for="Input.VoucherCode"
                               class="text-danger small d-block"></span>
@@ -401,7 +415,9 @@
         </div>
     </div>
 </div>
-
+@await Component.InvokeAsync(
+  "CheckoutVouchers",
+  new { subtotal = Model.Cart.Subtotal })
 @section Scripts {
     <script>
         (() => {
@@ -497,6 +513,103 @@
                     confirmButton.textContent = "Xác nhận đặt đơn";
                 }
             });
+        })();
+    </script>
+    <script>
+        (() => {
+            document.addEventListener("click", event => {
+                if (!(event.target instanceof Element)) {
+                    return;
+                }
+
+                const button = event.target.closest(
+                    "[data-checkout-select-voucher]"
+                );
+
+                if (!button || button.disabled) {
+                    return;
+                }
+
+                event.preventDefault();
+
+                const form = document.getElementById(
+                    "checkout-review-form"
+                );
+
+                const field = form?.querySelector(
+                    '[name="Input.VoucherCode"]'
+                );
+
+                const code = button.getAttribute("data-code")?.trim();
+
+                if (!field || !code) {
+                    console.error(
+                        "Không tìm thấy ô Input.VoucherCode hoặc nút thiếu data-code."
+                    );
+                    return;
+                }
+
+                // Điền mã, giữ các thông tin giao hàng.
+                field.value = code;
+
+                field.dispatchEvent(
+                    new Event("input", { bubbles: true })
+                );
+
+                field.dispatchEvent(
+                    new Event("change", { bubbles: true })
+                );
+
+                // Yêu cầu kiểm tra lại trước khi xác nhận đơn.
+                const panel = document.getElementById(
+                    "checkout-confirmation"
+                );
+
+                if (panel) {
+                    panel.hidden = true;
+                }
+
+                const confirmButton = document.getElementById(
+                    "checkout-confirm-button"
+                );
+
+                if (confirmButton) {
+                    confirmButton.disabled = true;
+                }
+
+                const token = document.querySelector(
+                    '#checkout-confirm-form input[name="confirmationToken"]'
+                );
+
+                if (token) {
+                    token.value = "";
+                }
+
+                const reminder = document.getElementById(
+                    "checkout-recheck-message"
+                );
+
+                if (reminder) {
+                    reminder.hidden = false;
+                }
+
+                const status = document.getElementById(
+                    "checkout-voucher-selection-status"
+                );
+
+                if (status) {
+                    status.textContent =
+                        `Đã chọn mã ${code}. `
+                        + "Anh bấm Kiểm tra thông tin để áp dụng.";
+                }
+
+                // Đóng hộp chọn voucher.
+                const modal = button.closest(".modal");
+
+                if (modal && window.bootstrap?.Modal) {
+                    window.bootstrap.Modal.getInstance(modal)?.hide();
+                }
+            }, true);
         })();
     </script>
 }
