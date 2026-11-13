@@ -13,7 +13,8 @@ public sealed record MyOrderRow(
     public string StatusLabel => Status switch
     {
         "OPEN" => "Chờ tiếp nhận",
-        "IN_PROGRESS" => "Đang xử lý",
+        "IN_PROGRESS" => "Đang chuẩn bị",
+        "SHIPPING" => "Đang giao hàng",
         "COMPLETED" => "Hoàn tất",
         "CANCELLED" => "Đã hủy",
         _ => "Chưa xác định"
@@ -23,6 +24,7 @@ public sealed record MyOrderRow(
     {
         "OPEN" => "bg-warning text-dark",
         "IN_PROGRESS" => "bg-primary text-white",
+        "SHIPPING" => "bg-info text-dark",
         "COMPLETED" => "bg-success text-white",
         "CANCELLED" => "bg-secondary text-white",
         _ => "bg-light text-dark"
@@ -44,6 +46,11 @@ public sealed record MyOrderItemRow(
     public decimal LineTotal => Quantity * UnitPrice;
 }
 
+// Dữ liệu giảm giá được lưu tại thời điểm đặt đơn.
+public sealed record MyOrderDiscountRow(
+    string Description,
+    decimal Amount);
+
 public sealed record MyOrderDetailsViewModel(
     MyOrderRow Order,
     string? ReceiverName,
@@ -52,6 +59,13 @@ public sealed record MyOrderDetailsViewModel(
     string? Note,
     IReadOnlyList<MyOrderItemRow> Items)
 {
+    public decimal Subtotal { get; init; }
+
+    public decimal DiscountAmount { get; init; }
+
+    public IReadOnlyList<MyOrderDiscountRow> Discounts { get; init; }
+        = Array.Empty<MyOrderDiscountRow>();
+
     public IReadOnlyList<MyOrderHistoryRow> History { get; init; }
         = Array.Empty<MyOrderHistoryRow>();
 }
@@ -66,7 +80,8 @@ public sealed record MyOrderHistoryRow(
         : Status switch
         {
             "OPEN" => "Chuyển về chờ tiếp nhận",
-            "IN_PROGRESS" => "Quán đang xử lý đơn",
+            "IN_PROGRESS" => "Quán đang chuẩn bị món",
+            "SHIPPING" => "Đơn đang được giao",
             "COMPLETED" => "Đơn đã hoàn tất",
             "CANCELLED" => "Đơn đã hủy",
             _ => "Cập nhật trạng thái"

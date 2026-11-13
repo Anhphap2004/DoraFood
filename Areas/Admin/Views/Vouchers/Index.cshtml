@@ -1,0 +1,1025 @@
+﻿@using System
+@using System.Collections.Generic
+@using System.Globalization
+@model List<DoraFood.Models.Voucher>
+
+@{
+    ViewData["Title"] = "Quản lý mã giảm giá";
+    var usageCounts = ViewData["VoucherUsageCounts"] as Dictionary<long, long>
+        ?? new Dictionary<long, long>();
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+    var now = DateTime.UtcNow;
+    var currentPage = ViewData["Page"] is int page ? page : 1;
+    var totalPages = ViewData["TotalPages"] is int pages ? pages : 1;
+    var totalItems = ViewData["TotalItems"] is int total ? total : 0;
+
+    string Money(decimal amount) => amount.ToString("#,##0.##", culture) + " ₫";
+}
+
+<style>
+    /* Scoped to the voucher page; no changes to the admin sidebar or navbar. */
+    .dv-page {
+        --dv-red: #b51b32;
+        --dv-ink: #291f23;
+        --dv-copy: #57484d;
+        --dv-line: #e9dde0;
+        box-sizing: border-box;
+        width: 100%;
+        max-width: 1600px;
+        min-width: 0;
+        margin: 0 auto;
+        padding: clamp(16px, 2vw, 28px);
+        color: var(--dv-ink);
+        font: 15px/1.65 'Open Sans', 'Segoe UI', Arial, sans-serif;
+    }
+
+        .dv-page *, .dv-page *::before, .dv-page *::after {
+            box-sizing: border-box;
+        }
+
+        .dv-page h1, .dv-page h2, .dv-page h3 {
+            color: var(--dv-ink);
+            font-family: 'Open Sans', 'Segoe UI', Arial, sans-serif !important;
+            font-weight: 700 !important;
+            letter-spacing: -.4px;
+        }
+
+        .dv-page .dv-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 18px 24px;
+            margin-bottom: 22px;
+        }
+
+        .dv-page .dv-eyebrow {
+            display: block;
+            color: #9f2337;
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .dv-page h1 {
+            font-size: clamp(25px, 2.1vw, 32px);
+            line-height: 1.3;
+            margin: 0 0 8px;
+        }
+
+        .dv-page .dv-header p {
+            color: var(--dv-copy);
+            font-size: 15px;
+            margin: 0;
+        }
+
+        .dv-page .dv-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 40px;
+            padding: 8px 13px;
+            border: 1px solid #decbd1;
+            border-radius: 8px;
+            background: #fff;
+            color: #643540;
+            font: 600 14px/1.5 'Open Sans', 'Segoe UI', Arial, sans-serif;
+            text-decoration: none;
+            text-align: center;
+            cursor: pointer;
+            transition: background-color .18s, border-color .18s;
+        }
+
+            .dv-page .dv-btn:hover {
+                background: #fff2f3;
+                border-color: #c48492;
+                color: #8d1b32;
+            }
+
+        .dv-page .dv-btn-primary {
+            min-height: 44px;
+            padding: 11px 18px;
+            background: var(--dv-red);
+            color: #fff;
+            border-color: var(--dv-red);
+            box-shadow: 0 5px 12px #a7152c15;
+            font-size: 15px;
+        }
+
+            .dv-page .dv-btn-primary:hover {
+                background: #94152a;
+                color: #fff;
+                border-color: #94152a;
+            }
+
+        .dv-page .dv-btn-danger {
+            color: #ab2037;
+            border-color: #edc7cf;
+            background: #fff7f8;
+        }
+
+            .dv-page .dv-btn-danger:hover {
+                background: #ffe8ed;
+                border-color: #ca657a;
+            }
+
+        .dv-page :is(a, button):focus-visible {
+            outline: 3px solid #b51b32;
+            outline-offset: 3px;
+        }
+
+        .dv-page .dv-summary {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 16px;
+            margin: 0 0 22px;
+        }
+
+        .dv-page .dv-stat {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 17px 20px;
+            background: #fff;
+            border: 1px solid var(--dv-line);
+            border-radius: 12px;
+        }
+
+        .dv-page .dv-stat-symbol {
+            display: grid;
+            place-items: center;
+            flex: 0 0 42px;
+            height: 42px;
+            background: #fff0f1;
+            color: #ae1b32;
+            border-radius: 11px;
+            font-weight: 700;
+            font-size: 20px;
+        }
+
+        .dv-page .dv-stat dl {
+            margin: 0;
+            min-width: 0;
+        }
+
+        .dv-page .dv-stat dt {
+            color: var(--dv-copy);
+            font-size: 14px;
+            font-weight: 600;
+            margin: 0;
+        }
+
+        .dv-page .dv-stat dd {
+            color: var(--dv-ink);
+            font-weight: 700;
+            font-size: 23px;
+            line-height: 1.3;
+            margin: 4px 0 0;
+            overflow-wrap: anywhere;
+        }
+
+        .dv-page .dv-notice {
+            padding: 13px 17px;
+            margin-bottom: 18px;
+            border: 1px solid;
+            border-radius: 10px;
+            font-size: 15px;
+        }
+
+        .dv-page .dv-notice-success {
+            background: #edf8f1;
+            border-color: #b8d9c6;
+            color: #21593b;
+        }
+
+        .dv-page .dv-notice-warning {
+            background: #fff6e5;
+            border-color: #e5cca1;
+            color: #70420b;
+        }
+
+        .dv-page .dv-panel {
+            min-width: 0;
+            background: #fff;
+            border: 1px solid var(--dv-line);
+            border-radius: 14px;
+            box-shadow: 0 7px 26px #35202a06;
+        }
+
+        .dv-page .dv-panel-heading {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            padding: 18px 22px;
+            border-bottom: 1px solid var(--dv-line);
+        }
+
+            .dv-page .dv-panel-heading h2 {
+                font-size: 19px;
+                margin: 0;
+                line-height: 1.4;
+            }
+
+        .dv-page .dv-page-label {
+            font-size: 14px;
+            font-weight: 600;
+            color: #70414c;
+            padding: 5px 11px;
+            background: #fff5f1;
+            border: 1px solid #efded4;
+            border-radius: 7px;
+        }
+
+        .dv-page .dv-table {
+            width: 100%;
+            margin: 0;
+            border-collapse: collapse;
+            table-layout: fixed;
+            font-size: 15px;
+            color: var(--dv-ink);
+        }
+
+            .dv-page .dv-table .dv-col-program {
+                width: 30%;
+            }
+
+            .dv-page .dv-table .dv-col-discount {
+                width: 20%;
+            }
+
+            .dv-page .dv-table .dv-col-usage {
+                width: 19%;
+            }
+
+            .dv-page .dv-table .dv-col-time {
+                width: 20%;
+            }
+
+            .dv-page .dv-table .dv-col-actions {
+                width: 11%;
+            }
+
+            .dv-page .dv-table th {
+                padding: 13px 18px;
+                background: #fcf7f8;
+                border-bottom: 1px solid var(--dv-line);
+                color: #68414b;
+                font-size: 13px;
+                font-weight: 700;
+                line-height: 1.5;
+                text-align: left;
+            }
+
+            .dv-page .dv-table td {
+                padding: 20px 18px;
+                border-bottom: 1px solid #f0e7ea;
+                vertical-align: top;
+                overflow-wrap: anywhere;
+            }
+
+            .dv-page .dv-table tbody tr:last-child td {
+                border-bottom: 0;
+            }
+
+            .dv-page .dv-table tbody tr:hover {
+                background: #fffcfc;
+            }
+
+        .dv-page .dv-program {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            min-width: 0;
+        }
+
+        .dv-page .dv-picture {
+            flex: 0 0 108px;
+            display: block;
+            width: 108px;
+            height: 72px;
+            overflow: hidden;
+            border: 1px solid #e6d5db;
+            border-radius: 9px;
+            background: #fcf3ef;
+            text-decoration: none;
+        }
+
+            .dv-page .dv-picture img {
+                display: block;
+                width: 100%;
+                height: 100%;
+                object-fit: cover;
+            }
+
+        .dv-page .dv-picture-empty {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            gap: 2px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #7e5260;
+        }
+
+            .dv-page .dv-picture-empty > span:first-child {
+                font-size: 24px;
+                line-height: 1;
+            }
+
+        .dv-page .dv-program-copy {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .dv-page .dv-code {
+            display: block;
+            margin: 0 0 6px;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            color: #a31b32;
+            font-size: 17px;
+            font-weight: 800;
+            line-height: 1.45;
+            overflow-wrap: anywhere;
+            text-decoration: none;
+        }
+
+            .dv-page .dv-code:hover {
+                color: #7e1023;
+                text-decoration: underline;
+                text-underline-offset: 3px;
+            }
+
+        .dv-page .dv-program-name {
+            display: block;
+            font-size: 14px;
+            line-height: 1.65;
+            color: #554249;
+        }
+
+        .dv-page .dv-discount {
+            color: #b51b32;
+            font-size: 23px;
+            font-weight: 800;
+            line-height: 1.3;
+            margin: 0 0 5px;
+        }
+
+        .dv-page .dv-discount-note {
+            font-size: 13px;
+            color: #61464e;
+            margin-bottom: 12px;
+        }
+
+        .dv-page .dv-minimum {
+            margin-top: 12px;
+            padding-top: 9px;
+            border-top: 1px dashed #e8d8de;
+            font-size: 14px;
+        }
+
+            .dv-page .dv-minimum span {
+                display: block;
+                color: var(--dv-copy);
+                margin-bottom: 2px;
+            }
+
+            .dv-page .dv-minimum strong {
+                color: #36252c;
+                font-size: 15px;
+            }
+
+        .dv-page .dv-usage {
+            display: grid;
+            gap: 5px;
+            margin: 0;
+            font-size: 14px;
+        }
+
+            .dv-page .dv-usage > div {
+                display: flex;
+                align-items: baseline;
+                justify-content: space-between;
+                gap: 8px;
+            }
+
+            .dv-page .dv-usage dt {
+                font-weight: 400;
+                color: #604a52;
+            }
+
+            .dv-page .dv-usage dd {
+                margin: 0;
+                font-weight: 700;
+                color: #33222a;
+                text-align: right;
+            }
+
+            .dv-page .dv-usage > div:last-child {
+                border-top: 1px dashed #e8d8de;
+                padding-top: 7px;
+                margin-top: 3px;
+            }
+
+            .dv-page .dv-usage dd.dv-remaining {
+                color: #226345;
+            }
+
+            .dv-page .dv-usage dd.dv-exhausted {
+                color: #a31a32;
+            }
+
+        .dv-page .dv-status {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 9px;
+            margin-bottom: 12px;
+            border: 1px solid transparent;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 700;
+            line-height: 1.5;
+        }
+
+            .dv-page .dv-status::before {
+                content: '';
+                width: 6px;
+                height: 6px;
+                border-radius: 50%;
+                background: currentColor;
+                flex-shrink: 0;
+            }
+
+        .dv-page .dv-status-off {
+            color: #574950;
+            background: #f2edef;
+            border-color: #ded4d8;
+        }
+
+        .dv-page .dv-status-scheduled {
+            color: #225b7a;
+            background: #edf6fc;
+            border-color: #c4dbe9;
+        }
+
+        .dv-page .dv-status-expired {
+            color: #83520e;
+            background: #fff5e1;
+            border-color: #ebd3a3;
+        }
+
+        .dv-page .dv-status-exhausted {
+            color: #a1243c;
+            background: #fff0f3;
+            border-color: #e9c2cc;
+        }
+
+        .dv-page .dv-status-available {
+            color: #216044;
+            background: #eef8f1;
+            border-color: #c5dfce;
+        }
+
+        .dv-page .dv-date {
+            display: grid;
+            grid-template-columns: 28px minmax(0, 1fr);
+            align-items: start;
+            gap: 6px;
+            margin-bottom: 6px;
+            font-size: 13px;
+        }
+
+            .dv-page .dv-date > span {
+                color: #6c505a;
+            }
+
+            .dv-page .dv-date time {
+                display: block;
+                color: #39272e;
+                font-weight: 600;
+            }
+
+            .dv-page .dv-date small {
+                color: #604b53;
+                font-size: 13px;
+                font-weight: 400;
+            }
+
+        .dv-page .dv-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 7px;
+        }
+
+            .dv-page .dv-actions form {
+                display: block;
+                margin: 0;
+            }
+
+            .dv-page .dv-actions .dv-btn {
+                width: 100%;
+                min-width: 0;
+                padding: 7px 9px;
+                min-height: 37px;
+            }
+
+        .dv-page .dv-mobile-label {
+            display: none;
+        }
+
+        .dv-page .dv-pagination {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 14px;
+            padding: 17px 22px;
+            border-top: 1px solid var(--dv-line);
+        }
+
+            .dv-page .dv-pagination > span {
+                color: var(--dv-copy);
+                font-size: 14px;
+            }
+
+            .dv-page .dv-pagination nav {
+                display: flex;
+                gap: 8px;
+                flex-wrap: wrap;
+            }
+
+        .dv-page .dv-note {
+            display: flex;
+            align-items: flex-start;
+            gap: 11px;
+            padding: 15px 18px;
+            margin-top: 18px;
+            background: #fff9ef;
+            border: 1px solid #ebddc5;
+            border-radius: 10px;
+        }
+
+        .dv-page .dv-note-mark {
+            display: grid;
+            place-items: center;
+            flex: 0 0 23px;
+            height: 23px;
+            border-radius: 50%;
+            background: #f4e6cb;
+            color: #75531f;
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .dv-page .dv-note p {
+            margin: 0;
+            color: #634c30;
+            font-size: 14px;
+            line-height: 1.8;
+        }
+
+        .dv-page .dv-empty {
+            padding: 54px 24px;
+            text-align: center;
+        }
+
+        .dv-page .dv-empty-symbol {
+            display: grid;
+            place-items: center;
+            width: 64px;
+            height: 64px;
+            margin: 0 auto 15px;
+            color: #b51b32;
+            background: #fff1f2;
+            border: 1px solid #ebcdd3;
+            border-radius: 18px;
+            font-size: 30px;
+        }
+
+        .dv-page .dv-empty h3 {
+            margin: 0 0 8px;
+            font-size: 20px;
+        }
+
+        .dv-page .dv-empty p {
+            color: var(--dv-copy);
+            margin: 0 0 20px;
+        }
+
+        .dv-page .dv-sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+    @@media (max-width: 1399.98px) {
+        .dv-page .dv-table, .dv-page .dv-table tbody {
+            display: block;
+        }
+
+            .dv-page .dv-table colgroup {
+                display: none;
+            }
+
+            .dv-page .dv-table thead {
+                position: absolute;
+                width: 1px;
+                height: 1px;
+                overflow: hidden;
+                clip: rect(0,0,0,0);
+                white-space: nowrap;
+            }
+
+            .dv-page .dv-table tbody {
+                display: grid;
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                gap: 16px;
+                padding: 18px;
+            }
+
+                .dv-page .dv-table tbody tr {
+                    display: grid;
+                    grid-template-columns: repeat(2, minmax(0, 1fr));
+                    min-width: 0;
+                    border: 1px solid var(--dv-line);
+                    border-radius: 11px;
+                    background: #fff;
+                }
+
+                    .dv-page .dv-table tbody tr:hover {
+                        background: #fff;
+                    }
+
+                    .dv-page .dv-table td, .dv-page .dv-table tbody tr:last-child td {
+                        display: block;
+                        padding: 16px;
+                        border: 0;
+                    }
+
+                        .dv-page .dv-table td.dv-cell-program {
+                            grid-column: 1 / -1;
+                            border-bottom: 1px solid var(--dv-line);
+                            background: #fffcfc;
+                            border-radius: 11px 11px 0 0;
+                        }
+
+                        .dv-page .dv-table td.dv-cell-discount {
+                            border-right: 1px solid #eee3e7;
+                        }
+
+                        .dv-page .dv-table td.dv-cell-time {
+                            grid-column: 1 / -1;
+                            border-top: 1px solid #eee3e7;
+                        }
+
+                        .dv-page .dv-table td.dv-cell-actions {
+                            grid-column: 1 / -1;
+                            border-top: 1px solid #eee3e7;
+                            padding-top: 12px;
+                            padding-bottom: 12px;
+                        }
+
+        .dv-page .dv-mobile-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 700;
+            color: #73515d;
+            margin-bottom: 10px;
+        }
+
+        .dv-page .dv-actions {
+            flex-direction: row;
+            gap: 8px;
+        }
+
+            .dv-page .dv-actions > a, .dv-page .dv-actions > form {
+                flex: 1;
+            }
+
+            .dv-page .dv-actions .dv-btn {
+                min-height: 40px;
+            }
+
+        .dv-page .dv-date {
+            display: inline-grid;
+            margin-right: 18px;
+            margin-bottom: 0;
+        }
+
+        .dv-page .dv-status {
+            display: table;
+            margin-bottom: 10px;
+        }
+
+            .dv-page .dv-status::before {
+                display: inline-block;
+                margin-right: 6px;
+                vertical-align: middle;
+            }
+    }
+
+    @@media (max-width: 1099.98px) {
+        .dv-page .dv-table tbody {
+            grid-template-columns: minmax(0, 1fr);
+        }
+
+        .dv-page .dv-summary {
+            gap: 10px;
+        }
+
+        .dv-page .dv-stat {
+            padding: 14px;
+            gap: 10px;
+        }
+
+        .dv-page .dv-stat-symbol {
+            flex-basis: 34px;
+            height: 34px;
+            font-size: 17px;
+            border-radius: 9px;
+        }
+    }
+
+    @@media (max-width: 599.98px) {
+        .dv-page {
+            padding: 15px 12px;
+        }
+
+            .dv-page .dv-header {
+                align-items: stretch;
+                gap: 15px;
+            }
+
+                .dv-page .dv-header > .dv-btn {
+                    width: 100%;
+                }
+
+            .dv-page .dv-summary {
+                gap: 8px;
+                margin-bottom: 16px;
+            }
+
+            .dv-page .dv-stat {
+                display: block;
+                padding: 12px 9px;
+            }
+
+            .dv-page .dv-stat-symbol {
+                display: none;
+            }
+
+            .dv-page .dv-stat dt {
+                font-size: 12px;
+            }
+
+            .dv-page .dv-stat dd {
+                font-size: 21px;
+            }
+
+            .dv-page .dv-panel-heading, .dv-page .dv-pagination {
+                padding: 15px;
+            }
+
+                .dv-page .dv-panel-heading h2 {
+                    font-size: 18px;
+                }
+
+            .dv-page .dv-table tbody {
+                padding: 12px;
+                gap: 12px;
+            }
+
+            .dv-page .dv-program {
+                gap: 11px;
+            }
+
+            .dv-page .dv-picture {
+                width: 88px;
+                height: 64px;
+                flex-basis: 88px;
+            }
+
+            .dv-page .dv-code {
+                font-size: 16px;
+            }
+
+            .dv-page .dv-table tbody tr {
+                grid-template-columns: minmax(0, 1fr);
+            }
+
+            .dv-page .dv-table td.dv-cell-discount {
+                border-right: 0;
+                border-bottom: 1px solid #eee3e7;
+            }
+
+            .dv-page .dv-table td {
+                padding: 14px;
+            }
+
+            .dv-page .dv-date {
+                margin-right: 9px;
+            }
+
+            .dv-page .dv-note {
+                padding: 13px;
+            }
+    }
+
+    @@media (prefers-reduced-motion: reduce) {
+        .dv-page .dv-btn {
+            transition: none;
+        }
+    }
+</style>
+
+<section class="dv-page" aria-labelledby="voucherPageTitle">
+    <header class="dv-header">
+        <div>
+            <span class="dv-eyebrow">DORAFOOD / QUẢN TRỊ ƯU ĐÃI</span>
+            <h1 id="voucherPageTitle">Quản lý mã giảm giá</h1>
+            <p>Theo dõi chương trình, điều kiện áp dụng và lượt sử dụng.</p>
+        </div>
+        <a asp-area="Admin" asp-controller="Vouchers" asp-action="Create" class="dv-btn dv-btn-primary">
+            <span aria-hidden="true">＋</span> Thêm mã giảm giá
+        </a>
+    </header>
+
+    <div class="dv-summary" role="group" aria-label="Tóm tắt danh sách">
+        <div class="dv-stat"><span class="dv-stat-symbol" aria-hidden="true">%</span><dl><dt>Tổng số mã</dt><dd>@totalItems.ToString("N0", culture)</dd></dl></div>
+        <div class="dv-stat"><span class="dv-stat-symbol" aria-hidden="true">≡</span><dl><dt>Trên trang này</dt><dd>@Model.Count.ToString("N0", culture)</dd></dl></div>
+        <div class="dv-stat"><span class="dv-stat-symbol" aria-hidden="true">↔</span><dl><dt>Trang hiện tại</dt><dd>@currentPage / @totalPages</dd></dl></div>
+    </div>
+
+    @if (TempData["VoucherSuccess"] is string success)
+    {
+        <div class="dv-notice dv-notice-success" role="status">@success</div>
+    }
+    @if (TempData["VoucherError"] is string error)
+    {
+        <div class="dv-notice dv-notice-warning" role="alert">@error</div>
+    }
+
+    <div class="dv-panel">
+        <div class="dv-panel-heading">
+            <h2>Danh sách mã giảm giá</h2>
+            <span class="dv-page-label">@Model.Count mã trên trang này</span>
+        </div>
+
+        @if (Model.Count == 0)
+        {
+            <div class="dv-empty">
+                <span class="dv-empty-symbol" aria-hidden="true">%</span>
+                <h3>Chưa có mã giảm giá nào</h3>
+                <p>Tạo chương trình đầu tiên để bắt đầu quản lý ưu đãi.</p>
+                <a asp-area="Admin" asp-controller="Vouchers" asp-action="Create" class="dv-btn dv-btn-primary">Tạo mã đầu tiên</a>
+            </div>
+        }
+        else
+        {
+            <table class="dv-table" role="table">
+                <caption class="dv-sr-only">Ảnh, chương trình, điều kiện giảm giá, lượt sử dụng, thời gian và thao tác quản lý.</caption>
+                <colgroup><col class="dv-col-program"><col class="dv-col-discount"><col class="dv-col-usage"><col class="dv-col-time"><col class="dv-col-actions"></colgroup>
+                <thead role="rowgroup">
+                    <tr role="row">
+                        <th scope="col" role="columnheader">Mã / chương trình</th>
+                        <th scope="col" role="columnheader">Mức giảm & điều kiện</th>
+                        <th scope="col" role="columnheader">Lượt sử dụng</th>
+                        <th scope="col" role="columnheader">Hiệu lực & trạng thái</th>
+                        <th scope="col" role="columnheader">Thao tác</th>
+                    </tr>
+                </thead>
+                <tbody role="rowgroup">
+                    @foreach (var voucher in Model)
+                    {
+                        var usedCount = usageCounts.TryGetValue(voucher.Id, out var count) ? count : 0L;
+                        long? remainingCount = voucher.UsageLimit.HasValue
+                            ? Math.Max(0L, (long)voucher.UsageLimit.Value - usedCount)
+                            : null;
+
+                        var status = !voucher.IsActive
+                            ? (Label: "Đã tắt", Class: "dv-status-off")
+                            : now < voucher.StartsAtUtc
+                                ? (Label: "Chưa bắt đầu", Class: "dv-status-scheduled")
+                                : now >= voucher.EndsAtUtc
+                                    ? (Label: "Đã hết hạn", Class: "dv-status-expired")
+                                    : remainingCount == 0
+                                        ? (Label: "Đã hết lượt", Class: "dv-status-exhausted")
+                                        : (Label: "Trong thời hạn", Class: "dv-status-available");
+
+                        <tr role="row">
+                            <td class="dv-cell-program" role="cell">
+                                <div class="dv-program">
+                                    @if (!string.IsNullOrWhiteSpace(voucher.Cover?.Url))
+                                    {
+                                        <a asp-area="Admin" asp-controller="Vouchers" asp-action="Edit" asp-route-id="@voucher.Id"
+                                           class="dv-picture" aria-label="Sửa ảnh voucher @voucher.Code">
+                                            <img src="@Url.Content(voucher.Cover.Url)" alt="@(voucher.Cover.AltText ?? voucher.Name)"
+                                                 width="108" height="72" loading="lazy" decoding="async" />
+                                        </a>
+                                    }
+                                    else
+                                    {
+                                        <div class="dv-picture dv-picture-empty"><span aria-hidden="true">▧</span><span>Chưa có ảnh</span></div>
+                                    }
+                                    <div class="dv-program-copy">
+                                        <a asp-area="Admin" asp-controller="Vouchers" asp-action="Edit" asp-route-id="@voucher.Id" class="dv-code">@voucher.Code</a>
+                                        <span class="dv-program-name">@voucher.Name</span>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="dv-cell-discount" role="cell">
+                                <span class="dv-mobile-label" aria-hidden="true">Mức giảm & điều kiện</span>
+                                <div class="dv-discount">
+                                    @if (voucher.DiscountType == "PERCENT")
+                                    {
+                                        <span>@voucher.DiscountValue.ToString("0.##", culture)%</span>
+                                    }
+                                    else
+                                    {
+                                        <span>@Money(voucher.DiscountValue)</span>
+                                    }
+                                </div>
+                                @if (voucher.DiscountType == "PERCENT" && voucher.MaxDiscount.HasValue)
+                                {
+                                    <div class="dv-discount-note">Tối đa @Money(voucher.MaxDiscount.Value)</div>
+                                }
+                                <div class="dv-minimum"><span>Đơn tối thiểu</span><strong>@Money(voucher.MinimumOrder)</strong></div>
+                            </td>
+                            <td class="dv-cell-usage" role="cell">
+                                <span class="dv-mobile-label" aria-hidden="true">Lượt sử dụng</span>
+                                <dl class="dv-usage">
+                                    <div><dt>Giới hạn</dt><dd>@(voucher.UsageLimit?.ToString("N0", culture) ?? "Không giới hạn")</dd></div>
+                                    <div><dt>Đã dùng</dt><dd>@usedCount.ToString("N0", culture)</dd></div>
+                                    <div>
+                                        <dt>Còn lại</dt>
+                                        @if (remainingCount.HasValue)
+                                        {
+                                            <dd class="@(remainingCount.Value == 0 ? "dv-exhausted" : "dv-remaining")">@remainingCount.Value.ToString("N0", culture)</dd>
+                                        }
+                                        else
+                                        {
+                                            <dd>Không giới hạn</dd>
+                                        }
+                                    </div>
+                                    <div><dt>Mỗi khách</dt><dd>@(voucher.PerCustomerLimit?.ToString("N0", culture) ?? "Không giới hạn")</dd></div>
+                                </dl>
+                            </td>
+                            <td class="dv-cell-time" role="cell">
+                                <span class="dv-mobile-label" aria-hidden="true">Hiệu lực & trạng thái</span>
+                                <span class="dv-status @status.Class">@status.Label</span>
+                                <div class="dv-date"><span>Từ</span><time datetime="@(voucher.StartsAtUtc.AddHours(7).ToString("yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture) + "+07:00")">@voucher.StartsAtUtc.AddHours(7).ToString("dd/MM/yyyy")<br /><small>@voucher.StartsAtUtc.AddHours(7).ToString("HH:mm")</small></time></div>
+                                <div class="dv-date"><span>Đến</span><time datetime="@(voucher.EndsAtUtc.AddHours(7).ToString("yyyy-MM-ddTHH:mm:ss", CultureInfo.InvariantCulture) + "+07:00")">@voucher.EndsAtUtc.AddHours(7).ToString("dd/MM/yyyy")<br /><small>@voucher.EndsAtUtc.AddHours(7).ToString("HH:mm")</small></time></div>
+                            </td>
+                            <td class="dv-cell-actions" role="cell">
+                                <div class="dv-actions">
+                                    <a asp-area="Admin" asp-controller="Vouchers" asp-action="Edit" asp-route-id="@voucher.Id" class="dv-btn" aria-label="Sửa mã @voucher.Code">Sửa</a>
+                                    <form asp-area="Admin" asp-controller="Vouchers" asp-action="SetActive" asp-route-id="@voucher.Id" asp-antiforgery="true" method="post">
+                                        <input type="hidden" name="isActive" value="@(voucher.IsActive ? "false" : "true")" />
+                                        <button type="submit" class="dv-btn" aria-label="@(voucher.IsActive ? "Tắt mã " + voucher.Code : "Bật mã " + voucher.Code)">@(voucher.IsActive ? "Tắt" : "Bật")</button>
+                                    </form>
+                                    <form asp-area="Admin" asp-controller="Vouchers" asp-action="Delete" asp-route-id="@voucher.Id" asp-antiforgery="true" method="post"
+                                          onsubmit="return confirm('Xóa vĩnh viễn mã này? Mã đã được sử dụng sẽ không được phép xóa.');">
+                                        <button type="submit" class="dv-btn dv-btn-danger" aria-label="Xóa mã @voucher.Code">Xóa</button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            @if (totalPages > 1)
+            {
+                <div class="dv-pagination">
+                    <span>Trang <strong>@currentPage</strong> / @totalPages · Tổng @totalItems.ToString("N0", culture) mã</span>
+                    <nav aria-label="Phân trang mã giảm giá">
+                        @if (currentPage > 1)
+                        {
+                            <a asp-area="Admin" asp-controller="Vouchers" asp-action="Index" asp-route-page="@(currentPage - 1)" class="dv-btn"><span aria-hidden="true">←</span> Trang trước</a>
+                        }
+                        @if (currentPage < totalPages)
+                        {
+                            <a asp-area="Admin" asp-controller="Vouchers" asp-action="Index" asp-route-page="@(currentPage + 1)" class="dv-btn">Trang sau <span aria-hidden="true">→</span></a>
+                        }
+                    </nav>
+                </div>
+            }
+        }
+    </div>
+
+    <aside class="dv-note" aria-label="Cách tính lượt sử dụng">
+        <span class="dv-note-mark" aria-hidden="true">i</span>
+        <p><strong>Lưu ý về lượt sử dụng:</strong> tính theo các đơn chưa hủy, bao gồm đơn đang chờ xử lý. Đơn đã hủy được hoàn lượt. Thời gian hiển thị theo giờ Việt Nam.</p>
+    </aside>
+</section>

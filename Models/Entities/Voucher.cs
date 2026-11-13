@@ -29,5 +29,11 @@ public partial class Voucher
 
     public bool IsActive { get; set; }
 
-    public virtual ICollection<OrderDiscount> OrderDiscounts { get; set; } = new List<OrderDiscount>();
+    // Ảnh quảng cáo của voucher.
+    public long? CoverId { get; set; }
+
+    public virtual MediaFile? Cover { get; set; }
+
+    public virtual ICollection<OrderDiscount> OrderDiscounts { get; set; }
+        = new List<OrderDiscount>();
 }

@@ -2,7 +2,18 @@
 @model DoraFood.ViewModels.CheckoutViewModel
 
 @{
+    ViewData["Title"] = "Thanh toán đơn giao hàng";
+
     var culture = CultureInfo.GetCultureInfo("vi-VN");
+
+    var hasConfirmation =
+        !string.IsNullOrWhiteSpace(Model.ConfirmationToken);
+
+    var hasVoucher =
+        !string.IsNullOrWhiteSpace(Model.AppliedVoucherCode);
+
+    string Money(decimal amount) =>
+        amount.ToString("N0", culture) + " ₫";
 }
 
 <div class="container py-5">
@@ -11,120 +22,279 @@
         ← Về giỏ hàng
     </a>
 
-    <h1 class="h3 mt-3 mb-4">Thanh toán đơn giao hàng</h1>
+    <div class="mt-3 mb-4">
+        <h1 class="h3 mb-2">Thanh toán đơn giao hàng</h1>
 
-    @if (!string.IsNullOrWhiteSpace(Model.ConfirmationToken))
+        <p class="text-muted mb-0">
+            Kiểm tra thông tin giao hàng và áp dụng mã giảm giá
+            trước khi xác nhận đặt đơn.
+        </p>
+    </div>
+
+    @if (hasConfirmation)
     {
-        <div class="card border-success mb-4">
-            <div class="card-body">
-                <h2 class="h5">Xác nhận đơn giao hàng</h2>
+        <section id="checkout-confirmation"
+                 class="card border-success shadow-sm mb-4"
+                 aria-labelledby="checkout-confirmation-title">
 
-                <p class="mb-1">
-                    <strong>Người nhận</strong> @Model.Input.ReceiverName
-                </p>
-                <p class="mb-1">
-                    <strong>Điện thoại</strong> @Model.Input.PhoneNumber
-                </p>
-                <p class="mb-1">
-                    <strong>Địa chỉ giao</strong> @Model.Input.DeliveryAddress
-                </p>
+            <div class="card-body p-4">
+                <div class="d-flex flex-wrap justify-content-between
+                    align-items-center gap-2 mb-3">
 
-                @if (!string.IsNullOrWhiteSpace(Model.Input.Note))
-                {
-                    <p class="mb-1">
-                        <strong>Ghi chú</strong> @Model.Input.Note
-                    </p>
-                }
+                    <h2 id="checkout-confirmation-title"
+                        class="h5 mb-0">
+                        Xác nhận đơn giao hàng
+                    </h2>
 
-                <p class="mb-3">
-                    <strong>Tiền mặt khi nhận hàng</strong>
-                    @Model.Cart.Subtotal.ToString("N0", culture) ₫
-                </p>
+                    <span class="badge bg-success">
+                        Đã kiểm tra thông tin
+                    </span>
+                </div>
 
-                <form asp-route="DoraFoodPlaceCashOrder" method="post">
+                <div class="row g-4">
+                    <div class="col-md-7">
+                        <dl class="mb-0">
+                            <dt class="small text-muted">
+                                Người nhận
+                            </dt>
+                            <dd class="text-break">
+                                @Model.Input.ReceiverName
+                            </dd>
+
+                            <dt class="small text-muted">
+                                Số điện thoại
+                            </dt>
+                            <dd>
+                                @Model.Input.PhoneNumber
+                            </dd>
+
+                            <dt class="small text-muted">
+                                Địa chỉ giao hàng
+                            </dt>
+                            <dd class="text-break"
+                                style="white-space: pre-line;">@Model.Input.DeliveryAddress</dd>
+
+                            @if (!string.IsNullOrWhiteSpace(Model.Input.Note))
+                            {
+                                <dt class="small text-muted">
+                                    Ghi chú cho quán
+                                </dt>
+
+                                <dd class="text-break mb-0"
+                                    style="white-space: pre-line;">@Model.Input.Note</dd>
+                            }
+                        </dl>
+                    </div>
+
+                    <div class="col-md-5">
+                        <div class="bg-light rounded-3 p-3">
+                            <div class="d-flex justify-content-between
+                                gap-3 mb-2">
+                                <span>Tiền món</span>
+                                <strong class="text-nowrap">
+                                    @Money(Model.Cart.Subtotal)
+                                </strong>
+                            </div>
+
+                            @if (hasVoucher)
+                            {
+                                <div class="d-flex justify-content-between
+                                    gap-3 mb-2 text-success">
+                                    <span>
+                                        Giảm giá
+                                        <span class="d-block small text-break">
+                                            @Model.AppliedVoucherCode
+                                        </span>
+                                    </span>
+
+                                    <strong class="text-nowrap">
+                                        −@Money(Model.DiscountAmount)
+                                    </strong>
+                                </div>
+                            }
+
+                            <div class="d-flex justify-content-between
+                                gap-3 border-top pt-3 mt-3">
+                                <span class="fw-semibold">
+                                    Tiền mặt khi nhận hàng
+                                </span>
+
+                                <strong class="text-danger text-nowrap">
+                                    @Money(Model.TotalAmount)
+                                </strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <form id="checkout-confirm-form"
+                      asp-route="DoraFoodPlaceCashOrder"
+                      asp-antiforgery="true"
+                      method="post"
+                      class="mt-4">
+
                     <input type="hidden"
                            name="confirmationToken"
                            value="@Model.ConfirmationToken" />
 
-                    <button type="submit" class="btn btn-success rounded-pill px-4">
+                    <button id="checkout-confirm-button"
+                            type="submit"
+                            class="btn btn-success rounded-pill px-4">
                         Xác nhận đặt đơn
                     </button>
                 </form>
 
                 <p class="small text-muted mt-3 mb-0">
-                    Nếu anh sửa thông tin ở form bên dưới, bấm Kiểm tra thông tin
-                    lại trước khi xác nhận.
+                    Nếu thay đổi thông tin giao hàng hoặc mã giảm giá,
+                    vui lòng bấm “Kiểm tra thông tin” lại trước khi đặt đơn.
+                    Số tiền sẽ được kiểm tra lại khi xác nhận.
                 </p>
             </div>
-        </div>
+        </section>
     }
 
     <div class="row g-4">
         <div class="col-lg-7">
-            <form asp-route="DoraFoodReviewCheckout"
+
+            @* Chọn địa chỉ đã lưu, giữ bên ngoài các form. *@
+            @await Component.InvokeAsync("CheckoutAddresses")
+
+            <form id="checkout-review-form"
+                  asp-route="DoraFoodReviewCheckout"
+                  asp-antiforgery="true"
                   method="post"
-                  class="card shadow-sm">
+                  class="card border-0 shadow-sm">
 
                 <div class="card-body p-4">
                     <h2 class="h5 mb-3">Thông tin giao hàng</h2>
 
                     <div asp-validation-summary="ModelOnly"
-                         class="text-danger"></div>
+                         class="text-danger mb-3"
+                         role="alert"></div>
 
-                    @await Component.InvokeAsync("CheckoutAddresses")
+                    <div id="checkout-recheck-message"
+                         class="alert alert-warning"
+                         role="alert"
+                         hidden>
+                        Thông tin đã thay đổi.
+                        Vui lòng bấm “Kiểm tra thông tin” lại
+                        để xác nhận thông tin và số tiền mới.
+                    </div>
 
                     <div class="mb-3">
                         <label asp-for="Input.ReceiverName"
-                               class="form-label">Tên người nhận</label>
+                               class="form-label">
+                            Tên người nhận
+                            <span class="text-danger">*</span>
+                        </label>
+
                         <input asp-for="Input.ReceiverName"
                                class="form-control"
                                autocomplete="name"
                                maxlength="150"
                                required />
+
                         <span asp-validation-for="Input.ReceiverName"
-                              class="text-danger"></span>
+                              class="text-danger small"></span>
                     </div>
 
                     <div class="mb-3">
                         <label asp-for="Input.PhoneNumber"
-                               class="form-label">Số điện thoại</label>
+                               class="form-label">
+                            Số điện thoại
+                            <span class="text-danger">*</span>
+                        </label>
+
                         <input asp-for="Input.PhoneNumber"
                                type="tel"
                                class="form-control"
                                autocomplete="tel"
                                maxlength="20"
                                required />
+
                         <span asp-validation-for="Input.PhoneNumber"
-                              class="text-danger"></span>
+                              class="text-danger small"></span>
                     </div>
 
                     <div class="mb-3">
                         <label asp-for="Input.DeliveryAddress"
-                               class="form-label">Địa chỉ giao hàng</label>
+                               class="form-label">
+                            Địa chỉ giao hàng
+                            <span class="text-danger">*</span>
+                        </label>
+
                         <textarea asp-for="Input.DeliveryAddress"
                                   class="form-control"
                                   autocomplete="street-address"
-                                  rows="2"
+                                  rows="3"
                                   maxlength="500"
+                                  placeholder="Số nhà, tên đường, phường/xã, tỉnh/thành..."
                                   required></textarea>
+
                         <span asp-validation-for="Input.DeliveryAddress"
-                              class="text-danger"></span>
+                              class="text-danger small"></span>
                     </div>
 
                     <div class="mb-4">
                         <label asp-for="Input.Note"
-                               class="form-label">Ghi chú cho quán</label>
+                               class="form-label">
+                            Ghi chú cho quán
+                        </label>
+
                         <textarea asp-for="Input.Note"
                                   class="form-control"
-                                  rows="2"
+                                  rows="3"
                                   maxlength="1000"
-                                  placeholder="Ví dụ: Gọi trước khi đến"></textarea>
+                                  placeholder="Ví dụ: Gọi trước khi đến, giao tại cổng..."></textarea>
+
                         <span asp-validation-for="Input.Note"
-                              class="text-danger"></span>
+                              class="text-danger small"></span>
                     </div>
 
+                    <hr class="my-4" />
+
                     <div class="mb-4">
-                        <h3 class="h5 mb-2">Phương thức thanh toán</h3>
+                        <h3 class="h5 mb-3">Mã giảm giá</h3>
+
+                        <label asp-for="Input.VoucherCode"
+                               class="form-label">
+                            Nhập mã ưu đãi
+                        </label>
+
+                        <input asp-for="Input.VoucherCode"
+                               class="form-control text-uppercase"
+                               maxlength="50"
+                               autocomplete="off"
+                               spellcheck="false"
+                               placeholder="Ví dụ: TET2027"
+                               aria-describedby="checkout-voucher-help" />
+
+                        <span asp-validation-for="Input.VoucherCode"
+                              class="text-danger small d-block"></span>
+
+                        <div id="checkout-voucher-help"
+                             class="form-text">
+                            Không bắt buộc.
+                            Nhập mã rồi bấm “Kiểm tra thông tin” để áp dụng.
+                            Muốn bỏ mã, xóa nội dung ô này và kiểm tra lại.
+                        </div>
+
+                        @if (hasVoucher)
+                        {
+                            <div class="alert alert-success mt-3 mb-0"
+                                 role="status">
+                                Đã áp dụng mã
+                                <strong>@Model.AppliedVoucherCode</strong>,
+                                giảm
+                                <strong>@Money(Model.DiscountAmount)</strong>.
+                            </div>
+                        }
+                    </div>
+
+                    <hr class="my-4" />
+
+                    <div class="mb-4">
+                        <h3 class="h5 mb-3">Phương thức thanh toán</h3>
 
                         <input type="hidden"
                                name="Input.PaymentMethod"
@@ -132,10 +302,15 @@
 
                         <div class="alert alert-light border mb-0">
                             <strong>Tiền mặt khi nhận hàng</strong>
+
                             <p class="mb-0 mt-1">
-                                Quý khách thanh toán cho nhân viên giao hàng khi nhận món.
+                                Quý khách thanh toán cho nhân viên giao hàng
+                                sau khi nhận món.
                             </p>
                         </div>
+
+                        <span asp-validation-for="Input.PaymentMethod"
+                              class="text-danger small"></span>
                     </div>
 
                     <button type="submit"
@@ -147,37 +322,181 @@
         </div>
 
         <div class="col-lg-5">
-            <div class="card shadow-sm">
+            <div class="card border-0 shadow-sm">
                 <div class="card-body p-4">
                     <h2 class="h5 mb-3">Món đã chọn</h2>
 
                     <ul class="list-group list-group-flush">
                         @foreach (var item in Model.Cart.Items)
                         {
-                            <li class="list-group-item px-0">
-                                <div class="d-flex flex-wrap justify-content-between gap-2">
-                                    <div>
-                                        <strong>@item.DishName</strong>
-                                        <div class="text-muted">
+                            <li class="list-group-item px-0 py-3">
+                                <div class="d-flex flex-wrap
+                                    justify-content-between gap-2">
+
+                                    <div class="text-break">
+                                        <div class="fw-semibold">
+                                            @item.DishName
+                                        </div>
+
+                                        <div class="text-muted small">
                                             @item.VariantName × @item.Quantity
                                         </div>
                                     </div>
-                                    <strong>
-                                        @(item.LineTotal.GetValueOrDefault().ToString("N0", culture)) ₫
+
+                                    <strong class="text-nowrap">
+                                        @Money(item.LineTotal.GetValueOrDefault())
                                     </strong>
                                 </div>
                             </li>
                         }
                     </ul>
 
-                    <div class="d-flex justify-content-between border-top pt-3 mt-3">
-                        <span>Tạm tính tiền món</span>
-                        <strong class="text-danger">
-                            @Model.Cart.Subtotal.ToString("N0", culture) ₫
-                        </strong>
+                    <div class="border-top pt-3 mt-3">
+                        <div class="d-flex justify-content-between
+                            gap-3 mb-3">
+                            <span>Tiền món</span>
+
+                            <strong class="text-nowrap">
+                                @Money(Model.Cart.Subtotal)
+                            </strong>
+                        </div>
+
+                        @if (hasVoucher)
+                        {
+                            <div class="d-flex justify-content-between
+                                gap-3 mb-3 text-success">
+                                <div>
+                                    <span>Giảm giá</span>
+                                    <div class="small text-break">
+                                        @Model.AppliedVoucherCode
+                                    </div>
+                                </div>
+
+                                <strong class="text-nowrap">
+                                    −@Money(Model.DiscountAmount)
+                                </strong>
+                            </div>
+                        }
+
+                        <div class="d-flex justify-content-between
+                            gap-3 border-top pt-3">
+                            <span class="fw-semibold">
+                                @(hasConfirmation
+                                    ? "Tổng thanh toán"
+                                    : "Dự kiến thanh toán")
+                            </span>
+
+                            <strong class="text-danger fs-5 text-nowrap">
+                                @Money(Model.TotalAmount)
+                            </strong>
+                        </div>
                     </div>
+
+                    <p class="small text-muted mt-3 mb-0">
+                        Bấm “Kiểm tra thông tin” sau mỗi lần thay đổi
+                        để cập nhật ưu đãi và số tiền thanh toán.
+                    </p>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+@section Scripts {
+    <script>
+        (() => {
+            const reviewForm = document.getElementById(
+                "checkout-review-form"
+            );
+
+            const confirmForm = document.getElementById(
+                "checkout-confirm-form"
+            );
+
+            const panel = document.getElementById(
+                "checkout-confirmation"
+            );
+
+            const confirmButton = document.getElementById(
+                "checkout-confirm-button"
+            );
+
+            const reminder = document.getElementById(
+                "checkout-recheck-message"
+            );
+
+            if (!reviewForm || !confirmForm || !panel || !confirmButton) {
+                return;
+            }
+
+            // Ghi nhận các giá trị của lần kiểm tra vừa hoàn tất.
+            const fields = Array.from(reviewForm.elements).filter(
+                field => field.name?.startsWith("Input.")
+                    && field.matches("input, select, textarea")
+            );
+
+            const initialValues = new Map(
+                fields.map(field => [field, field.value])
+            );
+
+            const hasChanges = () => fields.some(
+                field => field.value !== initialValues.get(field)
+            );
+
+            const invalidateConfirmation = () => {
+                panel.hidden = true;
+                confirmButton.disabled = true;
+
+                const token = confirmForm.querySelector(
+                    'input[name="confirmationToken"]'
+                );
+
+                if (token) {
+                    token.value = "";
+                }
+
+                if (reminder) {
+                    reminder.hidden = false;
+                }
+            };
+
+            const handleChange = () => {
+                if (hasChanges()) {
+                    invalidateConfirmation();
+                }
+            };
+
+            reviewForm.addEventListener("input", handleChange);
+            reviewForm.addEventListener("change", handleChange);
+
+            confirmForm.addEventListener("submit", event => {
+                // Bắt cả trường hợp chọn địa chỉ bằng script
+                // nhưng script đó không phát sự kiện input/change.
+                if (panel.hidden || hasChanges()) {
+                    event.preventDefault();
+                    invalidateConfirmation();
+                    reviewForm.scrollIntoView({
+                        behavior: "smooth",
+                        block: "start"
+                    });
+                    return;
+                }
+
+                if (confirmButton.disabled) {
+                    event.preventDefault();
+                    return;
+                }
+
+                confirmButton.disabled = true;
+                confirmButton.textContent = "Đang đặt đơn...";
+            });
+
+            window.addEventListener("pageshow", () => {
+                if (!panel.hidden) {
+                    confirmButton.disabled = false;
+                    confirmButton.textContent = "Xác nhận đặt đơn";
+                }
+            });
+        })();
+    </script>
+}

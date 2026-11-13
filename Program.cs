@@ -110,6 +110,8 @@ builder.Services.PostConfigure<CookieAuthenticationOptions>(
             await context.HttpContext.SignOutAsync(context.Scheme.Name);
         };
     });
+builder.Services.AddScoped<VoucherService>();
+builder.Services.AddScoped<VoucherImageService>();
 var app = builder.Build();
 
 // Xử lý lỗi ngoài môi trường Development.

@@ -165,7 +165,7 @@
                 </button>
             </div>
         </div>
-
+        @await Component.InvokeAsync("VoucherPromotions")
     </section>
     <!-- Food Strip End -->
     <section class="df-tet-wishes" id="df-tet-wishes" aria-label="Lời chúc đầu xuân">
@@ -319,4 +319,14 @@
 
 @section Scripts {
     <script src="~/assets/js/dorafood-tet-motion.js" asp-append-version="true" defer></script>
+    <script src="~/assets/js/voucher-promotions.js"
+            asp-append-version="true"
+            defer></script>
 }
+
+                @section Styles {
+    <link rel="stylesheet"
+          href="~/assets/css/voucher-promotions.css"
+          asp-append-version="true" />
+}
+

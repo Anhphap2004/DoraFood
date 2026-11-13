@@ -34,28 +34,56 @@ public class DeliveryOrdersController : Controller
 
     [HttpGet]
     public async Task<IActionResult> Index(
-        int page = 1,
-        CancellationToken cancellationToken = default)
+     int page = 1,
+     bool pendingCancellationOnly = false,
+     CancellationToken cancellationToken = default)
     {
         if (!ModelState.IsValid)
-            return BadRequest("Số trang không hợp lệ.");
+        {
+            return BadRequest("Thông tin lọc hoặc số trang không hợp lệ.");
+        }
 
         const int pageSize = 20;
 
-        // Lấy các khoản thanh toán tiền mặt cho đơn hàng.
         var cashPayments = CashSettlements();
 
-        // Chỉ lấy đơn giao hàng có khoản thanh toán tiền mặt.
-        var deliveryOrders = _context.Set<Order>()
+        // Những đơn đang có yêu cầu hủy chờ xét duyệt.
+        var pendingRequests = _context.Set<OrderCancellationRequest>()
             .AsNoTracking()
-            .Where(order => order.OrderType == "DELIVERY"
+            .Where(request => request.Status == "PENDING");
+
+        var pendingOrderIds = pendingRequests
+            .Select(request => request.OrderId);
+
+        // Danh sách đơn giao hàng thanh toán tiền mặt.
+        var query = _context.Set<Order>()
+            .AsNoTracking()
+            .Where(order =>
+                order.OrderType == "DELIVERY"
                 && cashPayments.Any(payment => payment.OrderId == order.Id));
 
-        var totalOrders = await deliveryOrders.CountAsync(cancellationToken);
-        var totalPages = Math.Max(1, (int)Math.Ceiling(totalOrders / (double)pageSize));
+        // Đếm trên toàn bộ danh sách, trước khi phân trang.
+        var pendingCancellationCount = await query
+            .CountAsync(
+                order => pendingOrderIds.Contains(order.Id),
+                cancellationToken);
+
+        // Chỉ lọc khi quản lý chọn nút "Chờ duyệt hủy".
+        if (pendingCancellationOnly)
+        {
+            query = query.Where(order =>
+                pendingOrderIds.Contains(order.Id));
+        }
+
+        var totalOrders = await query.CountAsync(cancellationToken);
+
+        var totalPages = Math.Max(
+            1,
+            (int)Math.Ceiling(totalOrders / (double)pageSize));
+
         page = Math.Clamp(page, 1, totalPages);
 
-        var orders = await deliveryOrders
+        var orders = await query
             .OrderByDescending(order => order.OpenedAtUtc)
             .ThenByDescending(order => order.Id)
             .Skip((page - 1) * pageSize)
@@ -67,18 +95,40 @@ public class DeliveryOrdersController : Controller
                 order.DeliveryAddress,
                 order.OpenedAtUtc,
                 order.Status,
+
                 cashPayments
-                    .Where(payment => payment.OrderId == order.Id
+                    .Where(payment =>
+                        payment.OrderId == order.Id
                         && payment.Status == "PENDING")
                     .Sum(payment => (decimal?)payment.Amount) ?? 0m,
+
                 cashPayments
-                    .Where(payment => payment.OrderId == order.Id
+                    .Where(payment =>
+                        payment.OrderId == order.Id
                         && payment.Status == "SUCCEEDED")
                     .Sum(payment => (decimal?)payment.Amount) ?? 0m))
             .ToListAsync(cancellationToken);
 
+        // Lấy mã các đơn trên trang hiện tại đang có yêu cầu hủy.
+        var pageCodes = orders.Select(order => order.Code).ToArray();
+
+        var pendingCodes = await pendingRequests
+            .Where(request =>
+                request.Order.OrderType == "DELIVERY"
+                && pageCodes.Contains(request.Order.Code))
+            .Select(request => request.Order.Code)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        ViewData["PendingCancellationOnly"] = pendingCancellationOnly;
+        ViewData["PendingCancellationCount"] = pendingCancellationCount;
+        ViewData["PendingCancellationCodes"] = pendingCodes.ToHashSet();
+
         return View(new DeliveryOrderListViewModel(
-            orders, page, totalPages, totalOrders));
+            orders,
+            page,
+            totalPages,
+            totalOrders));
     }
     [HttpPost]
     [ValidateAntiForgeryToken]

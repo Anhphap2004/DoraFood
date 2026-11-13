@@ -29,9 +29,14 @@ public sealed class ProfileOrdersController : Controller
 
     [HttpGet(Name = "DoraFood.MyOrders")]
     public async Task<IActionResult> Index(
-        CancellationToken cancellationToken,
-        [FromQuery] int pageNumber = 1)
+     CancellationToken cancellationToken,
+     [FromQuery] int pageNumber = 1)
     {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest("Số trang không hợp lệ.");
+        }
+
         if (await GetActiveUserIdAsync(cancellationToken) is not long userId)
         {
             return Forbid();
@@ -39,10 +44,19 @@ public sealed class ProfileOrdersController : Controller
 
         var orders = DeliveryOrdersOf(userId);
         var payments = SettlementPayments();
-        var items = _context.Set<OrderItem>().AsNoTracking();
+
+        var items = _context.Set<OrderItem>()
+            .AsNoTracking();
+
+        var discounts = _context.Set<OrderDiscount>()
+            .AsNoTracking();
 
         var totalOrders = await orders.CountAsync(cancellationToken);
-        var totalPages = Math.Max(1, (int)Math.Ceiling(totalOrders / (double)PageSize));
+
+        var totalPages = Math.Max(
+            1,
+            (int)Math.Ceiling(totalOrders / (double)PageSize));
+
         pageNumber = Math.Clamp(pageNumber, 1, totalPages);
 
         var rows = await orders
@@ -55,20 +69,35 @@ public sealed class ProfileOrdersController : Controller
                 order.Code,
                 order.OpenedAtUtc,
                 order.Status,
+
+                // Ưu tiên số tiền đã ghi nhận khi tạo thanh toán.
                 payments
                     .Where(payment => payment.OrderId == order.Id)
                     .OrderByDescending(payment => payment.Status == "SUCCEEDED")
                     .ThenByDescending(payment => payment.Id)
                     .Select(payment => (decimal?)payment.Amount)
                     .FirstOrDefault()
-                ?? items
-                    .Where(item => item.OrderId == order.Id)
-                    .Sum(item => (decimal?)(item.Quantity * item.UnitPrice))
-                ?? 0m))
+
+                // Nếu chưa có thanh toán: tiền món trừ khoản giảm đã lưu.
+                ?? (
+                    (items
+                        .Where(item => item.OrderId == order.Id)
+                        .Sum(item =>
+                            (decimal?)(item.Quantity * item.UnitPrice))
+                        ?? 0m)
+
+                    - (discounts
+                        .Where(discount => discount.OrderId == order.Id)
+                        .Sum(discount => (decimal?)discount.Amount)
+                        ?? 0m)
+                )))
             .ToListAsync(cancellationToken);
 
         return View(new MyOrdersViewModel(
-            rows, pageNumber, totalPages, totalOrders));
+            rows,
+            pageNumber,
+            totalPages,
+            totalOrders));
     }
 
     [HttpGet("{id:long}", Name = "DoraFood.MyOrderDetails")]
@@ -76,11 +105,17 @@ public sealed class ProfileOrdersController : Controller
     [FromRoute] long id,
     CancellationToken cancellationToken)
     {
+        if (!ModelState.IsValid || id <= 0)
+        {
+            return NotFound();
+        }
+
         if (await GetActiveUserIdAsync(cancellationToken) is not long userId)
         {
             return Forbid();
         }
 
+        // Mọi truy vấn đều giới hạn theo đơn của tài khoản hiện tại.
         var orders = DeliveryOrdersOf(userId);
         var payments = SettlementPayments();
 
@@ -96,6 +131,7 @@ public sealed class ProfileOrdersController : Controller
                 item.GuestPhone,
                 item.DeliveryAddress,
                 item.Note,
+
                 PaymentAmount = payments
                     .Where(payment => payment.OrderId == item.Id)
                     .OrderByDescending(payment => payment.Status == "SUCCEEDED")
@@ -110,9 +146,11 @@ public sealed class ProfileOrdersController : Controller
             return NotFound();
         }
 
+        // Đọc tên và giá món đã lưu trong đơn.
         var items = await (
             from item in _context.Set<OrderItem>().AsNoTracking()
-            join ownedOrder in orders on item.OrderId equals ownedOrder.Id
+            join ownedOrder in orders
+                on item.OrderId equals ownedOrder.Id
             where ownedOrder.Id == id
             orderby item.Id
             select new MyOrderItemRow(
@@ -122,9 +160,30 @@ public sealed class ProfileOrdersController : Controller
                 item.Status))
             .ToListAsync(cancellationToken);
 
+        // Đọc khoản giảm thực tế đã áp dụng.
+        // Không tính lại theo cấu hình voucher hiện tại.
+        var discounts = await (
+            from discount in _context.Set<OrderDiscount>().AsNoTracking()
+            join ownedOrder in orders
+                on discount.OrderId equals ownedOrder.Id
+            where ownedOrder.Id == id
+            orderby discount.Id
+            select new MyOrderDiscountRow(
+                discount.Description,
+                discount.Amount))
+            .ToListAsync(cancellationToken);
+
+        var subtotal = items.Sum(item => item.LineTotal);
+        var discountAmount = discounts.Sum(discount => discount.Amount);
+
+        var totalAmount = order.PaymentAmount
+            ?? (subtotal - discountAmount);
+
+        // Giữ lịch sử xử lý đơn đang có.
         var history = await (
             from entry in _context.Set<OrderStatusHistory>().AsNoTracking()
-            join ownedOrder in orders on entry.OrderId equals ownedOrder.Id
+            join ownedOrder in orders
+                on entry.OrderId equals ownedOrder.Id
             where ownedOrder.Id == id
                 && (entry.FromStatus != null || entry.ToStatus != "OPEN")
             orderby entry.ChangedAtUtc, entry.Id
@@ -134,17 +193,19 @@ public sealed class ProfileOrdersController : Controller
                 false))
             .ToListAsync(cancellationToken);
 
-        history.Insert(0, new MyOrderHistoryRow(
-            "OPEN",
-            order.OpenedAtUtc,
-            true));
+        history.Insert(
+            0,
+            new MyOrderHistoryRow(
+                "OPEN",
+                order.OpenedAtUtc,
+                true));
 
         var summary = new MyOrderRow(
             order.Id,
             order.Code,
             order.OpenedAtUtc,
             order.Status,
-            order.PaymentAmount ?? items.Sum(item => item.LineTotal));
+            totalAmount);
 
         var model = new MyOrderDetailsViewModel(
             summary,
@@ -154,6 +215,9 @@ public sealed class ProfileOrdersController : Controller
             order.Note,
             items)
         {
+            Subtotal = subtotal,
+            DiscountAmount = discountAmount,
+            Discounts = discounts,
             History = history
         };
 

@@ -1,11 +1,24 @@
 @using System.Globalization
+@using System.Collections.Generic
 @model DoraFood.Areas.Admin.ViewModels.DeliveryOrderListViewModel
 
 @{
     ViewData["Title"] = "Đơn giao hàng";
-    var culture = CultureInfo.GetCultureInfo("vi-VN");
-}
 
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+
+    var pendingCancellationOnly =
+        ViewData["PendingCancellationOnly"] is true;
+
+    var pendingCancellationCount =
+        ViewData["PendingCancellationCount"] is int count
+            ? count
+            : 0;
+
+    var pendingCancellationCodes =
+        ViewData["PendingCancellationCodes"] as HashSet<string>
+        ?? new HashSet<string>();
+}
 <div class="dv-page">
     <section class="dv-intro">
         <span class="dv-intro-icon"><i class="bi bi-truck" aria-hidden="true"></i></span>
@@ -23,6 +36,36 @@
     {
         <div class="alert alert-warning" role="alert">@error</div>
     }
+    <div class="d-flex flex-wrap align-items-center gap-2 mb-3">
+        <a asp-area="Admin"
+           asp-controller="DeliveryOrders"
+           asp-action="Index"
+           class="btn @(pendingCancellationOnly
+               ? "btn-outline-secondary"
+               : "btn-primary")"
+           aria-current="@(pendingCancellationOnly ? null : "page")">
+            Tất cả đơn
+        </a>
+
+        <a asp-area="Admin"
+           asp-controller="DeliveryOrders"
+           asp-action="Index"
+           asp-route-pendingCancellationOnly="true"
+           class="btn @(pendingCancellationOnly
+               ? "btn-warning"
+               : "btn-outline-warning")"
+           aria-current="@(pendingCancellationOnly ? "page" : null)">
+
+            <i class="bi bi-exclamation-circle me-1"
+               aria-hidden="true"></i>
+
+            Chờ duyệt hủy
+
+            <span class="badge bg-dark text-white ms-1">
+                @pendingCancellationCount
+            </span>
+        </a>
+    </div>
     <div class="card dv-card">
     <div class="card-header dv-card-header">
         <strong>Đơn giao hàng thu tiền mặt</strong>
@@ -32,7 +75,9 @@
     @if (Model.Orders.Count == 0)
     {
         <div class="card-body dv-empty text-body-secondary">
-            Chưa có đơn giao hàng thu tiền mặt.
+                @(pendingCancellationOnly
+        ? "Không có yêu cầu hủy nào đang chờ xét duyệt."
+        : "Chưa có đơn giao hàng thu tiền mặt.")
         </div>
     }
     else
@@ -82,7 +127,23 @@
                             <td class="text-nowrap">
                                 @order.OpenedAtUtc.AddHours(7).ToString("dd/MM/yyyy HH:mm")
                             </td>
-                            <td><span class="dv-status @statusClass"><span></span>@statusLabel</span></td>
+                                <td>
+                                    <span class="dv-status @statusClass">
+                                        <span></span>
+                                        @statusLabel
+                                    </span>
+
+                                    @if (pendingCancellationCodes.Contains(order.Code))
+                                    {
+                                        <div class="mt-2">
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="bi bi-exclamation-circle me-1"
+                                                   aria-hidden="true"></i>
+                                                Khách yêu cầu hủy
+                                            </span>
+                                        </div>
+                                    }
+                                </td>
                             <td class="text-end text-nowrap">
                                 @if (order.Status == "CANCELLED")
                                 {
@@ -115,8 +176,13 @@
                 @if (Model.Page > 1)
                 {
                     <a class="btn btn-outline-secondary btn-sm"
-                       href="@Url.Action("Index", "DeliveryOrders",
-                           new { area = "Admin", page = Model.Page - 1 })">
+                           href="@Url.Action("Index", "DeliveryOrders",
+                           new
+                           {
+                               area = "Admin",
+                               page = Model.Page - 1,
+                               pendingCancellationOnly = pendingCancellationOnly
+                           })">
                         Trang trước
                     </a>
                 }
@@ -126,8 +192,13 @@
                 @if (Model.Page < Model.TotalPages)
                 {
                     <a class="btn btn-outline-secondary btn-sm"
-                       href="@Url.Action("Index", "DeliveryOrders",
-                           new { area = "Admin", page = Model.Page + 1 })">
+                           href="@Url.Action("Index", "DeliveryOrders",
+                           new
+                           {
+                               area = "Admin",
+                               page = Model.Page + 1,
+                               pendingCancellationOnly = pendingCancellationOnly
+                           })">
                         Trang sau
                     </a>
                 }

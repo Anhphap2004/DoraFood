@@ -1,0 +1,278 @@
+﻿@model DoraFood.Areas.Admin.ViewModels.VoucherInput
+
+@{
+    ViewData["Title"] = "Sửa mã giảm giá";
+
+    var voucherId = ViewData["VoucherId"] is long id ? id : 0L;
+}
+
+<div class="container-fluid py-3">
+    <div class="mb-4">
+        <h1 class="h3 mb-1">Sửa mã giảm giá</h1>
+        <p class="text-body-secondary mb-0">
+            Cập nhật điều kiện áp dụng.
+            Số tiền giảm đã ghi nhận trong các đơn cũ không thay đổi.
+        </p>
+    </div>
+
+    <form asp-area="Admin"
+          asp-controller="Vouchers"
+          asp-action="Edit"
+          asp-route-id="@voucherId"
+          asp-antiforgery="true"
+          method="post"
+          enctype="multipart/form-data"
+          class="card border-0 shadow-sm">
+
+        <div class="card-body p-4">
+            <div asp-validation-summary="ModelOnly"
+                 class="text-danger mb-3"
+                 role="alert"></div>
+
+            <div class="row g-4">
+                @{
+                    var currentCoverUrl =
+                        string.IsNullOrWhiteSpace(Model.CurrentCoverUrl)
+                            ? null
+                            : Url.Content(Model.CurrentCoverUrl);
+                }
+
+                <div class="col-12">
+                    <div class="border rounded-3 p-3 p-lg-4"
+                         data-voucher-image-editor
+                         data-current-url="@currentCoverUrl">
+
+                        <div class="row g-3 align-items-start">
+                            <div class="col-lg-5">
+                                <label asp-for="CoverFile"
+                                       class="form-label fw-semibold">
+                                    Ảnh quảng cáo voucher
+                                </label>
+
+                                <input asp-for="CoverFile"
+                                       type="file"
+                                       class="form-control"
+                                       accept="image/jpeg,image/png,image/webp,.jpg,.jpeg,.png,.webp"
+                                       aria-describedby="voucher-cover-help"
+                                       data-cover-input />
+
+                                <span asp-validation-for="CoverFile"
+                                      class="text-danger small d-block mt-1"></span>
+
+                                <div data-cover-error
+                                     class="text-danger small mt-1"
+                                     role="alert"></div>
+
+                                <div id="voucher-cover-help" class="form-text">
+                                    Hỗ trợ JPG, PNG, WebP, tối đa 5 MB.
+                                    Nên dùng ảnh ngang, ví dụ 1200 × 675 px.
+                                </div>
+
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-secondary mt-3"
+                                        data-cover-reset
+                                        disabled>
+                                    Bỏ ảnh vừa chọn
+                                </button>
+
+                                <p class="small text-body-secondary mt-2 mb-0">
+                                    Không chọn ảnh mới thì giữ ảnh hiện tại.
+                                    Nếu gửi form bị lỗi, anh cần chọn lại file ảnh.
+                                </p>
+                            </div>
+
+                            <div class="col-lg-7">
+                                <div class="small fw-semibold mb-2">
+                                    Xem trước ảnh
+                                </div>
+
+                                <div class="border rounded-3 bg-light p-3 text-center">
+                                    <img src="@currentCoverUrl"
+                                         alt="Ảnh quảng cáo voucher"
+                                         class="img-fluid rounded"
+                                         style="max-height: 280px; object-fit: contain;"
+                                         hidden="@(currentCoverUrl is null)"
+                                         data-cover-preview />
+
+                                    <div class="text-muted py-5"
+                                         hidden="@(currentCoverUrl is not null)"
+                                         data-cover-placeholder>
+                                        Chưa có ảnh quảng cáo.
+                                        <div class="small mt-1">
+                                            Chọn ảnh từ máy để xem trước.
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <p class="small text-body-secondary mt-2 mb-0"
+                                   data-cover-status
+                                   role="status"></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <label asp-for="Code" class="form-label"></label>
+                    <input asp-for="Code"
+                           class="form-control"
+                           maxlength="50"
+                           required />
+                    <span asp-validation-for="Code"
+                          class="text-danger small"></span>
+                    <div class="form-text">
+                        Mã được chuyển thành chữ in hoa khi lưu.
+                    </div>
+                </div>
+
+                <div class="col-md-8">
+                    <label asp-for="Name" class="form-label"></label>
+                    <input asp-for="Name"
+                           class="form-control"
+                           maxlength="150"
+                           required />
+                    <span asp-validation-for="Name"
+                          class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-4">
+                    <label asp-for="DiscountType" class="form-label"></label>
+                    <select asp-for="DiscountType" class="form-select">
+                        <option value="PERCENT">Giảm theo phần trăm (%)</option>
+                        <option value="FIXED">Giảm số tiền cố định (₫)</option>
+                    </select>
+                    <span asp-validation-for="DiscountType"
+                          class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-4">
+                    <label asp-for="DiscountValue" class="form-label"></label>
+                    <input asp-for="DiscountValue"
+                           type="number"
+                           min="0.01"
+                           step="0.01"
+                           class="form-control"
+                           required />
+                    <span asp-validation-for="DiscountValue"
+                          class="text-danger small"></span>
+                    <div class="form-text">
+                        Nhập 10 để giảm 10%, hoặc 50000 để giảm 50.000₫.
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <label asp-for="MaxDiscount" class="form-label"></label>
+                    <input asp-for="MaxDiscount"
+                           type="number"
+                           min="0.01"
+                           step="0.01"
+                           class="form-control" />
+                    <span asp-validation-for="MaxDiscount"
+                          class="text-danger small"></span>
+                    <div class="form-text">
+                        Chỉ áp dụng khi giảm theo phần trăm.
+                        Để trống nếu không giới hạn.
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <label asp-for="MinimumOrder" class="form-label"></label>
+                    <input asp-for="MinimumOrder"
+                           type="number"
+                           min="0"
+                           step="0.01"
+                           class="form-control"
+                           required />
+                    <span asp-validation-for="MinimumOrder"
+                          class="text-danger small"></span>
+                    <div class="form-text">
+                        Nhập 0 nếu không yêu cầu giá trị đơn tối thiểu.
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <label asp-for="UsageLimit" class="form-label"></label>
+                    <input asp-for="UsageLimit"
+                           type="number"
+                           min="1"
+                           step="1"
+                           class="form-control" />
+                    <span asp-validation-for="UsageLimit"
+                          class="text-danger small"></span>
+                    <div class="form-text">
+                        Để trống nếu không giới hạn tổng lượt.
+                    </div>
+                </div>
+
+                <div class="col-md-4">
+                    <label asp-for="PerCustomerLimit"
+                           class="form-label"></label>
+                    <input asp-for="PerCustomerLimit"
+                           type="number"
+                           min="1"
+                           step="1"
+                           class="form-control" />
+                    <span asp-validation-for="PerCustomerLimit"
+                          class="text-danger small"></span>
+                    <div class="form-text">
+                        Để trống nếu không giới hạn lượt mỗi khách.
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="StartsAtLocal" class="form-label"></label>
+                    <input asp-for="StartsAtLocal"
+                           asp-format="{0:yyyy-MM-ddTHH:mm}"
+                           type="datetime-local"
+                           class="form-control"
+                           required />
+                    <span asp-validation-for="StartsAtLocal"
+                          class="text-danger small"></span>
+                </div>
+
+                <div class="col-md-6">
+                    <label asp-for="EndsAtLocal" class="form-label"></label>
+                    <input asp-for="EndsAtLocal"
+                           asp-format="{0:yyyy-MM-ddTHH:mm}"
+                           type="datetime-local"
+                           class="form-control"
+                           required />
+                    <span asp-validation-for="EndsAtLocal"
+                          class="text-danger small"></span>
+                </div>
+
+                <div class="col-12">
+                    <div class="form-check form-switch">
+                        <input asp-for="IsActive"
+                               class="form-check-input"
+                               role="switch" />
+                        <label asp-for="IsActive"
+                               class="form-check-label"></label>
+                    </div>
+
+                    <div class="form-text">
+                        Nhập thời gian theo giờ Việt Nam.
+                        Tắt mã để ngừng cho phép sử dụng.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card-footer bg-transparent d-flex
+            justify-content-end gap-2 p-3">
+            <a asp-area="Admin"
+               asp-controller="Vouchers"
+               asp-action="Index"
+               class="btn btn-outline-secondary">
+                Quay lại
+            </a>
+
+            <button type="submit" class="btn btn-primary">
+                Lưu thay đổi
+            </button>
+        </div>
+    </form>
+</div>
+@section Scripts {
+    <script src="~/admin/js/voucher-image-preview.js"
+            asp-append-version="true"></script>
+}

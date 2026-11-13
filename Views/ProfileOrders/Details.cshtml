@@ -100,12 +100,65 @@ new { id = Model.Order.Id })
                             </ul>
                         }
 
-                        <div class="d-flex justify-content-between
-                            gap-2 border-top pt-3 mt-3">
-                            <span class="fw-semibold">Tổng tiền đơn</span>
-                            <strong class="text-danger text-nowrap">
-                                @Model.Order.Total.ToString("N0", culture) ₫
-                            </strong>
+                        <div class="border-top pt-3 mt-3">
+                            <!-- Tiền món trước giảm -->
+                            <div class="d-flex justify-content-between gap-3 mb-3">
+                                <span>Tiền món</span>
+
+                                <strong class="text-nowrap">
+                                    @Model.Subtotal.ToString("N0", culture) ₫
+                                </strong>
+                            </div>
+
+                            <!-- Các khoản giảm đã ghi nhận khi đặt đơn -->
+                            @if (Model.Discounts.Count > 0)
+                            {
+                                <div class="d-flex justify-content-between
+                                    gap-3 mb-2 text-success">
+                                    <span>Giảm giá</span>
+
+                                    <strong class="text-nowrap">
+                                        −@Model.DiscountAmount.ToString("N0", culture) ₫
+                                    </strong>
+                                </div>
+
+                                <ul class="list-unstyled small text-muted mb-3">
+                                    @foreach (var discount in Model.Discounts)
+                                    {
+                                        <li class="d-flex flex-wrap justify-content-between
+                                            gap-2 mb-1">
+                                            <span class="text-break">
+                                                @discount.Description
+                                            </span>
+
+                                            <span class="text-nowrap">
+                                                −@discount.Amount.ToString("N0", culture) ₫
+                                            </span>
+                                        </li>
+                                    }
+                                </ul>
+                            }
+
+                            <!-- Tổng tiền sau giảm -->
+                            <div class="d-flex justify-content-between
+                                align-items-start gap-3 border-top pt-3">
+                                <span class="fw-semibold">
+                                    @(Model.Order.Status == "CANCELLED"
+                                        ? "Giá trị đơn trước khi hủy"
+                                        : "Tổng tiền đơn")
+                                </span>
+
+                                <strong class="text-danger fs-5 text-nowrap">
+                                    @Model.Order.Total.ToString("N0", culture) ₫
+                                </strong>
+                            </div>
+
+                            @if (Model.Order.Status == "CANCELLED")
+                            {
+                                <p class="small text-muted mt-2 mb-0">
+                                    Đơn hàng đã được hủy.
+                                </p>
+                            }
                         </div>
                     </div>
                 </div>

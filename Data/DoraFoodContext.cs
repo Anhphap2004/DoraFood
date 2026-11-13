@@ -673,10 +673,12 @@ public partial class DoraFoodContext : DbContext
             entity.Property(e => e.Amount).HasColumnType("decimal(19, 2)");
             entity.Property(e => e.Description).HasMaxLength(250);
 
-            entity.HasOne(d => d.ApprovedByNavigation).WithMany(p => p.OrderDiscounts)
-                .HasForeignKey(d => d.ApprovedBy)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_OrderDiscounts_ApprovedBy");
+            entity.HasOne(d => d.ApprovedByNavigation)
+    .WithMany(p => p.OrderDiscounts)
+    .HasForeignKey(d => d.ApprovedBy)
+    .IsRequired(false)
+    .OnDelete(DeleteBehavior.ClientSetNull)
+    .HasConstraintName("FK_OrderDiscounts_ApprovedBy");
 
             entity.HasOne(d => d.Order).WithMany(p => p.OrderDiscounts)
                 .HasForeignKey(d => d.OrderId)
@@ -1696,6 +1698,15 @@ public partial class DoraFoodContext : DbContext
             entity.Property(e => e.MinimumOrder).HasColumnType("decimal(19, 2)");
             entity.Property(e => e.Name).HasMaxLength(150);
             entity.Property(e => e.StartsAtUtc).HasPrecision(3);
+            entity.HasIndex(
+    voucher => voucher.CoverId,
+    "IX_Vouchers_CoverId");
+
+            entity.HasOne(voucher => voucher.Cover)
+                .WithMany()
+                .HasForeignKey(voucher => voucher.CoverId)
+                .OnDelete(DeleteBehavior.NoAction)
+                .HasConstraintName("FK_Vouchers_CoverId");
         });
 
         modelBuilder.Entity<Warehouse>(entity =>

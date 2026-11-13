@@ -1,0 +1,229 @@
+﻿.df-vouchers {
+    color: #202020;
+    font-family: inherit;
+}
+
+.df-vouchers__heading {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    justify-content: space-between;
+    gap: 12px 24px;
+    margin-bottom: 24px;
+}
+
+.df-vouchers__eyebrow {
+    display: block;
+    margin-bottom: 8px;
+    color: #b41924;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 1.5px;
+}
+
+.df-vouchers__heading h2 {
+    margin: 0;
+    color: #202020;
+    font-family: inherit;
+    font-size: clamp(24px, 3vw, 34px);
+    font-weight: 800;
+    line-height: 1.25;
+}
+
+.df-vouchers__heading p {
+    max-width: 340px;
+    margin: 0;
+    color: #555;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+.df-vouchers__grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 24px;
+}
+
+.df-voucher {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    overflow: hidden;
+    background: #fff;
+    border: 1px solid #e9e3df;
+    border-radius: 18px;
+    box-shadow: 0 8px 28px rgb(35 20 10 / 5%);
+    transition: transform .2s ease, box-shadow .2s ease;
+}
+
+    .df-voucher:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 14px 32px rgb(35 20 10 / 10%);
+    }
+
+.df-voucher__image {
+    position: relative;
+    overflow: hidden;
+    aspect-ratio: 16 / 9;
+    background: #f3eeea;
+}
+
+    .df-voucher__image img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+.df-voucher__badge {
+    position: absolute;
+    top: 14px;
+    left: 14px;
+    max-width: calc(100% - 28px);
+    padding: 8px 14px;
+    color: #fff;
+    background: #b41924;
+    border-radius: 999px;
+    font-size: 15px;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+    box-shadow: 0 4px 12px rgb(0 0 0 / 15%);
+}
+
+.df-voucher__body {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    padding: 22px;
+}
+
+.df-voucher__expiry {
+    margin: 0 0 10px;
+    color: #685a50;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.df-voucher__body h3 {
+    margin: 0 0 12px;
+    color: #202020;
+    font-family: inherit;
+    font-size: 20px;
+    font-weight: 800;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+.df-voucher__conditions {
+    margin: 0 0 20px;
+    padding-left: 18px;
+    color: #555;
+    font-size: 14px;
+    line-height: 1.7;
+}
+
+.df-voucher__actions {
+    margin-top: auto;
+}
+
+.df-voucher__codebox {
+    display: flex;
+    overflow: hidden;
+    background: #fff9f2;
+    border: 1px dashed #c99867;
+    border-radius: 10px;
+}
+
+    .df-voucher__codebox input {
+        width: 100%;
+        min-width: 0;
+        padding: 12px;
+        color: #8e1620;
+        background: transparent;
+        border: 0;
+        font-family: monospace;
+        font-size: 15px;
+        font-weight: 800;
+    }
+
+    .df-voucher__codebox button {
+        flex-shrink: 0;
+        padding: 10px 12px;
+        color: #8e1620;
+        background: #ffedda;
+        border: 0;
+        border-left: 1px dashed #c99867;
+        font-size: 12px;
+        font-weight: 700;
+        cursor: pointer;
+    }
+
+        .df-voucher__codebox button:hover {
+            background: #ffe1bf;
+        }
+
+        .df-voucher__codebox button:disabled {
+            opacity: .65;
+            cursor: wait;
+        }
+
+        .df-voucher__codebox input:focus-visible,
+        .df-voucher__codebox button:focus-visible,
+        .df-voucher__menu:focus-visible {
+            outline: 3px solid #b41924;
+            outline-offset: -3px;
+        }
+
+.df-voucher__status {
+    min-height: 20px;
+    margin: 6px 0 10px;
+    color: #34643b;
+    font-size: 12px;
+    line-height: 1.5;
+}
+
+.df-voucher__menu {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 11px 14px;
+    color: #fff;
+    background: #202020;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 700;
+    text-decoration: none;
+}
+
+    .df-voucher__menu:hover {
+        color: #fff;
+        background: #b41924;
+    }
+
+@media (max-width: 991.98px) {
+    .df-vouchers__grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px;
+    }
+}
+
+@media (max-width: 575.98px) {
+    .df-vouchers__grid {
+        grid-template-columns: minmax(0, 1fr);
+    }
+
+    .df-voucher__body {
+        padding: 18px;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .df-voucher {
+        transition: none;
+    }
+
+        .df-voucher:hover {
+            transform: none;
+        }
+}

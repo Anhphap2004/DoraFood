@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace DoraFood.Models;
+﻿namespace DoraFood.Models;
 
 public partial class OrderDiscount
 {
@@ -15,9 +12,10 @@ public partial class OrderDiscount
 
     public decimal Amount { get; set; }
 
-    public long ApprovedBy { get; set; }
+    // Để trống khi hệ thống tự áp dụng voucher.
+    public long? ApprovedBy { get; set; }
 
-    public virtual User ApprovedByNavigation { get; set; } = null!;
+    public virtual User? ApprovedByNavigation { get; set; }
 
     public virtual Order Order { get; set; } = null!;
 

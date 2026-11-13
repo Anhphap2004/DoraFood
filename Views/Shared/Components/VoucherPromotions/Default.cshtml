@@ -1,0 +1,129 @@
+﻿@using System.Collections.Generic
+@using System.Globalization
+@model List<DoraFood.ViewModels.VoucherPromotionItem>
+
+@{
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+
+    string Money(decimal amount) =>
+        amount.ToString("#,##0.##", culture) + " ₫";
+}
+
+@if (Model.Count > 0)
+{
+    <section class="df-vouchers py-4"
+             aria-label="Ưu đãi DoraFood">
+        <div class="container">
+            <div class="df-vouchers__heading">
+                <div>
+                    <span class="df-vouchers__eyebrow">
+                        ƯU ĐÃI DORAFOOD
+                    </span>
+
+                    <h2>Thêm vị ngon, thêm ưu đãi</h2>
+                </div>
+
+                <p>
+                    Sao chép mã yêu thích và nhập tại trang thanh toán.
+                </p>
+            </div>
+
+            <div class="df-vouchers__grid">
+                @foreach (var voucher in Model)
+                {
+                    var discountLabel = voucher.DiscountType == "PERCENT"
+                        ? $"Giảm {voucher.DiscountValue.ToString("0.##", culture)}%"
+                        : $"Giảm {Money(voucher.DiscountValue)}";
+
+                    <article class="df-voucher">
+                        <div class="df-voucher__image">
+                            <img src="@Url.Content(voucher.ImageUrl)"
+                                 alt="@(voucher.ImageAlt ?? voucher.Name)"
+                                 width="1200"
+                                 height="675"
+                                 loading="lazy"
+                                 decoding="async" />
+
+                            <span class="df-voucher__badge">
+                                @discountLabel
+                            </span>
+                        </div>
+
+                        <div class="df-voucher__body">
+                            <p class="df-voucher__expiry">
+                                Đến
+                                @voucher.EndsAtUtc.AddHours(7)
+                                .ToString("dd/MM/yyyy HH:mm")
+                            </p>
+
+                            <h3>@voucher.Name</h3>
+
+                            <ul class="df-voucher__conditions">
+                                <li>
+                                    @if (voucher.MinimumOrder > 0)
+                                    {
+                                        <span>
+                                            Đơn từ @Money(voucher.MinimumOrder).
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span>
+                                            Không yêu cầu giá trị đơn tối thiểu.
+                                        </span>
+                                    }
+                                </li>
+
+                                @if (voucher.DiscountType == "PERCENT"
+                                    && voucher.MaxDiscount.HasValue)
+                                {
+                                    <li>
+                                        Giảm tối đa
+                                        @Money(voucher.MaxDiscount.Value).
+                                    </li>
+                                }
+
+                                @if (voucher.PerCustomerLimit.HasValue)
+                                {
+                                    <li>
+                                        Mỗi khách tối đa
+                                        @voucher.PerCustomerLimit.Value lượt.
+                                    </li>
+                                }
+                            </ul>
+
+                            <div class="df-voucher__actions">
+                                <div class="df-voucher__codebox">
+                                    <input type="text"
+                                           value="@voucher.Code"
+                                           readonly
+                                           spellcheck="false"
+                                           aria-label="Mã giảm giá @voucher.Code"
+                                           data-voucher-code />
+
+                                    <button type="button"
+                                            data-voucher-copy>
+                                        Sao chép mã
+                                    </button>
+                                </div>
+
+                                <p class="df-voucher__status"
+                                   role="status"
+                                   aria-live="polite"
+                                   data-voucher-status></p>
+
+                                <a asp-area=""
+                                   asp-controller="Menu"
+                                   asp-action="Index"
+                                   class="df-voucher__menu">
+                                    Xem thực đơn
+                                    <span aria-hidden="true">→</span>
+                                </a>
+                            </div>
+                        </div>
+                    </article>
+                }
+            </div>
+        </div>
+    </section>
+}
