@@ -331,6 +331,28 @@
                                             text-nowrap px-3 py-2 me-2 mb-2">
                                             Chi tiết
                                         </a>
+                                        @foreach (var invoiceOrder in reservation.Orders
+    .Where(order =>
+        order.OrderType == "DINE_IN"
+        && order.Invoice != null
+        && order.Invoice.Status == "ISSUED"
+        && order.Invoice.IssuedAtUtc.HasValue)
+    .OrderByDescending(order => order.Invoice!.IssuedAtUtc)
+    .ThenByDescending(order => order.Id))
+                                        {
+                                            <a href="@Url.RouteUrl(
+                                                         "DoraFoodTableInvoice",
+                                                         new { orderId = invoiceOrder.Id })"
+                                               class="btn btn-outline-success rounded-pill
+                                                text-nowrap px-3 py-2 me-2 mb-2"
+                                               title="Hóa đơn @invoiceOrder.Invoice!.Number">
+
+                                                <i class="fas fa-receipt me-1"
+                                                   aria-hidden="true"></i>
+
+                                                Xem hóa đơn
+                                            </a>
+                                        }
                                         @if (reservation.Status == "PENDING"
                                             && reservation.StartsAtUtc > DateTime.UtcNow.AddMinutes(-30))
                                         {

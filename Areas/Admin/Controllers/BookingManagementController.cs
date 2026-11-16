@@ -218,9 +218,11 @@ namespace DoraFood.Controllers
                 Math.Max(1, totalPages));
 
             var reservations = await query
-                .Include(r => r.Tables)
-                    .ThenInclude(t => t.Area)
-                .AsSplitQuery()
+    .Include(r => r.Tables)
+        .ThenInclude(t => t.Area)
+    .Include(r => r.Orders)
+        .ThenInclude(order => order.Invoice)
+    .AsSplitQuery()
                 .OrderByDescending(r => r.CreatedAtUtc)
                 .ThenByDescending(r => r.Id)
                 .Skip((page - 1) * pageSize)
@@ -365,12 +367,15 @@ namespace DoraFood.Controllers
 
             // Lấy thông tin đặt bàn và các bàn đã phân.
             var reservation = await _context.Set<Reservation>()
-                .AsNoTracking()
-                .Include(r => r.Tables)
-                    .ThenInclude(t => t.Area)
-                .FirstOrDefaultAsync(
-                    r => r.Id == id,
-                    cancellationToken);
+     .AsNoTracking()
+     .Include(r => r.Tables)
+         .ThenInclude(t => t.Area)
+     .Include(r => r.Orders)
+         .ThenInclude(order => order.Invoice)
+     .AsSplitQuery()
+     .FirstOrDefaultAsync(
+         r => r.Id == id,
+         cancellationToken);
 
             if (reservation == null)
             {

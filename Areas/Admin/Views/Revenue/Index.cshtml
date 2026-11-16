@@ -1,0 +1,436 @@
+﻿@using System
+@using System.Linq
+@using System.Text.Json
+@using System.Globalization
+@model DoraFood.Areas.Admin.ViewModels.RevenueDashboardViewModel
+
+@{
+    ViewData["Title"] = "Thống kê doanh thu";
+
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+
+    var today = DateTime.UtcNow.AddHours(7).Date;
+    var monthStart = new DateTime(today.Year, today.Month, 1);
+    var previousMonthStart = monthStart.AddMonths(-1);
+    var previousMonthEnd = monthStart.AddDays(-1);
+
+    string Money(decimal amount) =>
+        amount.ToString("#,##0.##", culture) + " ₫";
+
+    string DateValue(DateTime date) =>
+        date.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+
+    var hasActivity =
+        Model.CollectedAmount != 0m
+        || Model.RefundedAmount != 0m
+        || Model.CompletedOrders != 0
+        || Model.DiscountAmount != 0m;
+}
+
+<div class="container-fluid py-3">
+    <div class="d-flex flex-wrap justify-content-between
+        align-items-start gap-3 mb-4">
+        <div>
+            <h1 class="h3 mb-2">Thống kê doanh thu</h1>
+
+            <p class="text-body-secondary mb-0">
+                Theo dõi tiền thanh toán đã thu và tiền đã hoàn.
+                Báo cáo không bao gồm tiền đặt cọc.
+            </p>
+        </div>
+
+        <span class="badge bg-light text-dark border px-3 py-2">
+            @Model.FromDate.ToString("dd/MM/yyyy")
+            —
+            @Model.ToDate.ToString("dd/MM/yyyy")
+        </span>
+    </div>
+
+    <!-- Bộ lọc -->
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <form id="revenue-filter-form"
+                  asp-area="Admin"
+                  asp-controller="Revenue"
+                  asp-action="Index"
+                  method="get">
+
+                <div class="row g-3 align-items-end">
+                    <div class="col-md-4">
+                        <label for="revenue-from-date"
+                               class="form-label">
+                            Từ ngày
+                        </label>
+
+                        <input id="revenue-from-date"
+                               name="fromDate"
+                               type="date"
+                               value="@DateValue(Model.FromDate)"
+                               class="form-control"
+                               required />
+                    </div>
+
+                    <div class="col-md-4">
+                        <label for="revenue-to-date"
+                               class="form-label">
+                            Đến ngày
+                        </label>
+
+                        <input id="revenue-to-date"
+                               name="toDate"
+                               type="date"
+                               value="@DateValue(Model.ToDate)"
+                               class="form-control"
+                               required />
+                    </div>
+
+                    <div class="col-md-4">
+                        <button type="submit"
+                                class="btn btn-primary w-100">
+                            Xem thống kê
+                        </button>
+                    </div>
+                </div>
+            </form>
+
+            <div class="d-flex flex-wrap gap-2 mt-3">
+                <a asp-area="Admin"
+                   asp-controller="Revenue"
+                   asp-action="Index"
+                   asp-route-fromDate="@DateValue(today)"
+                   asp-route-toDate="@DateValue(today)"
+                   class="btn btn-sm btn-outline-secondary">
+                    Hôm nay
+                </a>
+
+                <a asp-area="Admin"
+                   asp-controller="Revenue"
+                   asp-action="Index"
+                   asp-route-fromDate="@DateValue(today.AddDays(-6))"
+                   asp-route-toDate="@DateValue(today)"
+                   class="btn btn-sm btn-outline-secondary">
+                    7 ngày gần nhất
+                </a>
+
+                <a asp-area="Admin"
+                   asp-controller="Revenue"
+                   asp-action="Index"
+                   asp-route-fromDate="@DateValue(monthStart)"
+                   asp-route-toDate="@DateValue(today)"
+                   class="btn btn-sm btn-outline-secondary">
+                    Tháng này
+                </a>
+
+                <a asp-area="Admin"
+                   asp-controller="Revenue"
+                   asp-action="Index"
+                   asp-route-fromDate="@DateValue(previousMonthStart)"
+                   asp-route-toDate="@DateValue(previousMonthEnd)"
+                   class="btn btn-sm btn-outline-secondary">
+                    Tháng trước
+                </a>
+            </div>
+
+            <div class="form-text mt-3">
+                Thống kê theo giờ Việt Nam, bao gồm cả ngày kết thúc.
+                Mỗi lần xem tối đa 366 ngày.
+            </div>
+        </div>
+    </div>
+
+    <!-- Tổng quan tiền thu và hoàn -->
+    <div class="row g-3 mb-3">
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="text-body-secondary mb-2">
+                        Tiền thanh toán đã thu
+                    </div>
+
+                    <div class="h4 fw-bold text-primary text-break mb-2">
+                        @Money(Model.CollectedAmount)
+                    </div>
+
+                    <div class="small text-body-secondary">
+                        Các khoản thanh toán thành công trong kỳ.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="text-body-secondary mb-2">
+                        Tiền đã hoàn
+                    </div>
+
+                    <div class="h4 fw-bold text-danger text-break mb-2">
+                        @Money(Model.RefundedAmount)
+                    </div>
+
+                    <div class="small text-body-secondary">
+                        Các khoản hoàn tiền thành công trong kỳ.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4">
+                    <div class="text-body-secondary mb-2">
+                        Tiền thu sau hoàn
+                    </div>
+
+                    <div class="h4 fw-bold text-break mb-2
+                        @(Model.NetCollectedAmount < 0m
+    ? "text-danger"
+    : "text-success")">
+                        @Money(Model.NetCollectedAmount)
+                    </div>
+
+                    <div class="small text-body-secondary">
+                        Tiền đã thu trừ tiền đã hoàn.
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Đơn hàng và ưu đãi -->
+    <div class="row g-3 mb-4">
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4 d-flex
+                    justify-content-between align-items-center gap-3">
+                    <div>
+                        <h2 class="h6 mb-1">Đơn hoàn tất</h2>
+                        <div class="small text-body-secondary">
+                            Tính theo ngày hoàn tất đơn.
+                        </div>
+                    </div>
+
+                    <strong class="fs-3 text-nowrap">
+                        @Model.CompletedOrders.ToString("N0", culture)
+                    </strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body p-4 d-flex
+                    justify-content-between align-items-center gap-3">
+                    <div>
+                        <h2 class="h6 mb-1">Tiền giảm giá</h2>
+                        <div class="small text-body-secondary">
+                            Của các đơn hoàn tất trong kỳ.
+                        </div>
+                    </div>
+
+                    <strong class="fs-5 text-success text-break text-end">
+                        @Money(Model.DiscountAmount)
+                    </strong>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (!hasActivity)
+    {
+        <div class="alert alert-light border" role="status">
+            Chưa có phát sinh trong khoảng ngày đã chọn.
+            Bảng bên dưới vẫn hiển thị đầy đủ các ngày.
+        </div>
+    }
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-header bg-transparent py-3">
+            <h2 class="h5 mb-1">Tiền thu và tiền hoàn theo ngày</h2>
+
+            <p class="small text-body-secondary mb-0">
+                Rê chuột hoặc chạm vào biểu đồ để xem số tiền.
+                Bấm tên từng đường để ẩn hoặc hiện.
+            </p>
+        </div>
+
+        <div class="card-body">
+            <div id="revenue-chart-container"
+                 style="position: relative; height: 340px;">
+                <canvas id="revenue-chart"
+                        role="img"
+                        aria-label="Biểu đồ tiền đã thu và tiền đã hoàn theo từng ngày. Số liệu chi tiết nằm trong bảng bên dưới.">
+                    Xem số liệu trong bảng chi tiết bên dưới.
+                </canvas>
+            </div>
+
+            <div id="revenue-chart-error"
+                 class="alert alert-light border mb-0"
+                 role="status"
+                 hidden>
+                Chưa tải được biểu đồ.
+                Anh vẫn có thể xem số liệu trong bảng bên dưới.
+            </div>
+        </div>
+    </div>
+
+    <script id="revenue-chart-data" type="application/json">
+        @Html.Raw(JsonSerializer.Serialize(new
+        {
+                labels = Model.Days.Select(day =>
+                        day.Date.ToString("dd/MM/yyyy")),
+                collected = Model.Days.Select(day =>
+                        day.CollectedAmount),
+                refunded = Model.Days.Select(day =>
+                        day.RefundedAmount)
+        }))
+    </script>
+    <!-- Chi tiết từng ngày -->
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-transparent py-3">
+            <h2 class="h5 mb-0">Chi tiết theo ngày</h2>
+        </div>
+
+        <div class="table-responsive" style="max-height: 560px;">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light sticky-top">
+                    <tr>
+                        <th scope="col">Ngày</th>
+                        <th scope="col" class="text-end text-nowrap">
+                            Đã thu
+                        </th>
+                        <th scope="col" class="text-end text-nowrap">
+                            Đã hoàn
+                        </th>
+                        <th scope="col" class="text-end text-nowrap">
+                            Thu sau hoàn
+                        </th>
+                        <th scope="col" class="text-end text-nowrap">
+                            Đơn hoàn tất
+                        </th>
+                        <th scope="col" class="text-end text-nowrap">
+                            Giảm giá
+                        </th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @foreach (var day in Model.Days)
+                    {
+                        <tr>
+                            <th scope="row" class="text-nowrap fw-normal">
+                                @day.Date.ToString("dd/MM/yyyy")
+
+                                <div class="small text-body-secondary">
+                                    @day.Date.ToString("dddd", culture)
+                                </div>
+                            </th>
+
+                            <td class="text-end text-nowrap">
+                                @Money(day.CollectedAmount)
+                            </td>
+
+                            <td class="text-end text-nowrap">
+                                @Money(day.RefundedAmount)
+                            </td>
+
+                            <td class="text-end text-nowrap fw-semibold
+                                @(day.NetCollectedAmount < 0m
+    ? "text-danger"
+    : "text-success")">
+                                @Money(day.NetCollectedAmount)
+                            </td>
+
+                            <td class="text-end">
+                                @day.CompletedOrders.ToString("N0", culture)
+                            </td>
+
+                            <td class="text-end text-nowrap">
+                                @Money(day.DiscountAmount)
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+
+                <tfoot class="table-light fw-bold">
+                    <tr>
+                        <th scope="row">Tổng cộng</th>
+
+                        <td class="text-end text-nowrap">
+                            @Money(Model.CollectedAmount)
+                        </td>
+
+                        <td class="text-end text-nowrap">
+                            @Money(Model.RefundedAmount)
+                        </td>
+
+                        <td class="text-end text-nowrap">
+                            @Money(Model.NetCollectedAmount)
+                        </td>
+
+                        <td class="text-end">
+                            @Model.CompletedOrders.ToString("N0", culture)
+                        </td>
+
+                        <td class="text-end text-nowrap">
+                            @Money(Model.DiscountAmount)
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+
+        <div class="card-footer bg-transparent small text-body-secondary py-3">
+            Tiền thu và tiền hoàn được tính theo ngày thực hiện.
+            Đơn hoàn tất và giảm giá được tính theo ngày hoàn tất đơn.
+            Tiền giảm giá đã được phản ánh trong tiền thanh toán.
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (() => {
+            const form = document.getElementById("revenue-filter-form");
+            const from = document.getElementById("revenue-from-date");
+            const to = document.getElementById("revenue-to-date");
+
+            if (!form || !from || !to) {
+                return;
+            }
+
+            form.addEventListener("input", () => {
+                to.setCustomValidity("");
+            });
+
+            form.addEventListener("submit", event => {
+                to.setCustomValidity("");
+
+                const start = Date.parse(from.value + "T00:00:00Z");
+                const end = Date.parse(to.value + "T00:00:00Z");
+
+                if (!Number.isFinite(start) || !Number.isFinite(end)) {
+                    to.setCustomValidity("Vui lòng chọn ngày hợp lệ.");
+                } else if (end < start) {
+                    to.setCustomValidity(
+                        "Ngày kết thúc phải bằng hoặc sau ngày bắt đầu."
+                    );
+                } else if ((end - start) / 86400000 + 1 > 366) {
+                    to.setCustomValidity(
+                        "Mỗi lần thống kê tối đa 366 ngày."
+                    );
+                }
+
+                if (!form.reportValidity()) {
+                    event.preventDefault();
+                }
+            });
+        })();
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"
+        defer></script>
+
+<script src="~/admin/js/revenue-chart.js"
+        asp-append-version="true"
+        defer></script>
+}

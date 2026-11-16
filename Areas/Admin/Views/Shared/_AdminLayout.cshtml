@@ -167,8 +167,54 @@
                         @if (User.IsInRole("ADMIN") || User.IsInRole("MANAGER"))
                         {
                             <li class="nav-header">KIỂM SOÁT & THỐNG KÊ</li>
-                            <li class="nav-item"><a asp-area="Admin" asp-controller="AdminOverview" asp-action="Index" class="nav-link @Active("AdminOverview")"><i class="nav-icon bi bi-bar-chart-line" aria-hidden="true"></i><p>Thống kê thu chi</p></a></li>
-                            <li class="nav-item"><a asp-area="Admin" asp-controller="AdminFeedback" asp-action="Index" class="nav-link @Active("AdminFeedback")"><i class="nav-icon bi bi-chat-square-text" aria-hidden="true"></i><p>Bình luận & đánh giá</p></a></li>
+
+                            <li class="nav-item">
+                                <a asp-area="Admin"
+                                   asp-controller="Vouchers"
+                                   asp-action="Index"
+                                   class="nav-link @Active("Vouchers")"
+                                   aria-current="@(Active("Vouchers") == "active" ? "page" : null)">
+                                    <i class="nav-icon bi bi-ticket-perforated"
+                                       aria-hidden="true"></i>
+                                    <p>Mã giảm giá</p>
+                                </a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a asp-area="Admin"
+                                   asp-controller="Revenue"
+                                   asp-action="Index"
+                                   class="nav-link @Active("Revenue")"
+                                   aria-current="@(Active("Revenue") == "active" ? "page" : null)">
+                                    <i class="nav-icon bi bi-graph-up-arrow"
+                                       aria-hidden="true"></i>
+                                    <p>Thống kê doanh thu</p>
+                                </a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a asp-area="Admin"
+                                   asp-controller="AdminOverview"
+                                   asp-action="Index"
+                                   class="nav-link @Active("AdminOverview")"
+                                   aria-current="@(Active("AdminOverview") == "active" ? "page" : null)">
+                                    <i class="nav-icon bi bi-bar-chart-line"
+                                       aria-hidden="true"></i>
+                                    <p>Thống kê thu chi</p>
+                                </a>
+                            </li>
+
+                            <li class="nav-item">
+                                <a asp-area="Admin"
+                                   asp-controller="AdminFeedback"
+                                   asp-action="Index"
+                                   class="nav-link @Active("AdminFeedback")"
+                                   aria-current="@(Active("AdminFeedback") == "active" ? "page" : null)">
+                                    <i class="nav-icon bi bi-chat-square-text"
+                                       aria-hidden="true"></i>
+                                    <p>Bình luận & đánh giá</p>
+                                </a>
+                            </li>
                         }
                         @if (User.IsInRole("ADMIN"))
                         {

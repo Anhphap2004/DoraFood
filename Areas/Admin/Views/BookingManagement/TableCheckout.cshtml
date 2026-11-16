@@ -1,0 +1,561 @@
+﻿@using System.Globalization
+@model DoraFood.Areas.Admin.ViewModels.TableCheckoutViewModel
+
+@{
+    ViewData["Title"] = $"Thanh toán đơn {Model.OrderCode}";
+
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+
+    var blockReason =
+        ViewData["TableCheckoutBlockReason"] as string;
+
+    string Money(decimal amount) =>
+        amount.ToString("N0", culture) + " ₫";
+
+    string LineTypeLabel(string lineType) => lineType switch
+    {
+        "DISH" => "Món ăn",
+        "ADDON" => "Món thêm",
+        "SERVICE" => "Dịch vụ",
+        "FEE" => "Phụ phí",
+        _ => "Khác"
+    };
+}
+
+<div class="container-fluid pb-4">
+
+    <!-- Tiêu đề -->
+    <div class="d-flex flex-wrap justify-content-between
+        align-items-center gap-3 mb-4">
+
+        <div>
+            <h1 class="h3 mb-1">
+                Thanh toán tại bàn
+            </h1>
+
+            <p class="text-body-secondary mb-0">
+                Đơn hàng
+                <strong class="text-break">
+                    @Model.OrderCode
+                </strong>
+            </p>
+        </div>
+
+        <a href="@Url.RouteUrl(
+                     "DoraFoodTableOrderDetails",
+                     new { orderId = Model.OrderId })"
+           class="btn btn-outline-secondary">
+            <i class="fas fa-arrow-left me-1"
+               aria-hidden="true"></i>
+            Về đơn gọi món
+        </a>
+    </div>
+
+    <!-- Thông báo -->
+    @if (TempData["TableOrderSuccess"] is string successMessage)
+    {
+        <div class="alert alert-success" role="status">
+            @successMessage
+        </div>
+    }
+
+    @if (TempData["TableOrderError"] is string errorMessage)
+    {
+        <div class="alert alert-danger" role="alert">
+            @errorMessage
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(blockReason))
+    {
+        <div class="alert alert-warning" role="alert">
+            <div class="fw-semibold mb-1">
+                Chưa thể xác nhận thanh toán
+            </div>
+
+            <div>@blockReason</div>
+        </div>
+    }
+
+    <div class="row g-4">
+
+        <!-- Chi tiết hóa đơn -->
+        <div class="col-xl-8">
+
+            <!-- Thông tin khách và bàn -->
+            <div class="card border-0 shadow-sm mb-4">
+                <div class="card-body p-4">
+
+                    <h2 class="h5 mb-3">
+                        Thông tin phục vụ
+                    </h2>
+
+                    <dl class="row g-3 mb-0">
+
+                        <div class="col-md-6">
+                            <dt class="small text-body-secondary fw-normal">
+                                Khách hàng
+                            </dt>
+
+                            <dd class="fw-semibold text-break mb-0">
+                                @(string.IsNullOrWhiteSpace(Model.GuestName)
+                                    ? "Khách tại bàn"
+                                    : Model.GuestName)
+                            </dd>
+                        </div>
+
+                        <div class="col-md-6">
+                            <dt class="small text-body-secondary fw-normal">
+                                Số điện thoại
+                            </dt>
+
+                            <dd class="fw-semibold mb-0">
+                                @(string.IsNullOrWhiteSpace(Model.GuestPhone)
+                                    ? "Chưa có thông tin"
+                                    : Model.GuestPhone)
+                            </dd>
+                        </div>
+
+                        <div class="col-md-6">
+                            <dt class="small text-body-secondary fw-normal">
+                                Bàn phục vụ
+                            </dt>
+
+                            <dd class="mb-0">
+                                @if (Model.Tables.Count == 0)
+                                {
+                                    <span class="text-body-secondary">
+                                        Chưa có thông tin bàn
+                                    </span>
+                                }
+                                else
+                                {
+                                    <div class="d-flex flex-wrap gap-2 mt-1">
+                                        @foreach (var table in Model.Tables)
+                                        {
+                                            <span class="badge text-bg-primary">
+                                                @table
+                                            </span>
+                                        }
+                                    </div>
+                                }
+                            </dd>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(Model.ReservationCode))
+                        {
+                            <div class="col-md-6">
+                                <dt class="small text-body-secondary fw-normal">
+                                    Mã đặt bàn
+                                </dt>
+
+                                <dd class="fw-semibold text-break mb-0">
+                                    @Model.ReservationCode
+                                </dd>
+                            </div>
+                        }
+
+                    </dl>
+                </div>
+            </div>
+
+            <!-- Danh sách món và dịch vụ -->
+            <div class="card border-0 shadow-sm mb-4">
+
+                <div class="card-header bg-transparent py-3 px-4">
+                    <h2 class="h5 mb-0">
+                        Chi tiết tính tiền
+                    </h2>
+                </div>
+
+                @if (Model.Lines.Count == 0)
+                {
+                    <div class="card-body p-4">
+                        <p class="text-body-secondary mb-0">
+                            Chưa có món ăn hoặc dịch vụ để tính tiền.
+                        </p>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col" class="ps-4">
+                                        Nội dung
+                                    </th>
+
+                                    <th scope="col" class="text-end text-nowrap">
+                                        Số lượng
+                                    </th>
+
+                                    <th scope="col" class="text-end text-nowrap">
+                                        Đơn giá
+                                    </th>
+
+                                    <th scope="col"
+                                        class="text-end text-nowrap pe-4">
+                                        Thành tiền
+                                    </th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @foreach (var line in Model.Lines)
+                                {
+                                    <tr>
+                                        <td class="ps-4">
+                                            <div class="fw-semibold text-break">
+                                                @line.Name
+                                            </div>
+
+                                            <div class="small text-body-secondary">
+                                                @LineTypeLabel(line.LineType)
+                                            </div>
+                                        </td>
+
+                                        <td class="text-end text-nowrap">
+                                            @line.Quantity.ToString("0.###", culture)
+
+                                            <span class="small text-body-secondary">
+                                                @line.Unit
+                                            </span>
+                                        </td>
+
+                                        <td class="text-end text-nowrap">
+                                            @Money(line.UnitPrice)
+                                        </td>
+
+                                        <td class="text-end text-nowrap
+                                            fw-semibold pe-4">
+                                            @Money(line.LineTotal)
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+
+                            <tfoot>
+                                <tr>
+                                    <th scope="row"
+                                        colspan="3"
+                                        class="ps-4 py-3">
+                                        Tổng tiền món và dịch vụ
+                                    </th>
+
+                                    <td class="text-end text-nowrap
+                                        fw-bold pe-4 py-3">
+                                        @Money(Model.Subtotal)
+                                    </td>
+                                </tr>
+                            </tfoot>
+
+                        </table>
+                    </div>
+                }
+
+                <div class="card-footer bg-transparent px-4 py-3">
+                    <p class="small text-body-secondary mb-0">
+                        Các món đã hủy không được đưa vào số tiền thanh toán.
+                    </p>
+                </div>
+
+            </div>
+
+            <!-- Chi tiết giảm giá -->
+            @if (Model.Discounts.Count > 0)
+            {
+                <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+
+                        <h2 class="h5 mb-3">
+                            Giảm giá đã áp dụng
+                        </h2>
+
+                        <ul class="list-group list-group-flush">
+                            @foreach (var discount in Model.Discounts)
+                            {
+                                <li class="list-group-item px-0
+                                    d-flex justify-content-between
+                                    align-items-start gap-3">
+
+                                    <span class="text-break">
+                                        @discount.Description
+                                    </span>
+
+                                    <strong class="text-success text-nowrap">
+                                        −@Money(discount.Amount)
+                                    </strong>
+
+                                </li>
+                            }
+                        </ul>
+
+                    </div>
+                </div>
+            }
+
+        </div>
+
+        <!-- Tổng hợp thanh toán -->
+        <div class="col-xl-4">
+
+            <div class="card border-0 shadow-sm">
+                <div class="card-body p-4">
+
+                    <h2 class="h5 mb-4">
+                        Tổng hợp thanh toán
+                    </h2>
+                    <!-- Áp dụng voucher -->
+                    <div class="border rounded-3 p-3 mb-4">
+
+                        <h3 class="h6 mb-3">
+                            Mã giảm giá
+                        </h3>
+
+                        @if (Model.HasSavedVoucher)
+                        {
+                            <p class="small text-body-secondary mb-0">
+                                Đơn đã có voucher được lưu.
+                                Khoản giảm đã được tính trong tổng hóa đơn.
+                            </p>
+                        }
+                        else
+                        {
+                            <form action="@Url.RouteUrl(
+                                              "DoraFoodTableCheckout",
+                                              new { orderId = Model.OrderId })"
+                                  method="get">
+
+                                <label for="table-voucher-code"
+                                       class="form-label small">
+                                    Nhập mã voucher
+                                </label>
+
+                                <div class="input-group">
+                                    <input id="table-voucher-code"
+                                           name="voucherCode"
+                                           value="@Model.VoucherCode"
+                                           class="form-control text-uppercase"
+                                           type="text"
+                                           maxlength="30"
+                                           autocomplete="off"
+                                           placeholder="Ví dụ: DORA50"
+                                           aria-describedby="table-voucher-message" />
+
+                                    <button type="submit"
+                                            class="btn btn-outline-primary">
+                                        Áp dụng
+                                    </button>
+                                </div>
+
+                            </form>
+
+                            <div id="table-voucher-message"
+                                 class="small mt-2"
+                                 aria-live="polite">
+
+                                @if (!string.IsNullOrWhiteSpace(Model.VoucherError))
+                                {
+                                    <div class="text-danger" role="alert">
+                                        @Model.VoucherError
+                                    </div>
+                                }
+                                else if (Model.PreviewVoucherDiscount > 0)
+                                {
+                                    <div class="text-success">
+                                        Đã áp dụng mã
+                                        <strong>@Model.VoucherCode</strong>.
+
+                                        Giảm
+                                        <strong>
+                                            @Money(Model.PreviewVoucherDiscount)
+                                        </strong>.
+                                    </div>
+                                }
+
+                            </div>
+
+                            @if (!string.IsNullOrWhiteSpace(Model.VoucherCode))
+                            {
+                                <a href="@Url.RouteUrl(
+                                             "DoraFoodTableCheckout",
+                                             new { orderId = Model.OrderId })"
+                                   class="btn btn-link btn-sm text-danger px-0 mt-2">
+                                    Bỏ mã đang chọn
+                                </a>
+                            }
+                        }
+
+                    </div>
+                    <dl class="mb-0">
+
+                        <div class="d-flex justify-content-between gap-3 mb-3">
+                            <dt class="fw-normal text-body-secondary">
+                                Tiền món và dịch vụ
+                            </dt>
+
+                            <dd class="text-nowrap mb-0">
+                                @Money(Model.Subtotal)
+                            </dd>
+                        </div>
+
+                        <div class="d-flex justify-content-between gap-3 mb-3">
+                            <dt class="fw-normal text-body-secondary">
+                                Giảm giá
+                            </dt>
+
+                            <dd class="text-success text-nowrap mb-0">
+                                −@Money(Model.DiscountAmount)
+                            </dd>
+                        </div>
+
+                        <div class="d-flex justify-content-between gap-3 mb-3">
+                            <dt class="fw-normal text-body-secondary">
+                                Thuế
+                            </dt>
+
+                            <dd class="text-nowrap mb-0">
+                                @Money(Model.TaxAmount)
+                            </dd>
+                        </div>
+
+                        <div class="d-flex justify-content-between
+                            gap-3 border-top pt-3 mb-3">
+                            <dt>
+                                Tổng hóa đơn
+                            </dt>
+
+                            <dd class="fw-bold text-nowrap mb-0">
+                                @Money(Model.TotalAmount)
+                            </dd>
+                        </div>
+
+                        <div class="d-flex justify-content-between gap-3 mb-3">
+                            <dt class="fw-normal text-body-secondary">
+                                Đã thu, gồm tiền cọc
+                            </dt>
+
+                            <dd class="text-nowrap mb-0">
+                                @Money(Model.ReceivedAmount)
+                            </dd>
+                        </div>
+
+                        @if (Model.RefundedAmount > 0)
+                        {
+                            <div class="d-flex justify-content-between gap-3 mb-3">
+                                <dt class="fw-normal text-body-secondary">
+                                    Đã hoàn tiền
+                                </dt>
+
+                                <dd class="text-nowrap mb-0">
+                                    @Money(Model.RefundedAmount)
+                                </dd>
+                            </div>
+                        }
+
+                        <div class="d-flex justify-content-between
+                            align-items-center gap-3
+                            border-top pt-3">
+                            <dt class="fs-5">
+                                Còn phải thu
+                            </dt>
+
+                            <dd class="fs-4 fw-bold text-danger
+                                text-nowrap mb-0">
+                                @Money(Model.AmountToCollect)
+                            </dd>
+                        </div>
+
+                    </dl>
+
+                    @if (Model.OverpaidAmount > 0)
+                    {
+                        <div class="alert alert-warning mt-4 mb-0">
+                            Đơn đang thu dư
+                            <strong>@Money(Model.OverpaidAmount)</strong>.
+                            Cần kiểm tra và xử lý khoản tiền dư trước khi
+                            hoàn tất đơn.
+                        </div>
+                    }
+
+                    @if (Model.CanCheckout)
+                    {
+                        <!-- Thông báo số tiền -->
+                        <div class="alert alert-info mt-4 mb-0">
+                            @if (Model.AmountToCollect > 0)
+                            {
+                                <span>
+                                    Số tiền cần thu thêm từ khách là
+                                    <strong>@Money(Model.AmountToCollect)</strong>.
+                                </span>
+                            }
+                            else
+                            {
+                                <span>
+                                    Khách đã thanh toán đủ.
+                                    Không cần thu thêm tiền.
+                                </span>
+                            }
+                        </div>
+
+                        <!-- Xác nhận thanh toán -->
+                        @if (!string.IsNullOrWhiteSpace(Model.ConfirmationToken))
+                        {
+                            <form action="@Url.RouteUrl(
+                                              "DoraFoodConfirmTableCash",
+                                              new { orderId = Model.OrderId })"
+                                  method="post"
+                                  class="mt-4"
+                                  onsubmit="return confirm('Xác nhận đơn đã được thanh toán đủ? Thao tác này sẽ hoàn tất đơn và giải phóng bàn.');">
+
+                                @Html.AntiForgeryToken()
+
+                                <input type="hidden"
+                                       name="confirmationToken"
+                                       value="@Model.ConfirmationToken" />
+
+                                <button type="submit"
+                                        class="btn btn-success w-100 py-3">
+
+                                    <i class="fas fa-check-circle me-2"
+                                       aria-hidden="true"></i>
+
+                                    @if (Model.AmountToCollect > 0)
+                                    {
+                                        <span>
+                                            Xác nhận đã thu
+                                            @Money(Model.AmountToCollect)
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <span>
+                                            Hoàn tất đơn đã thanh toán đủ
+                                        </span>
+                                    }
+                                </button>
+
+                                <p class="small text-body-secondary mt-2 mb-0">
+                                    Chỉ xác nhận khi khách đã thanh toán đủ.
+                                    Bàn được giải phóng sau khi lưu thành công.
+                                </p>
+                            </form>
+                        }
+                    }
+
+                </div>
+            </div>
+
+            <div class="alert alert-light border mt-3">
+                <i class="fas fa-info-circle me-1"
+                   aria-hidden="true"></i>
+
+                Bàn vẫn được giữ cho đến khi hệ thống ghi nhận
+                hoàn tất thanh toán.
+            </div>
+
+        </div>
+    </div>
+</div>

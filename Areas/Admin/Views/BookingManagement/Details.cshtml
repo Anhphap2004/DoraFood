@@ -981,6 +981,75 @@
                 </button>
             </form>
         }
+        @{
+            var invoiceOrders = reservation.Orders
+                .Where(order =>
+                    order.OrderType == "DINE_IN"
+                    && order.Invoice != null
+                    && order.Invoice.Status == "ISSUED"
+                    && order.Invoice.IssuedAtUtc.HasValue)
+                .OrderByDescending(order => order.Invoice!.IssuedAtUtc)
+                .ThenByDescending(order => order.Id)
+                .ToList();
+        }
+
+        @if (invoiceOrders.Count > 0)
+        {
+            <section class="dbd-panel mb-4"
+                     aria-labelledby="booking-invoices-title">
+
+                <div class="dbd-panel-head">
+                    <div class="dbd-panel-heading">
+                        <span aria-hidden="true"></span>
+
+                        <h2 id="booking-invoices-title">
+                            Hóa đơn đã xuất
+                        </h2>
+                    </div>
+                </div>
+
+                <div class="dbd-panel-body">
+                    <div class="d-flex flex-column gap-3">
+
+                        @foreach (var invoiceOrder in invoiceOrders)
+                        {
+                            var savedInvoice = invoiceOrder.Invoice!;
+
+                            <div class="d-flex flex-wrap
+                                justify-content-between
+                                align-items-center gap-3">
+
+                                <div>
+                                    <div class="fw-semibold text-break">
+                                        @savedInvoice.Number
+                                    </div>
+
+                                    <div class="small dbd-muted">
+                                        Xuất lúc
+                                        @(savedInvoice.IssuedAtUtc!.Value
+                                            .AddHours(7)
+                                            .ToString("dd/MM/yyyy HH:mm"))
+                                    </div>
+                                </div>
+
+                                <a href="@Url.RouteUrl(
+                                             "DoraFoodTableInvoice",
+                                             new { orderId = invoiceOrder.Id })"
+                                   class="btn btn-outline-success
+                                    rounded-pill px-4">
+
+                                    <i class="fas fa-receipt me-1"
+                                       aria-hidden="true"></i>
+
+                                    Xem và in hóa đơn
+                                </a>
+                            </div>
+                        }
+
+                    </div>
+                </div>
+            </section>
+        }
         <div class="dbd-summary" aria-label="Tóm tắt đặt bàn">
             <div class="dbd-stat">
                 <span class="dbd-stat-icon"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="3" /><path d="M7 3v4m10-4v4M3 11h18" /></svg></span>

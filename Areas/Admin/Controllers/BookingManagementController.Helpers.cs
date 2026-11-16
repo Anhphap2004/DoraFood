@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
@@ -58,10 +59,32 @@ namespace DoraFood.Controllers
             }
             catch (DbUpdateException ex)
             {
-                _logger.LogError(ex, "Lỗi lưu dữ liệu tại {Path}", Request.Path);
-                TempData[errorKey] = "Không lưu được do dữ liệu liên quan đã thay đổi. Vui lòng kiểm tra lại.";
-            }
+                _logger.LogError(
+                    ex,
+                    "Lỗi lưu dữ liệu tại {Path}",
+                    Request.Path);
 
+                var environment = HttpContext.RequestServices
+                    .GetRequiredService<
+                        Microsoft.AspNetCore.Hosting.IWebHostEnvironment>();
+
+                // Chỉ hiện lỗi chi tiết khi chạy môi trường Development.
+                if (environment.EnvironmentName == "Development")
+                {
+                    var originalError = ex.GetBaseException();
+
+                    TempData[errorKey] =
+                        originalError is Microsoft.Data.SqlClient.SqlException sqlError
+                            ? $"SQL {sqlError.Number}: {sqlError.Message}"
+                            : $"Lỗi lưu dữ liệu: {originalError.Message}";
+                }
+                else
+                {
+                    TempData[errorKey] =
+                        "Chưa thể lưu thanh toán. " +
+                        "Vui lòng kiểm tra lại hoặc liên hệ quản trị.";
+                }
+            }
             // Không hiển thị thành công nếu giao dịch không hoàn tất.
             TempData.Remove("BookingManagementSuccess");
             TempData.Remove("TableOrderSuccess");

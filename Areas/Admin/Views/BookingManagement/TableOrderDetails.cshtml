@@ -39,17 +39,62 @@
         </a>
     }
 
-    <h1 class="h3 mb-2">Đơn gọi món @Model.Code</h1>
+    <div class="d-flex flex-wrap justify-content-between
+        align-items-center gap-3 mb-4">
 
-    <p class="text-muted mb-4">
-        @orderStatus · Bàn hiện tại
-        @(tableCodes.Count > 0 ? string.Join(", ", tableCodes) : "—")
-    </p>
+        <div>
+            <h1 class="h3 mb-2 text-break">
+                Đơn gọi món @Model.Code
+            </h1>
+
+            <p class="text-muted mb-0">
+                @orderStatus · Bàn hiện tại
+                @(tableCodes.Count > 0
+                    ? string.Join(", ", tableCodes)
+                    : "—")
+            </p>
+        </div>
+        @if (Model.Status == "COMPLETED")
+        {
+            <a href="@Url.RouteUrl(
+                         "DoraFoodTableInvoice",
+                         new { orderId = Model.Id })"
+               class="btn btn-outline-primary rounded-pill px-4">
+
+                <i class="fas fa-receipt me-2"
+                   aria-hidden="true"></i>
+
+                Xem hóa đơn
+            </a>
+        }
+        @if (Model.Status == "OPEN" || Model.Status == "IN_PROGRESS")
+        {
+            <a href="@Url.RouteUrl(
+                         "DoraFoodTableCheckout",
+                         new { orderId = Model.Id })"
+               class="btn btn-success rounded-pill px-4">
+
+                <i class="fas fa-money-bill-wave me-2"
+                   aria-hidden="true"></i>
+
+                Thanh toán
+            </a>
+        }
+    </div>
+    @if (TempData["TableOrderSuccess"] is string paymentSuccess)
+    {
+        <div class="alert alert-success" role="status">
+            @paymentSuccess
+        </div>
+    }
 
     @if (TempData["BookingManagementSuccess"] is string message)
     {
-        <div class="alert alert-success" role="status">@message</div>
+        <div class="alert alert-success" role="status">
+            @message
+        </div>
     }
+    
     @if (TempData["TableOrderError"] is string orderError)
     {
         <div class="alert alert-danger" role="alert">@orderError</div>
