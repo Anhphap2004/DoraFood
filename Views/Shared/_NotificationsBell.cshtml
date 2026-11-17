@@ -1,0 +1,593 @@
+﻿@if (User.Identity?.IsAuthenticated == true)
+{
+    <style>
+        .df-notifications {
+            position: relative;
+        }
+
+            .df-notifications .df-notification-toggle {
+                position: relative;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 42px;
+                height: 42px;
+                padding: 0;
+                border: 1px solid #e6d9dc;
+                border-radius: 50%;
+                background: #fff;
+                color: #922f40;
+            }
+
+                .df-notifications .df-notification-toggle:hover {
+                    background: #fff4f6;
+                }
+
+            .df-notifications .df-notification-count {
+                position: absolute;
+                top: -5px;
+                right: -5px;
+                min-width: 20px;
+                padding: 3px 5px;
+                border: 2px solid #fff;
+                border-radius: 20px;
+                background: #c92640;
+                color: #fff;
+                font-size: 10px;
+                line-height: 1.2;
+                font-weight: 700;
+            }
+
+            .df-notifications .df-notification-panel {
+                width: min(390px, calc(100vw - 24px));
+                padding: 0;
+                margin-top: 12px !important;
+                border: 1px solid #eadfe2;
+                border-radius: 14px;
+                background: #fff;
+                color: #252525;
+                box-shadow: 0 12px 36px rgb(0 0 0 / 14%);
+                overflow: hidden;
+                z-index: 1080;
+            }
+
+            .df-notifications .df-notification-header {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                gap: 12px;
+                padding: 16px;
+                border-bottom: 1px solid #eee;
+            }
+
+            .df-notifications .df-notification-heading {
+                margin: 0 0 3px;
+                color: #252525;
+                font-family: inherit;
+                font-size: 17px;
+                font-weight: 700;
+            }
+
+            .df-notifications .df-notification-caption {
+                color: #666;
+                font-size: 12px;
+            }
+
+            .df-notifications .df-notification-read-all {
+                flex-shrink: 0;
+                padding: 0;
+                border: 0;
+                background: transparent;
+                color: #922f40;
+                font-size: 12px;
+                font-weight: 600;
+                cursor: pointer;
+            }
+
+                .df-notifications .df-notification-read-all:disabled {
+                    color: #777;
+                    cursor: default;
+                }
+
+            .df-notifications .df-notification-list {
+                max-height: 420px;
+                max-height: min(420px, 60vh);
+                overflow-y: auto;
+                overscroll-behavior: contain;
+            }
+
+            .df-notifications .df-notification-item {
+                display: block;
+                width: 100%;
+                padding: 15px 16px;
+                border: 0;
+                border-bottom: 1px solid #eee;
+                background: #fff;
+                color: #252525;
+                font: inherit;
+                text-align: left;
+                cursor: pointer;
+            }
+
+                .df-notifications .df-notification-item.is-unread {
+                    border-left: 3px solid #922f40;
+                    padding-left: 13px;
+                    background: #fff4f6;
+                }
+
+                .df-notifications .df-notification-item:hover {
+                    background: #f5f5f5;
+                }
+
+                .df-notifications .df-notification-item:focus-visible,
+                .df-notifications .df-notification-toggle:focus-visible,
+                .df-notifications .df-notification-read-all:focus-visible {
+                    outline: 2px solid #922f40;
+                    outline-offset: -2px;
+                }
+
+            .df-notifications .df-notification-title {
+                display: block;
+                margin-bottom: 5px;
+                font-size: 13px;
+                font-weight: 700;
+                overflow-wrap: anywhere;
+            }
+
+            .df-notifications .df-notification-body {
+                display: block;
+                color: #484848;
+                font-size: 12px;
+                line-height: 1.65;
+                white-space: pre-wrap;
+                overflow-wrap: anywhere;
+            }
+
+            .df-notifications .df-notification-time {
+                display: block;
+                margin-top: 8px;
+                color: #666;
+                font-size: 11px;
+            }
+
+            .df-notifications .df-notification-empty {
+                padding: 28px 18px;
+                color: #666;
+                font-size: 13px;
+                text-align: center;
+            }
+
+            .df-notifications .df-notification-status {
+                padding: 10px 16px;
+                background: #fff8e8;
+                color: #805b15;
+                font-size: 12px;
+            }
+
+            .df-notifications .df-notification-footer {
+                padding: 12px 16px;
+                border-top: 1px solid #eee;
+                color: #666;
+                font-size: 11px;
+            }
+
+        @@media (max-width: 575.98px) {
+            .df-notifications .df-notification-panel {
+                position: fixed !important;
+                top: 85px !important;
+                left: 12px !important;
+                right: 12px !important;
+                width: auto;
+                margin-top: 0 !important;
+                transform: none !important;
+            }
+        }
+    </style>
+
+    <div id="df-notifications"
+         class="dropdown df-notifications"
+         data-latest-url="@Url.RouteUrl("DoraFoodNotificationsLatest")"
+         data-read-url="@Url.RouteUrl(
+                            "DoraFoodReadNotification",
+                            new { id = 0 })"
+         data-read-all-url="@Url.RouteUrl("DoraFoodReadAllNotifications")">
+
+        <!-- Mã xác thực dùng cho các yêu cầu POST -->
+        <div hidden>
+            @Html.AntiForgeryToken()
+        </div>
+
+        <button id="df-notification-toggle"
+                type="button"
+                class="df-notification-toggle"
+                data-bs-toggle="dropdown"
+                data-bs-auto-close="outside"
+                aria-expanded="false"
+                aria-controls="df-notification-panel"
+                aria-label="Thông báo">
+
+            <i class="far fa-bell" aria-hidden="true"></i>
+
+            <span id="df-notification-count"
+                  class="df-notification-count"
+                  hidden>
+                0
+            </span>
+        </button>
+
+        <div id="df-notification-panel"
+             class="dropdown-menu dropdown-menu-end
+            df-notification-panel"
+             aria-labelledby="df-notification-toggle">
+
+            <div class="df-notification-header">
+                <div>
+                    <h2 class="df-notification-heading">
+                        Thông báo
+                    </h2>
+
+                    <div id="df-notification-caption"
+                         class="df-notification-caption"
+                         role="status"
+                         aria-live="polite">
+                        Đang tải thông báo...
+                    </div>
+                </div>
+
+                <button id="df-notification-read-all"
+                        type="button"
+                        class="df-notification-read-all"
+                        disabled>
+                    Đọc tất cả
+                </button>
+            </div>
+
+            <div id="df-notification-status"
+                 class="df-notification-status"
+                 role="status"
+                 hidden>
+            </div>
+
+            <div id="df-notification-list"
+                 class="df-notification-list"
+                 aria-label="Danh sách thông báo">
+
+                <div class="df-notification-empty">
+                    Đang tải thông báo...
+                </div>
+            </div>
+
+            <div class="df-notification-footer">
+                Hiển thị 10 thông báo mới nhất.
+                Bấm thông báo để đánh dấu đã đọc và xem nội dung liên quan.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (() => {
+            const root = document.getElementById("df-notifications");
+
+            if (!root || root.dataset.initialized === "true") {
+                return;
+            }
+
+            root.dataset.initialized = "true";
+
+            const toggle = root.querySelector(
+                "#df-notification-toggle"
+            );
+
+            const badge = root.querySelector(
+                "#df-notification-count"
+            );
+
+            const caption = root.querySelector(
+                "#df-notification-caption"
+            );
+
+            const list = root.querySelector(
+                "#df-notification-list"
+            );
+
+            const status = root.querySelector(
+                "#df-notification-status"
+            );
+
+            const readAllButton = root.querySelector(
+                "#df-notification-read-all"
+            );
+
+            const token = root.querySelector(
+                'input[name="__RequestVerificationToken"]'
+            );
+
+            let loading = false;
+            let changing = false;
+            let stopped = false;
+            let unreadCount = 0;
+            let lastItems = null;
+            let revision = 0;
+
+            const dateFormatter = new Intl.DateTimeFormat("vi-VN", {
+                timeZone: "Asia/Ho_Chi_Minh",
+                day: "2-digit",
+                month: "2-digit",
+                year: "numeric",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false
+            });
+
+            function showError(message) {
+                status.textContent = message;
+                status.hidden = false;
+            }
+
+            function updateCount(value) {
+                unreadCount = Math.max(0, Number(value) || 0);
+
+                badge.hidden = unreadCount === 0;
+
+                badge.textContent = unreadCount > 99
+                    ? "99+"
+                    : unreadCount.toString();
+
+                caption.textContent = unreadCount > 0
+                    ? `${unreadCount} thông báo chưa đọc`
+                    : "Bạn đã đọc hết thông báo";
+
+                toggle.setAttribute(
+                    "aria-label",
+                    `Thông báo, ${unreadCount} chưa đọc`
+                );
+
+                readAllButton.disabled =
+                    changing || unreadCount === 0;
+            }
+
+            async function requestJson(url, options = {}) {
+                const response = await fetch(url, {
+                    credentials: "same-origin",
+                    cache: "no-store",
+                    ...options,
+                    headers: {
+                        Accept: "application/json",
+                        ...(options.headers || {})
+                    }
+                });
+
+                // Cookie đăng nhập hết hạn có thể khiến
+                // MVC chuyển hướng sang trang đăng nhập.
+                if (response.status === 401 || response.redirected) {
+                    stopped = true;
+
+                    throw new Error(
+                        "Phiên đăng nhập đã hết hạn. " +
+                        "Anh hãy tải lại trang và đăng nhập."
+                    );
+                }
+
+                const contentType =
+                    response.headers.get("content-type") || "";
+
+                if (!contentType.includes("application/json")) {
+                    throw new Error(
+                        "Chưa đọc được thông báo. Anh hãy thử lại."
+                    );
+                }
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        result.message || "Không xử lý được thông báo."
+                    );
+                }
+
+                return result;
+            }
+
+            function renderItems(items) {
+                const fragment = document.createDocumentFragment();
+
+                if (items.length === 0) {
+                    const empty = document.createElement("div");
+                    empty.className = "df-notification-empty";
+                    empty.textContent = "Bạn chưa có thông báo nào.";
+                    fragment.appendChild(empty);
+                }
+
+                items.forEach(item => {
+                    const button = document.createElement("button");
+
+                    button.type = "button";
+                    button.className = "df-notification-item";
+
+                    if (!item.isRead) {
+                        button.classList.add("is-unread");
+                    }
+
+                    button.dataset.notificationId = item.id;
+
+                    const title = document.createElement("span");
+                    title.className = "df-notification-title";
+                    title.textContent = item.title;
+
+                    const body = document.createElement("span");
+                    body.className = "df-notification-body";
+                    body.textContent = item.body;
+
+                    const time = document.createElement("time");
+                    time.className = "df-notification-time";
+
+                    const createdAt = new Date(item.createdAtUtc);
+
+                    if (!Number.isNaN(createdAt.getTime())) {
+                        time.dateTime = item.createdAtUtc;
+                        time.textContent = dateFormatter.format(createdAt);
+                    }
+
+                    button.append(title, body, time);
+                    fragment.appendChild(button);
+                });
+
+                list.replaceChildren(fragment);
+            }
+
+            async function loadNotifications() {
+                if (loading || changing || stopped || document.hidden) {
+                    return;
+                }
+
+                loading = true;
+                const requestRevision = revision;
+
+                try {
+                    const result = await requestJson(
+                        root.dataset.latestUrl
+                    );
+
+                    // Bỏ kết quả cũ nếu đang có thao tác đánh dấu đọc.
+                    if (requestRevision !== revision) {
+                        return;
+                    }
+
+                    updateCount(result.unreadCount);
+
+                    const items = Array.isArray(result.items)
+                        ? result.items
+                        : [];
+
+                    const snapshot = JSON.stringify(items);
+
+                    // Không dựng lại các nút đang được dùng bằng bàn phím.
+                    if (snapshot !== lastItems
+                        && !list.contains(document.activeElement)) {
+                        renderItems(items);
+                        lastItems = snapshot;
+                    }
+
+                    status.hidden = true;
+                } catch (error) {
+                    showError(error.message);
+                } finally {
+                    loading = false;
+                }
+            }
+
+            function createPostData() {
+                if (!token) {
+                    throw new Error(
+                        "Thiếu mã xác thực. Anh hãy tải lại trang."
+                    );
+                }
+
+                const data = new FormData();
+                data.append(token.name, token.value);
+
+                return data;
+            }
+
+            list.addEventListener("click", async event => {
+                const button = event.target.closest(
+                    "button[data-notification-id]"
+                );
+
+                if (!button || changing || stopped) {
+                    return;
+                }
+
+                const id = button.dataset.notificationId;
+
+                if (!/^[0-9]+$/.test(id)) {
+                    return;
+                }
+
+                changing = true;
+                revision++;
+                button.disabled = true;
+                readAllButton.disabled = true;
+
+                try {
+                    const url = root.dataset.readUrl.replace(
+                        "/0/da-doc",
+                        `/${id}/da-doc`
+                    );
+
+                    const result = await requestJson(url, {
+                        method: "POST",
+                        body: createPostData()
+                    });
+
+                    button.classList.remove("is-unread");
+                    updateCount(result.unreadCount);
+                    lastItems = null;
+                    status.hidden = true;
+
+                    if (result.linkUrl) {
+                        const destination = new URL(
+                            result.linkUrl,
+                            window.location.origin
+                        );
+
+                        if (destination.origin === window.location.origin) {
+                            window.location.assign(destination.href);
+                        }
+                    }
+                } catch (error) {
+                    showError(error.message);
+                } finally {
+                    changing = false;
+                    button.disabled = false;
+                    updateCount(unreadCount);
+                }
+            });
+
+            readAllButton.addEventListener("click", async () => {
+                if (changing || stopped) {
+                    return;
+                }
+
+                changing = true;
+                revision++;
+                readAllButton.disabled = true;
+
+                try {
+                    const result = await requestJson(
+                        root.dataset.readAllUrl,
+                        {
+                            method: "POST",
+                            body: createPostData()
+                        }
+                    );
+
+                    updateCount(result.unreadCount);
+
+                    // Tải lại để giữ đúng trạng thái nếu có
+                    // thông báo mới phát sinh trong lúc xử lý.
+                    lastItems = null;
+                    status.hidden = true;
+                } catch (error) {
+                    showError(error.message);
+                } finally {
+                    changing = false;
+                    updateCount(unreadCount);
+                    await loadNotifications();
+                }
+            });
+
+            toggle.addEventListener("click", loadNotifications);
+
+            document.addEventListener("visibilitychange", () => {
+                if (!document.hidden) {
+                    loadNotifications();
+                }
+            });
+
+            loadNotifications();
+
+            window.setInterval(loadNotifications, 15000);
+        })();
+    </script>
+}

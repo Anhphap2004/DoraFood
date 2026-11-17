@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Filters;
 using Microsoft.EntityFrameworkCore;
+using DoraFood.Services;
 using Microsoft.Extensions.Logging;
 
 namespace DoraFood.Controllers
@@ -19,6 +20,17 @@ namespace DoraFood.Controllers
     {
         private readonly DoraFoodContext _context;
         private readonly ILogger<BookingManagementController> _logger;
+        private readonly NotificationService _notifications;
+
+        public BookingManagementController(
+    DoraFoodContext context,
+    ILogger<BookingManagementController> logger,
+    NotificationService notifications)
+        {
+            _context = context;
+            _logger = logger;
+            _notifications = notifications;
+        }
 
         private static readonly string[] AllowedStatuses =
         {
@@ -26,13 +38,7 @@ namespace DoraFood.Controllers
             "COMPLETED", "CANCELLED", "NO_SHOW"
         };
 
-        public BookingManagementController(
-            DoraFoodContext context,
-            ILogger<BookingManagementController> logger)
-        {
-            _context = context;
-            _logger = logger;
-        }
+     
 
         public override async Task OnActionExecutionAsync(
             ActionExecutingContext context,
@@ -582,14 +588,49 @@ namespace DoraFood.Controllers
 
                 // Ghi lại thao tác xác nhận và phân bàn.
                 AddBookingHistory(
-                    reservation,
-                    "BOOKING_CONFIRMED",
-                    "Xác nhận đặt bàn và phân "
-                        + selectedTables.Count
-                        + " bàn cho "
-                        + reservation.PartySize
-                        + " khách.");
+     reservation,
+     "BOOKING_CONFIRMED",
+     "Xác nhận đặt bàn và phân "
+         + selectedTables.Count
+         + " bàn cho "
+         + reservation.PartySize
+         + " khách.");
 
+                // Danh sách bàn được phân.
+                var tableText = string.Join(
+                    ", ",
+                    selectedTables
+                        .OrderBy(table => table.Code)
+                        .Select(table => table.Code));
+
+                // Giới hạn độ dài để thông báo không vượt cột SQL.
+                if (tableText.Length > 600)
+                {
+                    tableText = tableText[..600] + "...";
+                }
+
+                var arrivalText = reservation.StartsAtUtc
+                    .AddHours(7)
+                    .ToString("dd/MM/yyyy HH:mm");
+
+                _notifications.Add(
+    reservation.CustomerId,
+    "Đặt bàn đã được xác nhận",
+    $"DoraFood đã xác nhận yêu cầu {reservation.Code} " +
+    $"cho {reservation.PartySize} khách. " +
+    $"Giờ đến: {arrivalText}. " +
+    $"Bàn được phân: {tableText}. " +
+    "Nhà hàng giữ bàn tối đa 30 phút sau giờ hẹn.",
+    Url.RouteUrl(
+        "DoraFoodMyBookingDetails",
+        new
+        {
+            area = "",
+            id = reservation.Id
+        })
+        ?? "/dat-ban/cua-toi");
+
+                // Trạng thái, lịch sử và thông báo cùng một giao dịch.
                 await _context.SaveChangesAsync(cancellationToken);
 
                 TempData["BookingManagementSuccess"] =
@@ -1482,6 +1523,23 @@ namespace DoraFood.Controllers
                     .ThenBy(variant => variant.Id)
                     .ToListAsync(HttpContext.RequestAborted);
             }
+            var orderEntityKey = order.Id.ToString(
+    System.Globalization.CultureInfo.InvariantCulture);
+
+            ViewData["TableOrderItemHistory"] = await _context
+                .Set<AuditLog>()
+                .AsNoTracking()
+                .Include(log => log.Actor)
+                .Where(log =>
+                    log.EntityName == "Order"
+                    && log.EntityKey == orderEntityKey
+                    && (
+                        log.Action == "TABLE_ORDER_ITEM_UPDATED"
+                        || log.Action == "TABLE_ORDER_ITEM_CANCELLED"))
+                .OrderByDescending(log => log.CreatedAtUtc)
+                .ThenByDescending(log => log.Id)
+                .Take(30)
+                .ToListAsync(HttpContext.RequestAborted);
             return View("TableOrderDetails", order);
         }
 

@@ -793,10 +793,11 @@ public partial class DoraFoodContext : DbContext
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("FK_OrderTables_OrderId");
 
-            entity.HasOne(d => d.Table).WithOne(p => p.OrderTable)
-                .HasForeignKey<OrderTable>(d => d.TableId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK_OrderTables_TableId");
+            entity.HasOne(d => d.Table)
+    .WithMany(table => table.OrderTables)
+    .HasForeignKey(link => link.TableId)
+    .OnDelete(DeleteBehavior.ClientSetNull)
+    .HasConstraintName("FK_OrderTables_TableId");
         });
 
         modelBuilder.Entity<Page>(entity =>

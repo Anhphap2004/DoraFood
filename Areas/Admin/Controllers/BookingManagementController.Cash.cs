@@ -613,9 +613,10 @@ public partial class BookingManagementController
                     order.Reservation.Status = "COMPLETED";
 
                     AddBookingHistory(
-                        order.Reservation,
-                        "BOOKING_COMPLETED",
-                        $"Hoàn tất sau thanh toán đơn {order.Code}.");
+    order.Reservation,
+    "BOOKING_COMPLETED",
+    $"Hoàn tất sau thanh toán đơn {order.Code}.",
+    notifyCustomer: false);
                 }
 
                 _context.Set<OrderStatusHistory>().Add(
@@ -656,6 +657,24 @@ public partial class BookingManagementController
                 invoice.Status = "ISSUED";
                 invoice.IssuedAtUtc = now;
 
+                var customerId = order.CustomerId
+                    ?? order.Reservation?.CustomerId;
+
+                var totalText = model.TotalAmount.ToString(
+                    "N0",
+                    System.Globalization.CultureInfo.GetCultureInfo("vi-VN"));
+
+                _notifications.Add(
+                    customerId,
+                    "Thanh toán tại bàn thành công",
+                    $"Đơn {order.Code} đã được thanh toán đầy đủ. " +
+                    $"Tổng hóa đơn: {totalText} ₫. " +
+                    $"Số hóa đơn: {invoice.Number}. " +
+                    "DoraFood cảm ơn quý khách!",
+                    Url.RouteUrl("DoraFoodMyBookings")
+                        ?? "/dat-ban/cua-toi");
+
+                // Xuất hóa đơn và lưu thông báo trong cùng giao dịch.
                 await _context.SaveChangesAsync(
                     cancellationToken);
 

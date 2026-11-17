@@ -1,0 +1,618 @@
+﻿@using System.Globalization
+@using System.Linq
+@model DoraFood.ViewModels.MyBookingDetailsViewModel
+
+@{
+    var reservation = Model.Reservation;
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+
+    ViewData["Title"] = "Chi tiết đặt bàn";
+
+    var waitingForArrival =
+        reservation.Status == "PENDING"
+        || reservation.Status == "CONFIRMED";
+
+    var arrivalLocal = reservation.StartsAtUtc.AddHours(7);
+
+    var arrivalDeadlineLocal = reservation.StartsAtUtc
+        .AddMinutes(30)
+        .AddHours(7);
+
+    string Money(decimal amount) =>
+        amount.ToString("N0", culture) + " ₫";
+
+    decimal ItemSubtotal(DoraFood.Models.OrderItem item)
+    {
+        var mainAmount = decimal.Round(
+            item.Quantity * item.UnitPrice,
+            2,
+            MidpointRounding.AwayFromZero);
+
+        var addOnAmount = item.OrderItemAddOns.Sum(
+            addOn => decimal.Round(
+                addOn.Quantity * addOn.UnitPrice,
+                2,
+                MidpointRounding.AwayFromZero));
+
+        return mainAmount + addOnAmount;
+    }
+
+    string OrderStatusLabel(string status) => status switch
+    {
+        "OPEN" => "Đang mở",
+        "IN_PROGRESS" => "Đang phục vụ",
+        "COMPLETED" => "Đã hoàn tất",
+        "CANCELLED" => "Đã hủy",
+        _ => "Đang cập nhật"
+    };
+
+    string ItemStatusLabel(string status) => status switch
+    {
+        "NEW" => "Đã ghi nhận",
+        "PREPARING" => "Đang chế biến",
+        "READY" => "Đã chuẩn bị xong",
+        "SERVED" => "Đã phục vụ",
+        "CANCELLED" => "Đã hủy",
+        _ => "Đang cập nhật"
+    };
+}
+
+<style>
+    .my-booking-detail {
+        --booking-primary: #922f40;
+        --booking-border: #e7e2e4;
+        color: #292529;
+        font-family: Arial, sans-serif;
+    }
+
+    .my-booking-detail h1,
+    .my-booking-detail h2,
+    .my-booking-detail h3 {
+        font-family: inherit !important;
+    }
+
+    .my-booking-detail .booking-card {
+        border: 1px solid var(--booking-border);
+        border-radius: 16px;
+        background: #fff;
+        overflow: hidden;
+    }
+
+    .my-booking-detail .booking-card-header {
+        padding: 22px 24px;
+        border-bottom: 1px solid var(--booking-border);
+    }
+
+    .my-booking-detail .booking-card-body {
+        padding: 24px;
+    }
+
+    .my-booking-detail .booking-information {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 22px;
+        margin: 0;
+    }
+
+    .my-booking-detail .booking-information > div {
+        min-width: 0;
+    }
+
+    .my-booking-detail .booking-information dt {
+        margin-bottom: 5px;
+        color: #666;
+        font-size: 13px;
+        font-weight: normal;
+    }
+
+    .my-booking-detail .booking-information dd {
+        margin: 0;
+        font-weight: 600;
+        overflow-wrap: anywhere;
+    }
+
+    .my-booking-detail .booking-table-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+    }
+
+    .my-booking-detail .booking-table {
+        min-width: 160px;
+        padding: 14px 18px;
+        border: 1px solid #ead5db;
+        border-radius: 10px;
+        background: #fff6f8;
+    }
+
+    .my-booking-detail .booking-table-code {
+        color: var(--booking-primary);
+        font-size: 18px;
+        font-weight: 700;
+    }
+
+    .my-booking-detail .booking-note {
+        padding-top: 20px;
+        margin-top: 22px;
+        border-top: 1px solid var(--booking-border);
+    }
+
+    .my-booking-detail .booking-message {
+        padding: 14px 18px;
+        border-left: 3px solid var(--booking-primary);
+        background: #faf4f6;
+        line-height: 1.7;
+    }
+
+    .my-booking-detail .booking-order-summary {
+        padding: 20px 24px;
+        border-top: 1px solid var(--booking-border);
+        background: #fcfafb;
+    }
+
+    .my-booking-detail .booking-money-row {
+        display: flex;
+        justify-content: space-between;
+        gap: 20px;
+        margin-bottom: 10px;
+    }
+
+    .my-booking-detail .booking-money-row:last-child {
+        margin-bottom: 0;
+    }
+
+    .my-booking-detail .booking-money-row strong {
+        flex-shrink: 0;
+        text-align: right;
+    }
+
+    .my-booking-detail .booking-final-total {
+        padding-top: 12px;
+        border-top: 1px solid var(--booking-border);
+        color: var(--booking-primary);
+        font-size: 18px;
+    }
+
+    @@media (max-width: 767.98px) {
+        .my-booking-detail .booking-information {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 18px;
+        }
+
+        .my-booking-detail .booking-card-header,
+        .my-booking-detail .booking-card-body,
+        .my-booking-detail .booking-order-summary {
+            padding: 18px;
+        }
+    }
+</style>
+
+<div class="container my-booking-detail py-4 py-lg-5">
+
+    <a href="@Url.RouteUrl("DoraFoodMyBookings")"
+       class="text-decoration-none">
+        ← Đặt bàn của tôi
+    </a>
+
+    <!-- Tiêu đề -->
+    <div class="d-flex flex-wrap justify-content-between
+        align-items-center gap-3 my-4">
+
+        <div>
+            <h1 class="h3 fw-bold mb-2">
+                Chi tiết đặt bàn
+            </h1>
+
+            <p class="text-muted text-break mb-0">
+                Mã yêu cầu:
+                <strong>@reservation.Code</strong>
+            </p>
+        </div>
+
+        <span class="badge rounded-pill px-3 py-2
+            @Model.StatusBadge">
+            @Model.StatusLabel
+        </span>
+    </div>
+
+    <!-- Thông tin đặt bàn và bàn phục vụ -->
+    <section class="booking-card shadow-sm mb-4"
+             aria-labelledby="booking-information-title">
+
+        <div class="booking-card-header">
+            <div class="d-flex flex-wrap justify-content-between
+                align-items-center gap-2">
+
+                <h2 id="booking-information-title"
+                    class="h5 fw-bold mb-0">
+                    Thông tin đặt bàn
+                </h2>
+
+                <span class="small text-muted">
+                    Thời gian theo giờ Việt Nam
+                </span>
+            </div>
+        </div>
+
+        <div class="booking-card-body">
+
+            <dl class="booking-information">
+                <div>
+                    <dt>Người liên hệ</dt>
+                    <dd>@reservation.GuestName</dd>
+                </div>
+
+                <div>
+                    <dt>Số điện thoại</dt>
+                    <dd>@reservation.GuestPhone</dd>
+                </div>
+
+                <div>
+                    <dt>Số khách</dt>
+                    <dd>@reservation.PartySize người</dd>
+                </div>
+
+                <div>
+                    <dt>Giờ đến dự kiến</dt>
+                    <dd>
+                        @arrivalLocal.ToString("dd/MM/yyyy HH:mm")
+                    </dd>
+                </div>
+
+                <div>
+                    <dt>Thời điểm gửi yêu cầu</dt>
+                    <dd>
+                        @reservation.CreatedAtUtc.AddHours(7)
+                        .ToString("dd/MM/yyyy HH:mm")
+                    </dd>
+                </div>
+
+                @if (waitingForArrival)
+                {
+                    <div>
+                        <dt>Hạn giữ bàn nếu chưa đến</dt>
+                        <dd>
+                            @arrivalDeadlineLocal.ToString(
+                                "dd/MM/yyyy HH:mm")
+                        </dd>
+                    </div>
+                }
+            </dl>
+
+            @if (!string.IsNullOrWhiteSpace(reservation.Note))
+            {
+                <div class="booking-note">
+                    <div class="small text-muted mb-2">
+                        Ghi chú đặt bàn
+                    </div>
+
+                    <div class="text-break"
+                         style="white-space: pre-wrap;">
+                        @reservation.Note
+                    </div>
+                </div>
+            }
+
+            <div class="booking-note">
+                <h3 class="h6 fw-bold mb-3">
+                    @(reservation.Status == "SEATED"
+                        ? "Bàn đang phục vụ"
+                        : reservation.Status == "COMPLETED"
+                            ? "Bàn đã phục vụ"
+                            : "Bàn được phân")
+                </h3>
+
+                @if (reservation.Tables.Count == 0)
+                {
+                    <p class="text-muted mb-0">
+                        Nhà hàng chưa phân bàn cho yêu cầu này.
+                    </p>
+                }
+                else
+                {
+                    <div class="booking-table-list">
+                        @foreach (var table in reservation.Tables
+                            .OrderBy(table => table.Area.Name)
+                            .ThenBy(table => table.Code))
+                        {
+                            <div class="booking-table">
+                                <div class="booking-table-code">
+                                    @table.Code
+                                </div>
+
+                                <div class="small mt-1">
+                                    @table.Area.Name
+                                </div>
+
+                                <div class="small text-muted mt-1">
+                                    Sức chứa: @table.Capacity người
+                                </div>
+                            </div>
+                        }
+                    </div>
+
+                    @if (reservation.Status == "CANCELLED"
+                        || reservation.Status == "NO_SHOW")
+                    {
+                        <p class="small text-muted mt-3 mb-0">
+                            Thông tin bàn được giữ để tra cứu.
+                            Các bàn này không còn được giữ cho yêu cầu.
+                        </p>
+                    }
+                }
+            </div>
+
+            @if (reservation.Status == "PENDING")
+            {
+                <div class="booking-message mt-4">
+                    Nhà hàng đã nhận yêu cầu và đang chờ xác nhận.
+                    Khi có cập nhật, thông báo sẽ xuất hiện trên chuông.
+                </div>
+            }
+            else if (reservation.Status == "CONFIRMED")
+            {
+                <div class="booking-message mt-4">
+                    Đặt bàn đã được xác nhận.
+                    Quý khách vui lòng đến đúng giờ.
+                    Nhà hàng giữ bàn tối đa 30 phút sau giờ hẹn.
+                </div>
+            }
+            else if (reservation.Status == "SEATED")
+            {
+                <div class="booking-message mt-4">
+                    Nhà hàng đã nhận khách vào bàn.
+                    Các món nhân viên ghi nhận sẽ xuất hiện bên dưới.
+                </div>
+            }
+        </div>
+    </section>
+
+    <!-- Các đơn thuộc lượt đặt bàn -->
+    <div class="d-flex flex-wrap justify-content-between
+        align-items-center gap-2 mb-3">
+
+        <h2 class="h5 fw-bold mb-0">
+            Món đã gọi và thanh toán
+        </h2>
+
+        <span class="small text-muted">
+            @Model.Orders.Count đơn
+        </span>
+    </div>
+
+    @if (Model.Orders.Count == 0)
+    {
+        <div class="booking-card p-4 text-center">
+            <p class="fw-semibold mb-1">
+                Chưa có đơn gọi món
+            </p>
+
+            <p class="small text-muted mb-0">
+                Đơn sẽ hiển thị sau khi nhà hàng mở đơn
+                cho lượt đặt bàn này.
+            </p>
+        </div>
+    }
+    else
+    {
+        @foreach (var order in Model.Orders)
+        {
+            var items = order.OrderItems
+                .OrderBy(item => item.Id)
+                .ToList();
+
+            var foodSubtotal = items
+                .Where(item => item.Status != "CANCELLED")
+                .Sum(item => ItemSubtotal(item));
+
+            var invoice = order.Invoice;
+
+            var hasIssuedInvoice =
+                invoice != null
+                && invoice.Status == "ISSUED"
+                && invoice.IssuedAtUtc.HasValue;
+
+            <section class="booking-card shadow-sm mb-4"
+                     aria-label="Đơn gọi món @order.Code">
+
+                <div class="booking-card-header">
+                    <div class="d-flex flex-wrap
+                        justify-content-between
+                        align-items-start gap-3">
+
+                        <div>
+                            <h3 class="h6 fw-bold text-break mb-1">
+                                Đơn @order.Code
+                            </h3>
+
+                            <div class="small text-muted">
+                                Mở lúc
+                                @order.OpenedAtUtc.AddHours(7)
+                                .ToString("dd/MM/yyyy HH:mm")
+                            </div>
+                        </div>
+
+                        <span class="badge bg-light text-dark border">
+                            @OrderStatusLabel(order.Status)
+                        </span>
+                    </div>
+                </div>
+
+                @if (items.Count == 0)
+                {
+                    <div class="booking-card-body">
+                        <p class="text-muted mb-0">
+                            Đơn chưa có món.
+                        </p>
+                    </div>
+                }
+                else
+                {
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0">
+
+                            <caption class="visually-hidden">
+                                Món đã gọi trong đơn @order.Code
+                            </caption>
+
+                            <thead class="table-light">
+                                <tr>
+                                    <th scope="col" class="ps-4">
+                                        Món ăn
+                                    </th>
+
+                                    <th scope="col"
+                                        class="text-end text-nowrap">
+                                        Số lượng
+                                    </th>
+
+                                    <th scope="col"
+                                        class="text-end text-nowrap">
+                                        Đơn giá
+                                    </th>
+
+                                    <th scope="col"
+                                        class="text-end text-nowrap pe-4">
+                                        Tiền món và món thêm
+                                    </th>
+                                </tr>
+                            </thead>
+
+                            <tbody>
+                                @foreach (var item in items)
+                                {
+                                    var cancelled =
+                                        item.Status == "CANCELLED";
+
+                                    <tr>
+                                        <td class="ps-4">
+                                            <div class="fw-semibold text-break">
+                                                @item.NameSnapshot
+                                            </div>
+
+                                            <span class="badge mt-1
+                                                @(cancelled
+    ? "bg-secondary"
+    : "bg-light text-dark border")">
+                                                @ItemStatusLabel(item.Status)
+                                            </span>
+
+                                            @if (!string.IsNullOrWhiteSpace(item.Note))
+                                            {
+                                                <div class="small text-muted
+                                                    text-break mt-2"
+                                                     style="white-space: pre-wrap;">
+                                                    @item.Note
+                                                </div>
+                                            }
+
+                                            @foreach (var addOn in item.OrderItemAddOns
+                                                .OrderBy(addOn => addOn.Id))
+                                            {
+                                                <div class="small text-muted mt-2">
+                                                    + @addOn.NameSnapshot:
+                                                    @addOn.Quantity.ToString(
+                                                        "0.###", culture)
+                                                    × @Money(addOn.UnitPrice)
+                                                </div>
+                                            }
+                                        </td>
+
+                                        <td class="text-end text-nowrap">
+                                            @item.Quantity.ToString(
+                                                "0.###", culture)
+                                        </td>
+
+                                        <td class="text-end text-nowrap">
+                                            @Money(item.UnitPrice)
+                                        </td>
+
+                                        <td class="text-end text-nowrap pe-4">
+                                            @if (cancelled)
+                                            {
+                                                <span class="small text-muted">
+                                                    Không tính tiền
+                                                </span>
+                                            }
+                                            else
+                                            {
+                                                <strong>
+                                                    @Money(ItemSubtotal(item))
+                                                </strong>
+                                            }
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                }
+
+                <div class="booking-order-summary">
+                    @if (hasIssuedInvoice)
+                    {
+                        var finalInvoice = invoice!;
+
+                        var total = finalInvoice.Subtotal
+                            - finalInvoice.DiscountAmount
+                            + finalInvoice.TaxAmount;
+
+                        <div class="d-flex flex-wrap
+                            justify-content-between gap-2 mb-3">
+                            <div class="small text-break">
+                                Hóa đơn:
+                                <strong>@finalInvoice.Number</strong>
+                            </div>
+
+                            <div class="small text-muted">
+                                Xuất lúc
+                                @finalInvoice.IssuedAtUtc!.Value
+                                .AddHours(7)
+                                .ToString("dd/MM/yyyy HH:mm")
+                            </div>
+                        </div>
+
+                        <div class="booking-money-row">
+                            <span>Tiền món và dịch vụ</span>
+                            <strong>
+                                @Money(finalInvoice.Subtotal)
+                            </strong>
+                        </div>
+
+                        <div class="booking-money-row">
+                            <span>Giảm giá</span>
+                            <strong class="text-success">
+                                −@Money(finalInvoice.DiscountAmount)
+                            </strong>
+                        </div>
+
+                        <div class="booking-money-row">
+                            <span>Thuế</span>
+                            <strong>
+                                @Money(finalInvoice.TaxAmount)
+                            </strong>
+                        </div>
+
+                        <div class="booking-money-row booking-final-total">
+                            <span>Tổng hóa đơn đã xuất</span>
+                            <strong>@Money(total)</strong>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="booking-money-row">
+                            <span>Tiền món trước giảm giá</span>
+                            <strong>@Money(foodSubtotal)</strong>
+                        </div>
+
+                        <p class="small text-muted mt-2 mb-0">
+                            Số tiền này gồm món chính và món thêm,
+                            chưa bao gồm dịch vụ hoặc giảm giá.
+                            Tổng thanh toán được xác định khi xuất hóa đơn.
+                        </p>
+                    }
+                </div>
+            </section>
+        }
+    }
+</div>

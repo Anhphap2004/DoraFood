@@ -132,6 +132,13 @@
         {
             @foreach (var reservation in Model.Reservations)
             {
+                <a href="@Url.RouteUrl(
+                   "DoraFoodMyBookingDetails",
+                   new { id = reservation.Id })"
+                   class="btn btn-sm btn-outline-primary rounded-pill px-3">
+
+                    Xem chi tiết
+                </a>
                 var status = BookingStatus(reservation.Status);
                 var arrivalLocal = reservation.StartsAtUtc.AddHours(7);
                 var arrivalDeadlineUtc = reservation.StartsAtUtc.AddMinutes(30);

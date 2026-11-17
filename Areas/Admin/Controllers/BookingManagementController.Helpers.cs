@@ -153,9 +153,10 @@ namespace DoraFood.Controllers
         }
 
         private void AddBookingHistory(
-            Reservation reservation,
-            string action,
-            string summary)
+    Reservation reservation,
+    string action,
+    string summary,
+    bool notifyCustomer = true)
         {
             var actorIdText = User.FindFirstValue(
                 ClaimTypes.NameIdentifier);
@@ -180,7 +181,15 @@ namespace DoraFood.Controllers
                 CreatedAtUtc = DateTime.UtcNow
             };
 
+           
             _context.Set<AuditLog>().Add(log);
+
+            if (notifyCustomer)
+            {
+                AddBookingStatusNotification(
+                    reservation,
+                    action);
+            }
         }
 
         private async Task LoadEditBookingDataAsync(

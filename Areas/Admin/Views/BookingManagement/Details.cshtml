@@ -43,6 +43,7 @@
     };
     string ActionText(string action) => action switch
     {
+        "BOOKING_TABLES_TRANSFERRED" => "Chuyển bàn đang phục vụ",
         "BOOKING_CREATED" => "Tạo yêu cầu đặt bàn",
         "BOOKING_CONFIRMED" => "Xác nhận và phân bàn",
         "BOOKING_SEATED" => "Nhận khách",
@@ -963,6 +964,21 @@
                              new { id = reservation.Id })"
                    class="btn btn-outline-primary rounded-pill px-4">
                     Điều chỉnh đặt bàn
+                </a>
+            </div>
+        }
+        @if (reservation.Status == "SEATED")
+        {
+            <div class="mb-3">
+                <a href="@Url.RouteUrl(
+                             "DoraFoodTransferBooking",
+                             new { id = reservation.Id })"
+                   class="btn btn-outline-primary rounded-pill px-4">
+
+                    <i class="fas fa-exchange-alt me-2"
+                       aria-hidden="true"></i>
+
+                    Chuyển bàn
                 </a>
             </div>
         }

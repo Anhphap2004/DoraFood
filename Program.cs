@@ -112,6 +112,7 @@ builder.Services.PostConfigure<CookieAuthenticationOptions>(
     });
 builder.Services.AddScoped<VoucherService>();
 builder.Services.AddScoped<VoucherImageService>();
+builder.Services.AddScoped<NotificationService>();
 var app = builder.Build();
 
 // Xử lý lỗi ngoài môi trường Development.

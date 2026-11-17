@@ -57,7 +57,17 @@
             </a>
             <div class="df-brand-message"><span>CHẠM VỊ NGON · GẮN KẾT CẢM XÚC</span><strong>Đầu xuân gặp gỡ, trọn vị yêu thương.</strong></div>
             <div class="df-header-actions">
-                <button type="button" class="df-header-search" data-bs-toggle="modal" data-bs-target="#searchModal" aria-label="Tìm nhanh nội dung"><i class="fas fa-search" aria-hidden="true"></i></button>
+
+                <button type="button"
+                        class="df-header-search"
+                        data-bs-toggle="modal"
+                        data-bs-target="#searchModal"
+                        aria-label="Tìm nhanh nội dung">
+                    <i class="fas fa-search" aria-hidden="true"></i>
+                </button>
+
+                @await Html.PartialAsync("_NotificationsBell")
+
                 @if (User.Identity?.IsAuthenticated == true)
                 {
                     <div class="dropdown df-user-dropdown">

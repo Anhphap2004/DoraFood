@@ -187,6 +187,7 @@
                                 <th scope="col" class="text-end">Số lượng</th>
                                 <th scope="col" class="text-end">Đơn giá</th>
                                 <th scope="col" class="text-end">Thành tiền</th>
+                                <th scope="col" class="text-end">Thao tác</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -205,7 +206,65 @@
                                         }
                                     </td>
                                     <td class="text-end">
-                                        @item.Quantity.ToString("0.###", culture)
+                                        @if (ViewData["CanAddTableOrderItems"] is true
+                                            && item.Status != "CANCELLED")
+                                        {
+                                            <form action="@Url.RouteUrl(
+                                                              "DoraFoodUpdateTableOrderItemQuantity",
+                                                              new
+                                                              {
+                                                                  orderId = Model.Id,
+                                                                  itemId = item.Id
+                                                              })"
+                                                  method="post"
+                                                  data-item-quantity
+                                                  class="d-inline-block"
+                                                  style="width: 185px;">
+
+                                                @Html.AntiForgeryToken()
+
+                                                <input type="hidden"
+                                                       name="version"
+                                                       value="@Convert.ToBase64String(item.Version)" />
+
+                                                <div class="input-group input-group-sm">
+                                                    <button type="button"
+                                                            class="btn btn-outline-secondary"
+                                                            data-quantity-change="-1"
+                                                            aria-label="Giảm số lượng">
+                                                        −
+                                                    </button>
+
+                                                    <input type="number"
+                                                           name="quantity"
+                                                           value="@item.Quantity.ToString(
+                                                                      "0.###",
+                                                                      CultureInfo.InvariantCulture)"
+                                                           min="0.001"
+                                                           max="999"
+                                                           step="0.001"
+                                                           required
+                                                           class="form-control text-center"
+                                                           aria-label="Số lượng món @item.NameSnapshot" />
+
+                                                    <button type="button"
+                                                            class="btn btn-outline-secondary"
+                                                            data-quantity-change="1"
+                                                            aria-label="Tăng số lượng">
+                                                        +
+                                                    </button>
+                                                </div>
+
+                                                <button type="submit"
+                                                        class="btn btn-sm btn-primary w-100 mt-2">
+                                                    Xác nhận
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            @item.Quantity.ToString("0.###", culture)
+                                        }
                                     </td>
                                     <td class="text-end">
                                         @item.UnitPrice.ToString("#,##0.##", culture) ₫
@@ -215,6 +274,38 @@
                                             ? "—"
                                             : (item.Quantity * item.UnitPrice)
                                                 .ToString("#,##0.##", culture) + " ₫")
+                                    </td>
+                                    <td class="text-end">
+                                        @if (ViewData["CanAddTableOrderItems"] is true
+                                            && item.Status != "CANCELLED")
+                                        {
+                                            <form action="@Url.RouteUrl(
+                                                              "DoraFoodCancelTableOrderItem",
+                                                              new
+                                                              {
+                                                                  orderId = Model.Id,
+                                                                  itemId = item.Id
+                                                              })"
+                                                  method="post"
+                                                  class="d-inline"
+                                                  onsubmit="return confirm('Xác nhận hủy dòng món này và các món thêm đi kèm?');">
+
+                                                @Html.AntiForgeryToken()
+
+                                                <input type="hidden"
+                                                       name="version"
+                                                       value="@Convert.ToBase64String(item.Version)" />
+
+                                                <button type="submit"
+                                                        class="btn btn-sm btn-outline-danger text-nowrap">
+                                                    Hủy món
+                                                </button>
+                                            </form>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">—</span>
+                                        }
                                     </td>
                                 </tr>
                             }
@@ -227,6 +318,138 @@
                 <strong>Tiền món tạm tính</strong>
                 <strong>@subtotal.ToString("#,##0.##", culture) ₫</strong>
             </div>
+            @{
+                var itemHistory =
+                    ViewData["TableOrderItemHistory"]
+                    as System.Collections.Generic.IReadOnlyList<
+                        DoraFood.Models.AuditLog>;
+            }
+
+            @if (itemHistory is { Count: > 0 })
+            {
+                <section class="border-top pt-4 mt-4"
+                         aria-labelledby="item-history-title">
+
+                    <div class="d-flex flex-wrap justify-content-between
+                        align-items-center gap-2 mb-3">
+                        <h2 id="item-history-title" class="h5 mb-0">
+                            Lịch sử điều chỉnh món
+                        </h2>
+
+                        <span class="small text-muted">
+                            Tối đa 30 thao tác gần nhất
+                        </span>
+                    </div>
+
+                    <ol class="list-group list-group-flush">
+                        @foreach (var entry in itemHistory)
+                        {
+                            <li class="list-group-item px-0 py-3">
+                                <div class="d-flex flex-wrap
+                                    justify-content-between gap-2">
+
+                                    <strong>
+                                        @(entry.Action == "TABLE_ORDER_ITEM_CANCELLED"
+                                            ? "Hủy món"
+                                            : "Điều chỉnh món")
+                                    </strong>
+
+                                    <span class="small text-muted">
+                                        @entry.CreatedAtUtc.AddHours(7)
+                                        .ToString("dd/MM/yyyy HH:mm")
+                                    </span>
+                                </div>
+
+                                <div class="small text-muted mt-1">
+                                    Nhân viên:
+                                    @(entry.Actor?.UserName ?? "Chưa có thông tin")
+                                </div>
+
+                                <div class="small text-break mt-2"
+                                     style="white-space: pre-wrap;">
+                                    @entry.Summary
+                                </div>
+                            </li>
+                        }
+                    </ol>
+                </section>
+            }
         </div>
     </div>
 </div>
+@section Scripts {
+    <script>
+        (() => {
+            document.querySelectorAll("[data-item-quantity]")
+                .forEach(form => {
+                    const input = form.querySelector(
+                        'input[name="quantity"]'
+                    );
+
+                    const submit = form.querySelector(
+                        'button[type="submit"]'
+                    );
+
+                    const originalQuantity = Number(input.value);
+
+                    const buttons = [
+                        ...form.querySelectorAll(
+                            "[data-quantity-change]"
+                        )
+                    ];
+
+                    function refresh() {
+                        const value = Number(input.value);
+                        const valid =
+                            input.value !== ""
+                            && input.checkValidity()
+                            && Number.isFinite(value);
+
+                        submit.disabled =
+                            !valid || value === originalQuantity;
+
+                        buttons.forEach(button => {
+                            const next = value
+                                + Number(button.dataset.quantityChange);
+
+                            button.disabled =
+                                !valid || next < 0.001 || next > 999;
+                        });
+                    }
+
+                    buttons.forEach(button => {
+                        button.addEventListener("click", () => {
+                            const next = Number(input.value)
+                                + Number(button.dataset.quantityChange);
+
+                            if (next < 0.001 || next > 999) {
+                                return;
+                            }
+
+                            input.value = (
+                                Math.round(next * 1000) / 1000
+                            ).toString();
+
+                            refresh();
+                        });
+                    });
+
+                    input.addEventListener("input", refresh);
+
+                    form.addEventListener("submit", event => {
+                        refresh();
+
+                        if (submit.disabled) {
+                            event.preventDefault();
+                            return;
+                        }
+
+                        submit.disabled = true;
+                        submit.textContent = "Đang lưu...";
+                    });
+
+                    refresh();
+                });
+        })();
+    </script>
+}

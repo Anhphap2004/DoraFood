@@ -19,7 +19,8 @@ public partial class DiningTable
 
     public virtual DiningArea Area { get; set; } = null!;
 
-    public virtual OrderTable? OrderTable { get; set; }
+    public virtual ICollection<OrderTable> OrderTables { get; set; }
+    = new List<OrderTable>();
 
     public virtual ICollection<Reservation> Reservations { get; set; } = new List<Reservation>();
 }
