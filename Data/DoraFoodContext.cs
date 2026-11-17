@@ -1723,6 +1723,8 @@ public partial class DoraFoodContext : DbContext
 
         modelBuilder.ApplyConfiguration(new OrderCancellationRequestConfiguration());
 
+        ConfigureChatModels(modelBuilder);
+
         OnModelCreatingPartial(modelBuilder);
     }
 

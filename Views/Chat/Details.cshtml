@@ -1,0 +1,914 @@
+﻿@model DoraFood.ViewModels.CustomerChatViewModel
+
+@{
+    ViewData["Title"] = "Trò chuyện cùng DoraFood";
+
+    var backUrl = Model.ReservationId.HasValue
+        ? Url.RouteUrl(
+            "DoraFoodMyBookingDetails",
+            new { id = Model.ReservationId.Value })
+        : Url.Content("~/");
+}
+<style>
+    .df-chat-page {
+        padding-top: 12px !important;
+        padding-bottom: 18px !important;
+    }
+
+    .df-chat {
+        width: 100%;
+        max-width: 900px;
+        margin: 0 auto;
+        color: #292529;
+        font-family: Arial, sans-serif;
+        font-size: 14px;
+    }
+
+        .df-chat .df-chat-back {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 10px;
+            color: #725660;
+            font-size: 12px;
+            text-decoration: none;
+        }
+
+            .df-chat .df-chat-back:hover {
+                color: #922f40;
+            }
+
+        .df-chat .df-chat-panel {
+            display: flex;
+            flex-direction: column;
+            height: 520px;
+            min-height: 340px;
+            border: 1px solid #e7dce0;
+            border-radius: 14px;
+            overflow: hidden;
+            background: #fff;
+            box-shadow: 0 8px 28px rgb(70 25 40 / 6%);
+        }
+
+        .df-chat .df-chat-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-shrink: 0;
+            gap: 12px;
+            padding: 13px 18px;
+            border-bottom: 1px solid #eee5e8;
+        }
+
+        .df-chat .df-chat-brand {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            min-width: 0;
+        }
+
+        .df-chat .df-chat-avatar {
+            display: grid;
+            place-items: center;
+            width: 36px;
+            height: 36px;
+            flex-shrink: 0;
+            border-radius: 11px;
+            background: #922f40;
+            color: #fff;
+            font-size: 14px;
+        }
+
+        .df-chat .df-chat-title {
+            margin: 0 0 3px;
+            color: #292529;
+            font-family: inherit !important;
+            font-size: 16px !important;
+            line-height: 1.3;
+            font-weight: 700;
+        }
+
+        .df-chat .df-chat-subtitle {
+            color: #70646a;
+            font-size: 11px;
+            line-height: 1.4;
+        }
+
+        .df-chat .df-chat-state {
+            flex-shrink: 0;
+            padding: 5px 9px;
+            border-radius: 20px;
+            background: #edf7f0;
+            color: #287142;
+            font-size: 10px;
+            font-weight: 600;
+            white-space: nowrap;
+        }
+
+            .df-chat .df-chat-state.is-closed {
+                background: #f0edef;
+                color: #686067;
+            }
+
+        .df-chat .df-chat-context {
+            flex-shrink: 0;
+            padding: 9px 18px;
+            border-bottom: 1px solid #eee5e8;
+            background: #fff8fa;
+            color: #6d4c57;
+            font-size: 11px;
+            line-height: 1.5;
+            overflow-wrap: anywhere;
+        }
+
+            .df-chat .df-chat-context a {
+                color: #922f40;
+            }
+
+        .df-chat .df-chat-status {
+            flex-shrink: 0;
+            padding: 8px 18px;
+            background: #fff4dc;
+            color: #795614;
+            font-size: 12px;
+        }
+
+        .df-chat .df-chat-history {
+            flex: 1 1 auto;
+            min-height: 0;
+            height: auto;
+            padding: 15px 18px;
+            overflow-y: auto;
+            overscroll-behavior: contain;
+            scrollbar-width: thin;
+            scrollbar-color: #d8c4cb transparent;
+            background: #faf8f9;
+        }
+
+        .df-chat .df-chat-message {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            margin-bottom: 13px;
+        }
+
+            .df-chat .df-chat-message.is-mine {
+                align-items: flex-end;
+            }
+
+        .df-chat .df-chat-sender {
+            margin: 0 3px 4px;
+            color: #756970;
+            font-size: 10px;
+            line-height: 1.3;
+        }
+
+        .df-chat .df-chat-bubble {
+            max-width: min(78%, 560px);
+            padding: 9px 12px;
+            border: 1px solid #e8e0e3;
+            border-radius: 12px 12px 12px 3px;
+            background: #fff;
+            color: #302930;
+            font-size: 13px;
+            line-height: 1.55;
+            white-space: pre-wrap;
+            overflow-wrap: anywhere;
+        }
+
+        .df-chat .df-chat-message.is-mine .df-chat-bubble {
+            border-color: #922f40;
+            border-radius: 12px 12px 3px 12px;
+            background: #922f40;
+            color: #fff;
+        }
+
+        .df-chat .df-chat-meta {
+            margin: 4px 3px 0;
+            color: #7b7076;
+            font-size: 10px;
+            line-height: 1.3;
+        }
+
+        .df-chat .df-chat-empty {
+            padding: 35px 20px;
+            color: #756970;
+            font-size: 13px;
+            line-height: 1.7;
+            text-align: center;
+        }
+
+        .df-chat .df-chat-compose {
+            flex-shrink: 0;
+            margin: 0;
+            padding: 12px 16px 10px;
+            border-top: 1px solid #e9e0e4;
+            background: #fff;
+        }
+
+        .df-chat .df-chat-compose-row {
+            display: flex;
+            align-items: stretch;
+            gap: 10px;
+        }
+
+        .df-chat #df-chat-body {
+            flex: 1 1 auto;
+            min-width: 0;
+            height: 52px;
+            min-height: 52px;
+            max-height: 52px;
+            padding: 9px 12px;
+            border: 1px solid #e0d5da;
+            border-radius: 10px;
+            background: #fcfafb;
+            font-family: inherit;
+            font-size: 13px;
+            line-height: 1.5;
+            resize: none;
+        }
+
+            .df-chat #df-chat-body:focus {
+                border-color: #922f40;
+                background: #fff;
+                box-shadow: 0 0 0 3px rgb(146 47 64 / 9%);
+            }
+
+        .df-chat #df-chat-send {
+            flex-shrink: 0;
+            min-width: 84px;
+            padding: 0 13px;
+            border: 1px solid #922f40;
+            border-radius: 10px;
+            background: #922f40;
+            color: #fff;
+            font-family: inherit;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+            .df-chat #df-chat-send:hover {
+                background: #762334;
+            }
+
+            .df-chat #df-chat-send:disabled {
+                opacity: .55;
+                cursor: not-allowed;
+            }
+
+            .df-chat #df-chat-send:focus-visible {
+                outline: 3px solid #dba9b4;
+                outline-offset: 2px;
+            }
+
+        .df-chat .df-chat-compose-help {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 4px 12px;
+            margin-top: 7px;
+            color: #82737b;
+            font-size: 10px;
+            line-height: 1.4;
+        }
+
+        .df-chat #df-chat-older {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 11px;
+        }
+
+    @@media (max-width: 575.98px) {
+        .df-chat-page {
+            padding-top: 8px !important;
+        }
+
+        .df-chat .df-chat-header {
+            padding: 11px 12px;
+        }
+
+        .df-chat .df-chat-title {
+            font-size: 14px !important;
+        }
+
+        .df-chat .df-chat-avatar {
+            width: 32px;
+            height: 32px;
+        }
+
+        .df-chat .df-chat-context {
+            padding: 8px 12px;
+        }
+
+        .df-chat .df-chat-history {
+            padding: 12px;
+        }
+
+        .df-chat .df-chat-bubble {
+            max-width: 90%;
+        }
+
+        .df-chat .df-chat-compose {
+            padding: 10px 12px;
+        }
+
+        .df-chat #df-chat-send {
+            min-width: 65px;
+            padding: 0 9px;
+        }
+
+        .df-chat .df-chat-state {
+            font-size: 9px;
+            padding: 4px 7px;
+        }
+    }
+</style>
+
+<div class="container df-chat-page">
+    <div id="df-chat"
+         class="df-chat"
+         data-messages-url="@Url.RouteUrl(
+                                "DoraFoodChatMessages",
+                                new { id = Model.ConversationId })"
+         data-send-url="@Url.RouteUrl(
+                            "DoraFoodSendChatMessage",
+                            new { id = Model.ConversationId })"
+         data-read-url="@Url.RouteUrl(
+                            "DoraFoodReadChatMessages",
+                            new { id = Model.ConversationId })">
+
+        <a href="@backUrl" class="df-chat-back">
+            <span aria-hidden="true">←</span>
+
+            @(Model.ReservationId.HasValue
+                ? "Về chi tiết đặt bàn"
+                : "Về trang chủ")
+        </a>
+
+        <div class="df-chat-panel">
+
+            <header class="df-chat-header">
+                <div class="df-chat-brand">
+                    <div class="df-chat-avatar" aria-hidden="true">
+                        <i class="fas fa-utensils"></i>
+                    </div>
+
+                    <div>
+                        <h1 class="df-chat-title">
+                            DoraFood hỗ trợ
+                        </h1>
+
+                        <div class="df-chat-subtitle">
+                            Tư vấn món ăn và đặt bàn
+                        </div>
+                    </div>
+                </div>
+
+                <span class="df-chat-state
+                    @(!Model.CanSend ? "is-closed" : "")">
+                    @(Model.CanSend
+                        ? "Hội thoại mở"
+                        : "Đã đóng")
+                </span>
+            </header>
+
+            <div class="df-chat-context">
+                @if (Model.ReservationId.HasValue)
+                {
+                    <strong>Đặt bàn:</strong>
+
+                    <a href="@backUrl">
+                        @Model.ReservationCode
+                    </a>
+                }
+                else
+                {
+                    <strong>Tư vấn chung</strong>
+                    <span> · Trao đổi trực tiếp với nhân viên nhà hàng</span>
+                }
+            </div>
+
+            <div id="df-chat-status"
+                 class="df-chat-status"
+                 role="status"
+                 hidden></div>
+
+            <div id="df-chat-history"
+                 class="df-chat-history"
+                 aria-label="Lịch sử trò chuyện">
+
+                <div class="text-center mb-2">
+                    <button id="df-chat-older"
+                            type="button"
+                            class="btn btn-sm btn-outline-secondary"
+                            hidden>
+                        Xem tin nhắn cũ hơn
+                    </button>
+                </div>
+
+                <div id="df-chat-messages">
+                    <div class="df-chat-empty">
+                        Đang tải tin nhắn...
+                    </div>
+                </div>
+            </div>
+
+            <form id="df-chat-form"
+                  action="@Url.RouteUrl(
+                              "DoraFoodSendChatMessage",
+                              new { id = Model.ConversationId })"
+                  method="post"
+                  class="df-chat-compose">
+
+                @Html.AntiForgeryToken()
+
+                <label for="df-chat-body"
+                       class="visually-hidden">
+                    Tin nhắn của bạn
+                </label>
+
+                <div class="df-chat-compose-row">
+                    <textarea id="df-chat-body"
+                              name="Body"
+                              class="form-control"
+                              rows="2"
+                              maxlength="2000"
+                              required
+                              disabled="@(!Model.CanSend)"
+                              placeholder="Nhập tin nhắn cho nhà hàng..."></textarea>
+
+                    <button id="df-chat-send"
+                            type="submit"
+                            disabled="@(!Model.CanSend)">
+                        Gửi
+                    </button>
+                </div>
+
+                <div class="df-chat-compose-help">
+                    <span>
+                        @(Model.CanSend
+                            ? "Enter để gửi · Shift + Enter để xuống dòng"
+                            : "Hội thoại đã đóng · Bạn vẫn xem được lịch sử")
+                    </span>
+
+                    <span id="df-chat-counter">
+                        0/2000 ký tự
+                    </span>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        (() => {
+            const root = document.getElementById("df-chat");
+            if (!root) return;
+
+            const form = document.getElementById("df-chat-form");
+            const input = document.getElementById("df-chat-body");
+            const sendButton = document.getElementById("df-chat-send");
+            const history = document.getElementById("df-chat-history");
+            const messagesElement = document.getElementById("df-chat-messages");
+            const olderButton = document.getElementById("df-chat-older");
+            const counter = document.getElementById("df-chat-counter");
+            const status = document.getElementById("df-chat-status");
+
+            const token = form.querySelector(
+                'input[name="__RequestVerificationToken"]'
+            );
+
+            const messages = new Map();
+
+            let loading = false;
+            let sending = false;
+            let reading = false;
+            let stopped = false;
+            let lastSyncedId = null;
+            let lastReadId = null;
+            let pendingMessage = null;
+
+            const timeFormatter = new Intl.DateTimeFormat("vi-VN", {
+                timeZone: "Asia/Ho_Chi_Minh",
+                day: "2-digit",
+                month: "2-digit",
+                hour: "2-digit",
+                minute: "2-digit",
+                hour12: false
+            });
+
+            function showError(message) {
+                status.textContent = message;
+                status.hidden = false;
+            }
+
+            function nearBottom() {
+                return history.scrollHeight
+                    - history.scrollTop
+                    - history.clientHeight < 80;
+            }
+
+            function sortedMessages() {
+                return [...messages.values()].sort((a, b) => {
+                    const left = BigInt(a.id);
+                    const right = BigInt(b.id);
+                    return left < right ? -1 : left > right ? 1 : 0;
+                });
+            }
+
+            function mergeMessages(items) {
+                let changed = false;
+
+                items.forEach(item => {
+                    const previous = messages.get(item.id);
+
+                    if (!previous
+                        || previous.body !== item.body
+                        || previous.isRead !== item.isRead) {
+                        changed = true;
+                    }
+
+                    messages.set(item.id, item);
+                });
+
+                return changed;
+            }
+
+            function renderMessages(scrollToEnd = false) {
+                const rows = sortedMessages();
+                const fragment = document.createDocumentFragment();
+
+                if (rows.length === 0) {
+                    const empty = document.createElement("div");
+                    empty.className = "df-chat-empty";
+                    empty.textContent =
+                        "Chưa có tin nhắn. Bạn có thể gửi lời chào " +
+                        "hoặc nội dung cần nhà hàng tư vấn.";
+                    fragment.appendChild(empty);
+                }
+
+                rows.forEach(item => {
+                    const wrapper = document.createElement("div");
+                    wrapper.className = "df-chat-message";
+
+                    if (item.isMine) {
+                        wrapper.classList.add("is-mine");
+                    }
+
+                    const sender = document.createElement("div");
+                    sender.className = "df-chat-sender";
+                    sender.textContent = item.isMine
+                        ? "Bạn"
+                        : "Nhà hàng DoraFood";
+
+                    const bubble = document.createElement("div");
+                    bubble.className = "df-chat-bubble";
+
+                    // Tin nhắn luôn hiển thị dưới dạng văn bản.
+                    bubble.textContent = item.body;
+
+                    const meta = document.createElement("div");
+                    meta.className = "df-chat-meta";
+
+                    const createdAt = new Date(item.createdAtUtc);
+
+                    const time = Number.isNaN(createdAt.getTime())
+                        ? ""
+                        : timeFormatter.format(createdAt);
+
+                    meta.textContent = item.isMine
+                        ? `${time} · ${item.isRead
+                            ? "Nhà hàng đã đọc"
+                            : "Đã gửi"}`
+                        : time;
+
+                    wrapper.append(sender, bubble, meta);
+                    fragment.appendChild(wrapper);
+                });
+
+                messagesElement.replaceChildren(fragment);
+
+                if (scrollToEnd) {
+                    history.scrollTop = history.scrollHeight;
+                }
+            }
+
+            async function requestJson(url, options = {}) {
+                let response;
+
+                try {
+                    response = await fetch(url, {
+                        credentials: "same-origin",
+                        cache: "no-store",
+                        ...options,
+                        headers: {
+                            Accept: "application/json",
+                            ...(options.headers || {})
+                        }
+                    });
+                } catch {
+                    throw new Error(
+                        "Không kết nối được với nhà hàng. " +
+                        "Nội dung đang soạn vẫn được giữ lại."
+                    );
+                }
+
+                if (response.status === 401 || response.redirected) {
+                    stopped = true;
+                    sendButton.disabled = true;
+                    input.disabled = true;
+
+                    throw new Error(
+                        "Phiên đăng nhập đã hết hạn. " +
+                        "Bạn hãy tải lại trang và đăng nhập."
+                    );
+                }
+
+                const contentType =
+                    response.headers.get("content-type") || "";
+
+                if (!contentType.includes("application/json")) {
+                    throw new Error(
+                        "Chưa xử lý được yêu cầu. Bạn hãy thử lại."
+                    );
+                }
+
+                const result = await response.json();
+
+                if (!response.ok) {
+                    throw new Error(
+                        result.message || "Không xử lý được yêu cầu."
+                    );
+                }
+
+                return result;
+            }
+
+            function postData() {
+                const data = new FormData();
+                data.append(token.name, token.value);
+                return data;
+            }
+
+            async function getMessages(beforeId = null) {
+                const url = new URL(
+                    root.dataset.messagesUrl,
+                    window.location.origin
+                );
+
+                if (beforeId) {
+                    url.searchParams.set("beforeId", beforeId);
+                }
+
+                return requestJson(url);
+            }
+
+            async function markRead() {
+                if (reading || stopped || document.hidden
+                    || !nearBottom() || !lastSyncedId
+                    || lastReadId === lastSyncedId) {
+                    return;
+                }
+
+                reading = true;
+                const upToId = lastSyncedId;
+
+                try {
+                    const data = postData();
+                    data.append("upToId", upToId);
+
+                    await requestJson(root.dataset.readUrl, {
+                        method: "POST",
+                        body: data
+                    });
+
+                    lastReadId = upToId;
+                } catch (error) {
+                    showError(error.message);
+                } finally {
+                    reading = false;
+                }
+            }
+
+            async function syncMessages() {
+                if (loading || stopped || document.hidden) return;
+
+                loading = true;
+                const keepAtBottom = nearBottom();
+
+                try {
+                    const latest = await getMessages();
+                    let page = latest;
+                    let collected = [...latest.items];
+
+                    // Nếu có hơn 50 tin phát sinh giữa hai lần tải,
+                    // lấy các trang còn thiếu trước khi cập nhật mốc.
+                    while (lastSyncedId && page.hasOlder
+                        && page.oldestId
+                        && BigInt(page.oldestId) > BigInt(lastSyncedId)) {
+                        page = await getMessages(page.oldestId);
+                        collected.push(...page.items);
+                    }
+
+                    const firstLoad = lastSyncedId === null;
+                    const changed = mergeMessages(collected);
+
+                    if (firstLoad) {
+                        olderButton.hidden = !page.hasOlder;
+                    }
+
+                    if (latest.items.length > 0) {
+                        lastSyncedId =
+                            latest.items[latest.items.length - 1].id;
+                    }
+
+                    if (changed || firstLoad) {
+                        renderMessages(firstLoad || keepAtBottom);
+                    }
+
+                    if (!sending) status.hidden = true;
+
+                    await markRead();
+                } catch (error) {
+                    showError(error.message);
+                } finally {
+                    loading = false;
+                }
+            }
+
+            olderButton.addEventListener("click", async () => {
+                if (loading || stopped) return;
+
+                const rows = sortedMessages();
+                if (rows.length === 0) return;
+
+                loading = true;
+                olderButton.disabled = true;
+
+                const oldHeight = history.scrollHeight;
+                const oldTop = history.scrollTop;
+
+                try {
+                    const result = await getMessages(rows[0].id);
+
+                    mergeMessages(result.items);
+                    olderButton.hidden = !result.hasOlder;
+
+                    renderMessages();
+
+                    history.scrollTop =
+                        oldTop + history.scrollHeight - oldHeight;
+                } catch (error) {
+                    showError(error.message);
+                } finally {
+                    loading = false;
+                    olderButton.disabled = false;
+                }
+            });
+
+            input.addEventListener("input", () => {
+                counter.textContent =
+                    `${input.value.length}/2000 ký tự`;
+            });
+
+            input.addEventListener("keydown", event => {
+                if (event.key === "Enter"
+                    && !event.shiftKey
+                    && !event.isComposing) {
+                    event.preventDefault();
+
+                    if (!sending && !input.disabled) {
+                        form.requestSubmit();
+                    }
+                }
+            });
+
+            form.addEventListener("submit", async event => {
+                event.preventDefault();
+
+                if (sending || stopped || input.disabled) return;
+
+                const body = input.value.trim();
+
+                if (!body) {
+                    input.focus();
+                    return;
+                }
+
+                // Giữ nguyên mã khi gửi lại cùng nội dung bị lỗi mạng.
+                if (!pendingMessage || pendingMessage.body !== body) {
+                    pendingMessage = {
+                        body,
+                        clientMessageId: crypto.randomUUID()
+                    };
+                }
+
+                sending = true;
+                input.disabled = true;
+                sendButton.disabled = true;
+                sendButton.textContent = "Đang gửi";
+
+                try {
+                    const data = postData();
+                    data.append("Body", pendingMessage.body);
+                    data.append(
+                        "ClientMessageId",
+                        pendingMessage.clientMessageId
+                    );
+
+                    const result = await requestJson(
+                        root.dataset.sendUrl,
+                        {
+                            method: "POST",
+                            body: data
+                        }
+                    );
+
+                    mergeMessages([result.item]);
+                    renderMessages(true);
+
+                    input.value = "";
+                    counter.textContent = "0/2000 ký tự";
+                    pendingMessage = null;
+                    status.hidden = true;
+
+                    await syncMessages();
+                } catch (error) {
+                    showError(error.message);
+                } finally {
+                    sending = false;
+                    input.disabled = stopped;
+                    sendButton.disabled = stopped;
+                    sendButton.textContent = "Gửi";
+
+                    if (!stopped) input.focus();
+                }
+            });
+
+            history.addEventListener("scroll", markRead);
+
+            document.addEventListener("visibilitychange", () => {
+                if (!document.hidden) syncMessages();
+            });
+
+            syncMessages();
+            window.setInterval(syncMessages, 5000);
+        })();
+
+    </script>
+    <script>
+        (() => {
+            const root = document.getElementById("df-chat");
+            const panel = root?.querySelector(".df-chat-panel");
+            const history = document.getElementById("df-chat-history");
+
+            if (!panel || !history) return;
+
+            let scheduled = false;
+
+            function fitChat() {
+                scheduled = false;
+
+                const keepAtBottom =
+                    history.scrollHeight
+                    - history.scrollTop
+                    - history.clientHeight < 80;
+
+                const top = panel.getBoundingClientRect().top;
+
+                const availableHeight =
+                    window.innerHeight - top - 18;
+
+                panel.style.height =
+                    Math.max(340, Math.min(580, availableHeight)) + "px";
+
+                if (keepAtBottom) {
+                    history.scrollTop = history.scrollHeight;
+                }
+            }
+
+            function scheduleFit() {
+                if (scheduled) return;
+
+                scheduled = true;
+                window.requestAnimationFrame(fitChat);
+            }
+
+            window.addEventListener("resize", scheduleFit);
+
+            const siteHeader = document.querySelector(".df-site-header");
+
+            if (siteHeader && "ResizeObserver" in window) {
+                const observer = new ResizeObserver(scheduleFit);
+                observer.observe(siteHeader);
+            }
+
+            if (document.fonts) {
+                document.fonts.ready.then(scheduleFit);
+            }
+
+            scheduleFit();
+        })();
+    </script>
+}

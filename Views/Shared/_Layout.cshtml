@@ -36,6 +36,33 @@
           rel="stylesheet"
           asp-append-version="true">
     <link href="~/assets/css/dorafood-tet-motion.css" rel="stylesheet" asp-append-version="true">
+    <style>
+        .df-chat-icon-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 42px;
+    height: 42px;
+    padding: 0;
+    border: 1px solid #e6d9dc;
+    border-radius: 50%;
+    background: #fff;
+    color: #922f40;
+    font-size: 19px;
+    cursor: pointer;
+    transition: background-color .2s, border-color .2s;
+}
+
+.df-chat-icon-button:hover {
+    border-color: #922f40;
+    background: #fff4f6;
+}
+
+.df-chat-icon-button:focus-visible {
+    outline: 3px solid #dba9b4;
+    outline-offset: 3px;
+}
+    </style>
     @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="df-site" id="df-page-top">
@@ -67,6 +94,24 @@
                 </button>
 
                 @await Html.PartialAsync("_NotificationsBell")
+                @if (User.Identity?.IsAuthenticated == true)
+{
+    <form action="@Url.RouteUrl("DoraFoodOpenChat")"
+          method="post"
+          data-chat-open
+          class="m-0">
+
+        @Html.AntiForgeryToken()
+
+        <button type="submit"
+                class="df-chat-icon-button"
+                title="Nhắn nhà hàng"
+                aria-label="Nhắn nhà hàng">
+
+            <i class="far fa-comments" aria-hidden="true"></i>
+        </button>
+    </form>
+}
 
                 @if (User.Identity?.IsAuthenticated == true)
                 {
@@ -199,6 +244,8 @@
     <script src="~/assets/js/main.js" asp-append-version="true"></script>
     <script src="~/assets/js/dorafood-home.js" asp-append-version="true"></script>
     <script src="~/assets/js/dorafood-premium.js" asp-append-version="true"></script>
+    <script src="~/js/dorafood-chat-entry.js"
+        asp-append-version="true"></script>
     @await RenderSectionAsync("Scripts", required: false)
 </body>
 </html>

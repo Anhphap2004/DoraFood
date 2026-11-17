@@ -1,0 +1,108 @@
+﻿@using System.Globalization
+@model DoraFood.Areas.Admin.ViewModels.AdminChatIndexViewModel
+@{
+    ViewData["Title"] = "Tin nhắn khách hàng";
+    long? selectedId = long.TryParse(Context.Request.Query["conversationId"].ToString(), out var parsedId) && parsedId > 0 ? parsedId : null;
+    string? PageUrl(int page) => Url.RouteUrl("DoraFoodAdminChat", new { keyword = Model.Keyword, status = Model.Status, unreadOnly = Model.UnreadOnly, page, conversationId = selectedId });
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/admin/css/chat-management.css" asp-append-version="true" />
+}
+
+<section id="admin-chat" class="admin-chat"
+         data-selected-id="@selectedId"
+         data-inbox-url="@Url.RouteUrl("DoraFoodAdminChat", new { keyword = Model.Keyword, status = Model.Status, unreadOnly = Model.UnreadOnly, page = Model.CurrentPage })"
+         data-info-template="@Url.RouteUrl("DoraFoodAdminChatInfo", new { id = 0 })"
+         data-messages-template="@Url.RouteUrl("DoraFoodAdminChatMessages", new { id = 0 })"
+         data-send-template="@Url.RouteUrl("DoraFoodAdminSendChatMessage", new { id = 0 })"
+         data-read-template="@Url.RouteUrl("DoraFoodAdminReadChatMessages", new { id = 0 })">
+
+    <header class="ac-page-heading">
+        <div>
+            <h1>Tin nhắn khách hàng</h1>
+            <p>Tư vấn món ăn, đặt bàn và hỗ trợ khách hàng.</p>
+        </div>
+        <button type="button" id="ac-refresh" class="ac-button">Làm mới</button>
+    </header>
+
+    <form class="ac-filters" method="get" action="@Url.RouteUrl("DoraFoodAdminChat")">
+        <div class="ac-search-field">
+            <label for="ac-keyword">Tìm khách / đặt bàn</label>
+            <input id="ac-keyword" name="keyword" value="@Model.Keyword" maxlength="100" placeholder="Tên khách, tài khoản, mã hoặc số điện thoại" />
+        </div>
+        <div>
+            <label for="ac-status-filter">Hội thoại</label>
+            <select id="ac-status-filter" name="status">
+                <option value="OPEN" selected="@(Model.Status == "OPEN")">Đang mở</option>
+                <option value="CLOSED" selected="@(Model.Status == "CLOSED")">Đã đóng</option>
+                <option value="ALL" selected="@(Model.Status == "ALL")">Tất cả</option>
+            </select>
+        </div>
+        <label class="ac-checkbox"><input type="checkbox" name="unreadOnly" value="true" checked="@Model.UnreadOnly" /> Chỉ chưa đọc</label>
+        <button class="ac-button ac-button-primary" type="submit">Tìm kiếm</button>
+    </form>
+
+    <div id="ac-alert" class="ac-alert" role="status" hidden></div>
+
+    <div id="ac-panel" class="ac-panel">
+        <aside class="ac-inbox" aria-label="Danh sách hội thoại">
+            <div class="ac-inbox-heading"><strong>Hộp thư</strong><span id="ac-total">@Model.TotalItems hội thoại</span></div>
+            <div id="ac-list" class="ac-list">
+                @if (Model.Conversations.Count == 0)
+                {
+                    <div class="ac-list-empty">Chưa có hội thoại phù hợp.<br />Thử đổi bộ lọc hoặc từ khóa.</div>
+                }
+                @foreach (var row in Model.Conversations)
+                {
+                    <a class="ac-row" data-conversation-id="@row.Id" href="@Url.RouteUrl("DoraFoodAdminChatDetails", new { id = row.Id })">
+                        <div class="ac-row-top"><strong>@row.CustomerName</strong>
+                            @if (row.UnreadCount > 0) { <span class="ac-unread">@(row.UnreadCount > 99 ? "99+" : row.UnreadCount.ToString())</span> }
+                        </div>
+                        <div class="ac-row-context">@(row.ReservationCode ?? "Tư vấn chung")</div>
+                        <div class="ac-preview">@row.Preview</div>
+                        <div class="ac-row-bottom"><time>@row.UpdatedAtUtc.AddHours(7).ToString("dd/MM HH:mm")</time><span>@(row.Status == "OPEN" ? "Đang mở" : "Đã đóng")</span></div>
+                    </a>
+                }
+            </div>
+            <nav class="ac-pagination" aria-label="Phân trang hội thoại">
+                <a id="ac-previous" class="ac-page-link" href="@PageUrl(Math.Max(1, Model.CurrentPage - 1))" hidden="@(Model.CurrentPage <= 1)">← Trước</a>
+                <span id="ac-page-number">@Model.CurrentPage / @Math.Max(1, Model.TotalPages)</span>
+                <a id="ac-next" class="ac-page-link" href="@PageUrl(Model.CurrentPage + 1)" hidden="@(Model.CurrentPage >= Model.TotalPages)">Sau →</a>
+            </nav>
+        </aside>
+
+        <div class="ac-conversation">
+            <div id="ac-placeholder" class="ac-placeholder">
+                <span class="ac-placeholder-icon" aria-hidden="true">✉</span>
+                <h2>Chọn một cuộc trò chuyện</h2>
+                <p>Thông tin khách, lịch sử và ô trả lời sẽ xuất hiện tại đây.</p>
+            </div>
+
+            <header id="ac-conversation-heading" class="ac-conversation-heading" hidden>
+                <div class="ac-contact">
+                    <span id="ac-avatar" class="ac-avatar" aria-hidden="true">K</span>
+                    <div><h2 id="ac-customer-name"></h2><div id="ac-customer-meta" class="ac-customer-meta"></div></div>
+                </div>
+                <span id="ac-state" class="ac-state"></span>
+            </header>
+            <div id="ac-context" class="ac-context" hidden><span id="ac-context-text"></span><a id="ac-booking-link" hidden>Xem đặt bàn ↗</a></div>
+
+            <div id="ac-history" class="ac-history" aria-label="Lịch sử trò chuyện" hidden>
+                <div class="ac-older-wrap"><button id="ac-older" type="button" class="ac-older" hidden>Xem tin nhắn cũ hơn</button></div>
+                <div id="ac-messages"></div>
+            </div>
+
+            <form id="ac-compose" class="ac-compose" method="post" hidden>
+                @Html.AntiForgeryToken()
+                <label for="ac-body" class="ac-sr-only">Tin nhắn trả lời khách</label>
+                <div class="ac-compose-row"><textarea id="ac-body" name="Body" rows="2" maxlength="2000" required disabled placeholder="Nhập nội dung trả lời khách..."></textarea><button id="ac-send" class="ac-send" type="submit" disabled>Gửi</button></div>
+                <div class="ac-compose-help"><span id="ac-compose-hint">Enter để gửi · Shift + Enter để xuống dòng</span><span id="ac-counter">0/2000 ký tự</span></div>
+            </form>
+        </div>
+    </div>
+</section>
+
+@section Scripts {
+    <script src="~/admin/js/chat-management.js" asp-append-version="true"></script>
+}

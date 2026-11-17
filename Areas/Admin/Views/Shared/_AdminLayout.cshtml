@@ -21,12 +21,16 @@
         (Label: "Danh mục món ăn", Controller: "DishCategories", Icon: "bi-collection")
     };
     var contentLinks = new[]
-    {
-        (Label: "Bài viết", Controller: "Posts", Action: "Index", Icon: "bi-journal-richtext"),
-        (Label: "Giới thiệu", Controller: "AboutPage", Action: "Edit", Icon: "bi-info-circle"),
-        (Label: "Liên hệ", Controller: "Contacts", Action: "Index", Icon: "bi-envelope"),
-        (Label: "Mục điều hướng", Controller: "NavigationItems", Action: "Index", Icon: "bi-signpost-split")
-    };
+ {
+    (Label: "Bài viết", Controller: "Posts", Action: "Index", Icon: "bi-journal-richtext"),
+    (Label: "Giới thiệu", Controller: "AboutPage", Action: "Edit", Icon: "bi-info-circle"),
+    (Label: "Liên hệ", Controller: "Contacts", Action: "Index", Icon: "bi-envelope"),
+
+    // Hộp thư trò chuyện với khách hàng.
+    (Label: "Tin nhắn khách hàng", Controller: "Chat", Action: "Index", Icon: "bi-chat-dots"),
+
+    (Label: "Mục điều hướng", Controller: "NavigationItems", Action: "Index", Icon: "bi-signpost-split")
+};
 }
 <!doctype html>
 <html lang="vi">

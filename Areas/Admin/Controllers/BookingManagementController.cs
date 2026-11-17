@@ -534,6 +534,17 @@ namespace DoraFood.Controllers
                 // Kiểm tra lại hạn sau khi lấy khóa và đọc phiên bản dữ liệu.
                 if (reservation.StartsAtUtc <= now.AddMinutes(-30))
                 {
+                    var previousStatus = reservation.Status;
+
+                    if (!await CancelUnservedTableOrdersAsync(
+                            reservation.Id,
+                            "Hủy đơn món đặt trước do lượt đặt bàn bị hủy."))
+                    {
+                        return RedirectToRoute(
+                            "DoraFoodManageBookingDetails",
+                            new { id = reservation.Id });
+                    }
+
                     reservation.Status = "CANCELLED";
 
                     AddBookingHistory(
@@ -775,6 +786,17 @@ namespace DoraFood.Controllers
                 // Không cho đổi giờ để khôi phục một yêu cầu đã hết hạn.
                 if (reservation.StartsAtUtc <= now.AddMinutes(-30))
                 {
+                    var previousStatus = reservation.Status;
+
+                    if (!await CancelUnservedTableOrdersAsync(
+                            reservation.Id,
+                            "Hủy đơn món đặt trước do lượt đặt bàn bị hủy."))
+                    {
+                        return RedirectToRoute(
+                            "DoraFoodManageBookingDetails",
+                            new { id = reservation.Id });
+                    }
+
                     reservation.Status = "CANCELLED";
 
                     AddBookingHistory(
@@ -984,7 +1006,18 @@ namespace DoraFood.Controllers
 
                 var previousStatus = reservation.Status;
 
+                if (!await CancelUnservedTableOrdersAsync(
+        reservation.Id,
+        "Hủy đơn món đặt trước do lượt đặt bàn bị hủy."))
+                {
+                    return RedirectToRoute(
+                        "DoraFoodManageBookingDetails",
+                        new { id = reservation.Id });
+                }
+
                 reservation.Status = "CANCELLED";
+
+
 
                 // Giữ nguyên các bàn đã phân để lưu lịch sử.
                 AddBookingHistory(
@@ -1080,6 +1113,15 @@ namespace DoraFood.Controllers
                     return BackToDetails();
                 }
 
+                if (!await CancelUnservedTableOrdersAsync(
+         reservation.Id,
+         "Hủy đơn món đặt trước do khách không đến sau hạn giữ bàn."))
+                {
+                    return RedirectToRoute(
+                        "DoraFoodManageBookingDetails",
+                        new { id = reservation.Id });
+                }
+
                 reservation.Status = "NO_SHOW";
 
                 // Giữ liên kết bàn để lưu lịch sử.
@@ -1159,6 +1201,26 @@ namespace DoraFood.Controllers
 
                 if (DateTime.UtcNow >= arrivalDeadlineUtc)
                 {
+                    if (!await CancelUnservedTableOrdersAsync(
+        reservation.Id,
+        "Hủy đơn món đặt trước do lượt đặt bàn bị hủy."))
+                    {
+                        return RedirectToRoute(
+                            "DoraFoodManageBookingDetails",
+                            new { id = reservation.Id });
+                    }
+
+                    var previousStatus = reservation.Status;
+
+                    if (!await CancelUnservedTableOrdersAsync(
+                            reservation.Id,
+                            "Hủy đơn món đặt trước do lượt đặt bàn bị hủy."))
+                    {
+                        return RedirectToRoute(
+                            "DoraFoodManageBookingDetails",
+                            new { id = reservation.Id });
+                    }
+
                     reservation.Status = "CANCELLED";
 
                     AddBookingHistory(
