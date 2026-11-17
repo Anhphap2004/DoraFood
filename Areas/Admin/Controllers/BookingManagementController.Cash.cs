@@ -665,14 +665,22 @@ public partial class BookingManagementController
                     System.Globalization.CultureInfo.GetCultureInfo("vi-VN"));
 
                 _notifications.Add(
-                    customerId,
-                    "Thanh toán tại bàn thành công",
-                    $"Đơn {order.Code} đã được thanh toán đầy đủ. " +
-                    $"Tổng hóa đơn: {totalText} ₫. " +
-                    $"Số hóa đơn: {invoice.Number}. " +
-                    "DoraFood cảm ơn quý khách!",
-                    Url.RouteUrl("DoraFoodMyBookings")
-                        ?? "/dat-ban/cua-toi");
+    customerId,
+    "Thanh toán tại bàn thành công",
+    $"Đơn {order.Code} đã được thanh toán đầy đủ. " +
+    $"Tổng hóa đơn: {totalText} ₫. " +
+    $"Số hóa đơn: {invoice.Number}. " +
+    "DoraFood cảm ơn quý khách!",
+    order.ReservationId.HasValue
+        ? Url.RouteUrl(
+            "DoraFoodMyBookingInvoice",
+            new
+            {
+                area = "",
+                id = order.ReservationId.Value,
+                orderId = order.Id
+            }) ?? "/dat-ban/cua-toi"
+        : "/dat-ban/cua-toi");
 
                 // Xuất hóa đơn và lưu thông báo trong cùng giao dịch.
                 await _context.SaveChangesAsync(

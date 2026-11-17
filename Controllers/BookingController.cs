@@ -38,6 +38,131 @@ namespace DoraFood.Controllers
             TimeZoneInfo.FindSystemTimeZoneById(
                 "SE Asia Standard Time");
 
+        [HttpGet(
+    "/dat-ban/cua-toi/{id:long}/hoa-don/{orderId:long}",
+    Name = "DoraFoodMyBookingInvoice")]
+        [Authorize]
+        [ResponseCache(
+    NoStore = true,
+    Location = ResponseCacheLocation.None)]
+        public async Task<IActionResult> MyBookingInvoice(
+    [FromRoute] long id,
+    [FromRoute] long orderId)
+        {
+            if (!ModelState.IsValid || id <= 0 || orderId <= 0)
+            {
+                return BadRequest("Thông tin hóa đơn không hợp lệ.");
+            }
+
+            var customerId = await GetActiveCustomerIdAsync();
+
+            if (!customerId.HasValue)
+            {
+                return await RestartBookingLoginAsync(
+                    Url.RouteUrl(
+                        "DoraFoodMyBookingInvoice",
+                        new { id, orderId }));
+            }
+
+            var cancellationToken = HttpContext.RequestAborted;
+
+            // Kiểm tra đồng thời:
+            // - Đúng đơn gọi món.
+            // - Đúng lượt đặt bàn.
+            // - Lượt đặt bàn thuộc tài khoản đang đăng nhập.
+            // - Hóa đơn đã xuất.
+            var invoice = await _context.Set<Invoice>()
+                .AsNoTracking()
+                .Include(item => item.InvoiceLines)
+                .Include(item => item.Order)
+                    .ThenInclude(order => order.Reservation)
+                .Include(item => item.Order)
+                    .ThenInclude(order => order.OrderTables)
+                    .ThenInclude(link => link.Table)
+                .AsSplitQuery()
+                .SingleOrDefaultAsync(
+                    item =>
+                        item.OrderId == orderId
+                        && item.Status == "ISSUED"
+                        && item.IssuedAtUtc.HasValue
+                        && item.Order.OrderType == "DINE_IN"
+                        && item.Order.ReservationId == id
+                        && item.Order.Reservation != null
+                        && item.Order.Reservation.CustomerId ==
+                            customerId.Value
+                        && (
+                            item.Order.CustomerId == customerId.Value
+                            || item.Order.CustomerId == null),
+                    cancellationToken);
+
+            if (invoice == null)
+            {
+                return NotFound("Không tìm thấy hóa đơn.");
+            }
+
+            var issuedAtUtc = invoice.IssuedAtUtc!.Value;
+
+            // Chỉ lấy các khoản thu đến thời điểm xuất hóa đơn.
+            var payments = await _context.Set<Payment>()
+                .AsNoTracking()
+                .Where(payment =>
+                    payment.OrderId == orderId
+                    && payment.Status == "SUCCEEDED"
+                    && payment.PaidAtUtc.HasValue
+                    && payment.PaidAtUtc.Value <= issuedAtUtc)
+                .Select(payment => new
+                {
+                    payment.Purpose,
+                    payment.Amount
+                })
+                .ToListAsync(cancellationToken);
+
+            var refundedAmount = await _context.Set<Refund>()
+                .AsNoTracking()
+                .Where(refund =>
+                    refund.Payment.OrderId == orderId
+                    && refund.Status == "SUCCEEDED"
+                    && refund.RefundedAtUtc.HasValue
+                    && refund.RefundedAtUtc.Value <= issuedAtUtc)
+                .SumAsync(
+                    refund => (decimal?)refund.Amount,
+                    cancellationToken)
+                ?? 0m;
+
+            var model = new MyBookingInvoiceViewModel
+            {
+                Invoice = invoice,
+
+                ReservationId = id,
+
+                ReservationCode =
+                    invoice.Order.Reservation!.Code,
+
+                OrderCode = invoice.Order.Code,
+
+                // Lấy cả bàn đã giải phóng để giữ lịch sử phục vụ.
+                TableCodes = invoice.Order.OrderTables
+                    .Select(link => link.Table.Code)
+                    .Distinct()
+                    .OrderBy(code => code)
+                    .ToList(),
+
+                DepositAmount = payments
+                    .Where(payment => payment.Purpose == "DEPOSIT")
+                    .Sum(payment => payment.Amount),
+
+                SettlementAmount = payments
+                    .Where(payment => payment.Purpose == "SETTLEMENT")
+                    .Sum(payment => payment.Amount),
+
+                RefundedAmount = refundedAmount
+            };
+
+            ViewData["Title"] =
+                $"Hóa đơn {invoice.Number}";
+
+            return View("MyBookingInvoice", model);
+        }
 
         [HttpGet(
     "/dat-ban/cua-toi/{id:long}",
