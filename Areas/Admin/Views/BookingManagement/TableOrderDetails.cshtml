@@ -67,7 +67,7 @@
                 Xem hóa đơn
             </a>
         }
-        @if (Model.Status == "OPEN" || Model.Status == "IN_PROGRESS")
+        @if (ViewData["CanPayTableOrder"] is true)
         {
             <a href="@Url.RouteUrl(
                          "DoraFoodTableCheckout",
@@ -81,6 +81,14 @@
             </a>
         }
     </div>
+    @if (Model.Reservation?.Status == "CONFIRMED")
+    {
+        <div class="alert alert-info mb-4">
+            <strong>Đơn món đặt trước.</strong>
+            Nhân viên nhập các món đã tư vấn và thống nhất với khách.
+            Đơn chưa chiếm bàn; bàn được gắn khi nhận khách vào phục vụ.
+        </div>
+    }
     @if (TempData["TableOrderSuccess"] is string paymentSuccess)
     {
         <div class="alert alert-success" role="status">

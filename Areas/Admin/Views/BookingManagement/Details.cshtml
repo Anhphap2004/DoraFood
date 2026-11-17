@@ -982,18 +982,26 @@
                 </a>
             </div>
         }
-        @if (reservation.Status == "SEATED")
+        @if (reservation.Status == "CONFIRMED"
+    || reservation.Status == "SEATED")
         {
             <form action="@Url.RouteUrl(
                               "DoraFoodOpenTableOrder",
                               new { id = reservation.Id })"
                   method="post"
                   class="mb-4">
+
                 @Html.AntiForgeryToken()
 
                 <button type="submit"
                         class="btn btn-primary rounded-pill px-4">
-                    Mở đơn gọi món
+
+                    <i class="fas fa-utensils me-2"
+                       aria-hidden="true"></i>
+
+                    @(reservation.Status == "CONFIRMED"
+                        ? "Lập / xem món đặt trước"
+                        : "Mở đơn gọi món")
                 </button>
             </form>
         }

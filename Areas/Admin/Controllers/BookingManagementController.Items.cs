@@ -112,17 +112,11 @@ public partial class BookingManagementController
 
                 var order = item.Order;
 
-                if ((order.Status != "OPEN"
-                        && order.Status != "IN_PROGRESS")
-                    || order.ClosedAtUtc.HasValue
-                    || order.Invoice != null
-                    || order.Reservation?.Status != "SEATED"
-                    || !order.OrderTables.Any(
-                        link => link.ReleasedAtUtc == null))
+                if (!CanStaffManageTableOrder(order))
                 {
                     return Error(
-                        "Đơn đã đóng, đã có hóa đơn " +
-                        "hoặc lượt khách không còn sử dụng bàn.");
+                        "Không thể thay đổi món khi lượt đặt bàn " +
+                        "không còn hợp lệ hoặc đơn đã có hóa đơn.");
                 }
 
                 if (item.Status == "CANCELLED")
@@ -211,6 +205,16 @@ public partial class BookingManagementController
                     CreatedAtUtc = DateTime.UtcNow
                 });
 
+                NotifyCustomerAboutTableOrder(
+    order,
+    isCancel
+        ? "Nhà hàng đã hủy một món"
+        : "Nhà hàng đã điều chỉnh số lượng món",
+    isCancel
+        ? $"Món {item.NameSnapshot} đã được hủy " +
+          "và không tính vào tiền thanh toán."
+        : $"Món {item.NameSnapshot} đã đổi số lượng " +
+          $"từ {before} thành {after}.");
                 await _context.SaveChangesAsync(cancellationToken);
 
                 TempData["TableOrderSuccess"] = isCancel
