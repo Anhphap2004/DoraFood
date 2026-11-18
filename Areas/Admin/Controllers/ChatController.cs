@@ -164,9 +164,12 @@ public sealed class ChatController : Controller
                 UpdatedAtUtc = conversation.UpdatedAtUtc,
 
                 LastMessage = conversation.Messages
-                    .OrderByDescending(message => message.Id)
-                    .Select(message => message.Body)
-                    .FirstOrDefault(),
+    .OrderByDescending(message => message.Id)
+    .Select(message =>
+        message.MediaFileId.HasValue && message.Body == ""
+            ? "Đã gửi một ảnh"
+            : message.Body)
+    .FirstOrDefault(),
 
                 UnreadCount = conversation.Messages.Count(
                     message =>
@@ -340,7 +343,33 @@ public sealed class ChatController : Controller
          conversationId = model.ConversationId
      });
     }
+    // GET: /Admin/Chat/chua-doc
+    [HttpGet(
+        "/Admin/Chat/chua-doc",
+        Name = "DoraFoodAdminChatUnread")]
+    public async Task<IActionResult> Unread()
+    {
+        var unreadCount = await _context.Set<ChatMessage>()
+            .AsNoTracking()
+            .CountAsync(
+                message =>
+                    message.SenderType == "CUSTOMER"
+                    && message.ReadAtUtc == null,
+                HttpContext.RequestAborted);
 
+        return Json(new
+        {
+            unreadCount,
+
+            // Bấm biểu tượng sẽ mở hộp thư, lọc các cuộc chưa đọc.
+            url = Url.RouteUrl(
+                "DoraFoodAdminChat",
+                new
+                {
+                    unreadOnly = true
+                })
+        });
+    }
     // GET: lấy tin nhắn, hỗ trợ tải lịch sử cũ.
     [HttpGet(
         "/Admin/Chat/{id:long}/tin-nhan",
@@ -436,7 +465,8 @@ public sealed class ChatController : Controller
                 input.Body,
                 input.ClientMessageId,
                 fromStaff: true,
-                cancellationToken: HttpContext.RequestAborted);
+                cancellationToken: HttpContext.RequestAborted,
+image: input.Image);
 
             return Json(new
             {
@@ -543,6 +573,11 @@ public sealed class ChatController : Controller
                 : "Khách hàng",
 
             body = message.Body,
+            imageUrl = message.MediaFileId.HasValue
+    ? Url.RouteUrl(
+        "DoraFoodChatImage",
+        new { area = "", id = message.Id })
+    : null,
 
             // Tin của các nhân viên cùng hiển thị
             // phía nhà hàng, bên phải khung chat.

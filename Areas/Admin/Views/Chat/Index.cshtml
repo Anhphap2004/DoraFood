@@ -96,7 +96,27 @@
             <form id="ac-compose" class="ac-compose" method="post" hidden>
                 @Html.AntiForgeryToken()
                 <label for="ac-body" class="ac-sr-only">Tin nhắn trả lời khách</label>
-                <div class="ac-compose-row"><textarea id="ac-body" name="Body" rows="2" maxlength="2000" required disabled placeholder="Nhập nội dung trả lời khách..."></textarea><button id="ac-send" class="ac-send" type="submit" disabled>Gửi</button></div>
+                <div class="ac-compose-row"><textarea id="ac-body" name="Body" rows="2" maxlength="2000"  disabled placeholder="Nhập nội dung trả lời khách..."></textarea><button id="ac-send" class="ac-send" type="submit" disabled>Gửi</button></div>
+<fieldset id="ac-attachments" class="mt-2" disabled>
+    <button id="ac-choose-image" type="button"
+            class="btn btn-sm btn-outline-secondary">
+        Chọn ảnh
+    </button>
+
+    <input id="ac-image" name="Image" type="file"
+           accept=".jpg,.jpeg,.png,.webp" hidden />
+
+    <div id="ac-preview" class="mt-2" hidden>
+        <img id="ac-preview-image" alt="Ảnh đã chọn"
+             class="rounded border"
+             style="width:80px;height:60px;object-fit:contain" />
+
+        <button id="ac-remove-image" type="button"
+                class="btn btn-sm btn-outline-danger ms-2">
+            Bỏ ảnh
+        </button>
+    </div>
+</fieldset>
                 <div class="ac-compose-help"><span id="ac-compose-hint">Enter để gửi · Shift + Enter để xuống dòng</span><span id="ac-counter">0/2000 ký tự</span></div>
             </form>
         </div>

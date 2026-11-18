@@ -186,12 +186,21 @@ public partial class DoraFoodContext
                 .HasConstraintName(
                     "FK_ChatMessages_ConversationId");
 
+            // Người gửi tin nhắn.
             entity.HasOne(item => item.Sender)
                 .WithMany()
                 .HasForeignKey(item => item.SenderId)
                 .OnDelete(DeleteBehavior.NoAction)
                 .HasConstraintName(
                     "FK_ChatMessages_SenderId");
+
+            // Ảnh đính kèm tin nhắn.
+            entity.HasOne(item => item.MediaFile)
+                .WithMany()
+                .HasForeignKey(item => item.MediaFileId)
+                .OnDelete(DeleteBehavior.NoAction)
+                .HasConstraintName(
+                    "FK_ChatMessages_MediaFiles");
         });
     }
 }

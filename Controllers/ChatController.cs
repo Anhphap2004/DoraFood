@@ -252,7 +252,8 @@ public sealed class ChatController : Controller
                 // Khách không thể tự gửi với vai trò nhân viên.
                 fromStaff: false,
 
-                cancellationToken: HttpContext.RequestAborted);
+                cancellationToken: HttpContext.RequestAborted,
+image: input.Image);
 
             return Json(new
             {
@@ -359,6 +360,11 @@ public sealed class ChatController : Controller
             id = message.Id.ToString(),
             senderType = message.SenderType,
             body = message.Body,
+            imageUrl = message.MediaFileId.HasValue
+    ? Url.RouteUrl(
+        "DoraFoodChatImage",
+        new { area = "", id = message.Id })
+    : null,
             isMine = message.SenderId == _userId,
             isRead = message.ReadAtUtc.HasValue,
 

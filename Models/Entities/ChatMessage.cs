@@ -12,7 +12,11 @@ public partial class ChatMessage
 
     public string SenderType { get; set; } = null!;
 
-    public string Body { get; set; } = null!;
+    // Gửi riêng ảnh thì lưu chuỗi rỗng.
+    public string Body { get; set; } = string.Empty;
+
+    // Không có ảnh thì để null.
+    public long? MediaFileId { get; set; }
 
     public Guid ClientMessageId { get; set; }
 
@@ -24,4 +28,7 @@ public partial class ChatMessage
         = null!;
 
     public virtual User Sender { get; set; } = null!;
+
+    // Thông tin ảnh đính kèm tin nhắn.
+    public virtual MediaFile? MediaFile { get; set; }
 }

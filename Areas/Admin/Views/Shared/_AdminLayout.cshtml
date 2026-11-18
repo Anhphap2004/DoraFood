@@ -97,6 +97,7 @@
                     <div class="dt-header-caption"><strong>DoraFood <span>Workspace</span></strong><small>Chăm từng bữa ăn · Trọn từng trải nghiệm</small></div>
                 </div>
                 <ul class="navbar-nav ms-auto align-items-center gap-1">
+                    @await Html.PartialAsync("_AdminChatBell")
                     <li class="nav-item d-none d-md-block"><a href="@customerUrl" class="nav-link dt-store-link"><i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i>Trang khách hàng</a></li>
                     <li class="nav-item"><button type="button" id="dt-motion-toggle" class="btn dt-icon-btn" aria-label="Tạm dừng hiệu ứng trang trí" aria-pressed="true" title="Bật hoặc tắt hiệu ứng"><i class="bi bi-stars" aria-hidden="true"></i></button></li>
                     <li class="nav-item dropdown">

@@ -4,6 +4,9 @@ using System.Security.Claims;
 using System.Threading;
 using System.Threading.Tasks;
 using DoraFood.Data;
+using System.IO;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using DoraFood.Models;
 using Microsoft.EntityFrameworkCore;
 
@@ -13,15 +16,24 @@ public sealed class ChatService
 {
     private readonly DoraFoodContext _context;
     private readonly NotificationService _notifications;
+    private readonly ChatImageService _images;
+    private readonly string _imageDirectory;
 
     public ChatService(
         DoraFoodContext context,
-        NotificationService notifications)
+        NotificationService notifications,
+        ChatImageService images,
+        IWebHostEnvironment environment)
     {
         _context = context;
         _notifications = notifications;
-    }
+        _images = images;
 
+        _imageDirectory = Path.Combine(
+            environment.ContentRootPath,
+            "App_Data",
+            "ChatImages");
+    }
     // Mở hội thoại của khách.
     // reservationId = null: tư vấn chung.
     // Có reservationId: tư vấn về lượt đặt bàn đó.
@@ -125,13 +137,17 @@ public sealed class ChatService
     // Controller khách truyền fromStaff: false.
     // Controller quản trị truyền fromStaff: true.
     // Không nhận giá trị này từ form của trình duyệt.
+    // Controller khách truyền fromStaff: false.
+    // Controller Admin truyền fromStaff: true.
+    // Không lấy fromStaff từ dữ liệu trình duyệt gửi lên.
     public async Task<ChatMessage> SendAsync(
         ClaimsPrincipal user,
         long conversationId,
         string? body,
         Guid clientMessageId,
         bool fromStaff,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        IFormFile? image = null)
     {
         var actor = await GetActorAsync(
             user,
@@ -144,13 +160,13 @@ public sealed class ChatService
                 "Tài khoản không có quyền trả lời phía nhà hàng.");
         }
 
-        body = body?.Trim();
+        body = body?.Trim() ?? string.Empty;
 
-        if (string.IsNullOrWhiteSpace(body))
+        if (body.Length == 0 && image == null)
         {
             throw new ChatException(
                 400,
-                "Anh hãy nhập nội dung tin nhắn.");
+                "Anh hãy nhập tin nhắn hoặc chọn một ảnh.");
         }
 
         if (body.Length > 2000)
@@ -168,12 +184,55 @@ public sealed class ChatService
                 "Thông tin gửi tin nhắn không hợp lệ.");
         }
 
+        // Kiểm tra quyền trước khi thực hiện xử lý ảnh.
+        var canAccess = await _context.Set<ChatConversation>()
+            .AsNoTracking()
+            .AnyAsync(
+                conversation =>
+                    conversation.Id == conversationId
+                    && (
+                        fromStaff
+                        || conversation.CustomerId == actor.Id),
+                cancellationToken);
+
+        if (!canAccess)
+        {
+            throw new ChatException(
+                404,
+                "Không tìm thấy hội thoại.");
+        }
+
+        PreparedChatImage? preparedImage = null;
+        string? imageFileName = null;
+        string? imageStorageKey = null;
+
+        if (image != null)
+        {
+            // Giải mã và chuẩn hóa ảnh ngoài giao dịch SQL,
+            // tránh giữ khóa hội thoại trong lúc xử lý ảnh.
+            preparedImage = await _images.PrepareAsync(
+                image,
+                cancellationToken);
+
+            // Tên do server tạo.
+            // Cùng yêu cầu gửi và cùng nội dung ảnh sẽ có cùng tên.
+            imageFileName =
+                $"{conversationId}-{actor.Id}-"
+                + $"{clientMessageId:N}-"
+                + $"{preparedImage.SourceHash}.png";
+
+            // Đây là khóa lưu trữ nội bộ,
+            // không phải URL công khai để truy cập trực tiếp.
+            imageStorageKey = $"chat-private/{imageFileName}";
+        }
+
         var senderType = fromStaff ? "STAFF" : "CUSTOMER";
 
         return await WithChatLockAsync(
             $"DoraFood.Chat.Conversation:{conversationId}",
             async () =>
             {
+                // Kiểm tra lại quyền trong giao dịch.
                 var conversation = await _context
                     .Set<ChatConversation>()
                     .AsTracking()
@@ -192,28 +251,35 @@ public sealed class ChatService
                         "Không tìm thấy hội thoại.");
                 }
 
-                // Gửi lại cùng yêu cầu thì trả tin đã có,
-                // không tạo thêm tin hoặc thông báo thứ hai.
+                // Kiểm tra yêu cầu đã được xử lý trước đó chưa.
                 var existing = await _context.Set<ChatMessage>()
                     .AsNoTracking()
+                    .Include(message => message.MediaFile)
                     .SingleOrDefaultAsync(
                         message =>
                             message.ConversationId == conversationId
                             && message.SenderId == actor.Id
-                            && message.ClientMessageId ==
-                                clientMessageId,
+                            && message.ClientMessageId == clientMessageId,
                         cancellationToken);
 
                 if (existing != null)
                 {
+                    var sameImage = imageStorageKey == null
+                        ? existing.MediaFileId == null
+                        : existing.MediaFile != null
+                            && existing.MediaFile.Url == imageStorageKey;
+
                     if (existing.Body != body
-                        || existing.SenderType != senderType)
+                        || existing.SenderType != senderType
+                        || !sameImage)
                     {
                         throw new ChatException(
                             409,
                             "Mã gửi tin đã được dùng cho nội dung khác.");
                     }
 
+                    // Trả về tin đã có, không tạo trùng tin,
+                    // ảnh trong SQL hoặc thông báo.
                     return existing;
                 }
 
@@ -226,12 +292,39 @@ public sealed class ChatService
 
                 var now = DateTime.UtcNow;
 
+                MediaFile? media = null;
+
+                if (preparedImage != null)
+                {
+                    await SaveChatImageAsync(
+                        preparedImage,
+                        imageFileName!,
+                        cancellationToken);
+
+                    media = new MediaFile
+                    {
+                        Url = imageStorageKey!,
+                        OriginalName = preparedImage.OriginalName,
+                        MimeType = preparedImage.MimeType,
+                        SizeBytes = preparedImage.SizeBytes,
+                        AltText = "Ảnh đính kèm tin nhắn",
+                        UploadedBy = actor.Id,
+                        CreatedAtUtc = now
+                    };
+
+                    _context.Set<MediaFile>().Add(media);
+                }
+
                 var message = new ChatMessage
                 {
                     ConversationId = conversation.Id,
                     SenderId = actor.Id,
                     SenderType = senderType,
                     Body = body,
+
+                    // EF tự lấy ID ảnh sau khi thêm MediaFile.
+                    MediaFile = media,
+
                     ClientMessageId = clientMessageId,
                     CreatedAtUtc = now,
                     ReadAtUtc = null
@@ -243,9 +336,11 @@ public sealed class ChatService
 
                 if (fromStaff)
                 {
-                    var preview = body.Length > 160
-                        ? body[..160] + "..."
-                        : body;
+                    var preview = body.Length == 0
+                        ? "Nhà hàng đã gửi một hình ảnh."
+                        : body.Length > 160
+                            ? body[..160] + "..."
+                            : body;
 
                     _notifications.Add(
                         conversation.CustomerId,
@@ -254,14 +349,78 @@ public sealed class ChatService
                         $"/tro-chuyen/{conversation.Id}");
                 }
 
-                // Tin nhắn, thời gian cập nhật hội thoại
-                // và thông báo được lưu cùng nhau.
+                // MediaFile, tin nhắn, thời gian hội thoại
+                // và thông báo được lưu trong cùng giao dịch SQL.
                 await _context.SaveChangesAsync(
                     cancellationToken);
 
                 return message;
             },
             cancellationToken);
+    }
+    private async Task SaveChatImageAsync(
+    PreparedChatImage image,
+    string fileName,
+    CancellationToken cancellationToken)
+    {
+        string? temporaryPath = null;
+
+        try
+        {
+            Directory.CreateDirectory(_imageDirectory);
+
+            var destinationPath = Path.Combine(
+                _imageDirectory,
+                fileName);
+
+            temporaryPath = Path.Combine(
+                _imageDirectory,
+                $"{Guid.NewGuid():N}.tmp");
+
+            // Ghi vào file tạm trước.
+            await File.WriteAllBytesAsync(
+                temporaryPath,
+                image.Bytes,
+                cancellationToken);
+
+            // Chỉ đưa vào tên chính thức khi đã ghi xong.
+            // Tên ảnh được tạo hoàn toàn bởi server.
+            File.Move(
+                temporaryPath,
+                destinationPath,
+                overwrite: true);
+        }
+        catch (IOException)
+        {
+            throw new ChatException(
+                503,
+                "Chưa lưu được ảnh. Anh hãy thử gửi lại.");
+        }
+        catch (UnauthorizedAccessException)
+        {
+            throw new ChatException(
+                503,
+                "Hệ thống chưa có quyền ghi thư mục ảnh chat.");
+        }
+        finally
+        {
+            // Dọn file tạm nếu việc ghi hoặc di chuyển bị lỗi.
+            if (temporaryPath != null)
+            {
+                try
+                {
+                    File.Delete(temporaryPath);
+                }
+                catch (IOException)
+                {
+                    // Không để lỗi dọn file tạm che mất lỗi chính.
+                }
+                catch (UnauthorizedAccessException)
+                {
+                    // Không để lỗi dọn file tạm che mất lỗi chính.
+                }
+            }
+        }
     }
 
     // Kiểm tra tài khoản thực tế và phiên đăng nhập.

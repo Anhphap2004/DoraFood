@@ -114,6 +114,7 @@ builder.Services.AddScoped<VoucherService>();
 builder.Services.AddScoped<VoucherImageService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<ChatService>();
+builder.Services.AddScoped<ChatImageService>();
 var app = builder.Build();
 
 // Xử lý lỗi ngoài môi trường Development.

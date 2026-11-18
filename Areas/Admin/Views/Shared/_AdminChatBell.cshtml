@@ -1,0 +1,124 @@
+﻿@if (User.Identity?.IsAuthenticated == true
+    && (User.IsInRole("ADMIN") || User.IsInRole("MANAGER")))
+{
+    <li class="nav-item">
+        <a id="admin-chat-bell"
+           href="@Url.RouteUrl("DoraFoodAdminChat", new { unreadOnly = true })"
+           data-count-url="@Url.RouteUrl("DoraFoodAdminChatUnread")"
+           class="btn dt-icon-btn position-relative"
+           aria-label="Tin nhắn khách hàng"
+           title="Tin nhắn khách hàng">
+
+            <i class="bi bi-chat-dots"
+               aria-hidden="true"></i>
+
+            <span id="admin-chat-unread"
+                  class="position-absolute top-0 start-100 translate-middle
+                badge rounded-pill bg-danger d-none"
+                  style="font-size: 10px;"
+                  aria-hidden="true">
+            </span>
+        </a>
+    </li>
+
+    <script>
+        (() => {
+            const bell = document.getElementById("admin-chat-bell");
+            const badge = document.getElementById("admin-chat-unread");
+
+            if (!bell || !badge || bell.dataset.initialized) {
+                return;
+            }
+
+            bell.dataset.initialized = "true";
+
+            let loading = false;
+            let stopped = false;
+
+            async function updateUnreadCount() {
+                if (loading || stopped || document.hidden) {
+                    return;
+                }
+
+                loading = true;
+
+                const controller = new AbortController();
+                const timeout = window.setTimeout(
+                    () => controller.abort(),
+                    10000
+                );
+
+                try {
+                    const response = await fetch(bell.dataset.countUrl, {
+                        method: "GET",
+                        credentials: "same-origin",
+                        cache: "no-store",
+                        headers: {
+                            "Accept": "application/json"
+                        },
+                        signal: controller.signal
+                    });
+
+                    // Dừng kiểm tra nếu phiên đăng nhập hoặc quyền đã thay đổi.
+                    if (response.redirected
+                        || response.status === 401
+                        || response.status === 403) {
+                        stopped = true;
+                        badge.classList.add("d-none");
+                        bell.title = "Vui lòng tải lại trang để kiểm tra đăng nhập";
+                        return;
+                    }
+
+                    if (!response.ok) {
+                        return;
+                    }
+
+                    const contentType =
+                        response.headers.get("content-type") || "";
+
+                    if (!contentType.includes("application/json")) {
+                        return;
+                    }
+
+                    const result = await response.json();
+                    const count = result.unreadCount;
+
+                    if (!Number.isSafeInteger(count) || count < 0) {
+                        return;
+                    }
+
+                    badge.textContent = count > 99
+                        ? "99+"
+                        : String(count);
+
+                    badge.classList.toggle("d-none", count === 0);
+
+                    const label = count > 0
+                        ? `Có ${count} tin nhắn khách hàng chưa đọc`
+                        : "Không có tin nhắn khách hàng chưa đọc";
+
+                    bell.setAttribute("aria-label", label);
+                    bell.title = label;
+                } catch {
+                    // Mất mạng tạm thời: giữ số hiện tại và thử lại lần sau.
+                } finally {
+                    window.clearTimeout(timeout);
+                    loading = false;
+                }
+            }
+
+            updateUnreadCount();
+
+            window.setInterval(updateUnreadCount, 15000);
+
+            // Kiểm tra ngay khi quản lý quay lại tab.
+            document.addEventListener("visibilitychange", () => {
+                if (!document.hidden) {
+                    updateUnreadCount();
+                }
+            });
+
+            window.addEventListener("focus", updateUnreadCount);
+        })();
+    </script>
+}

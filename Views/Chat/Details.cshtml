@@ -433,10 +433,37 @@
                               class="form-control"
                               rows="2"
                               maxlength="2000"
-                              required
                               disabled="@(!Model.CanSend)"
                               placeholder="Nhập tin nhắn cho nhà hàng..."></textarea>
+                    <fieldset id="df-chat-attachments"
+                              class="mt-2"
+                              disabled="@(!Model.CanSend)">
+                        <button id="df-chat-choose-image"
+                                type="button"
+                                class="btn btn-sm btn-outline-secondary">
+                            <i class="far fa-image me-1" aria-hidden="true"></i>
+                            Chọn ảnh
+                        </button>
 
+                        <input id="df-chat-image"
+                               name="Image"
+                               type="file"
+                               accept=".jpg,.jpeg,.png,.webp"
+                               hidden />
+
+                        <div id="df-chat-preview" class="mt-2" hidden>
+                            <img id="df-chat-preview-image"
+                                 alt="Ảnh đã chọn"
+                                 class="rounded border"
+                                 style="width: 80px; height: 60px; object-fit: contain;" />
+
+                            <button id="df-chat-remove-image"
+                                    type="button"
+                                    class="btn btn-sm btn-outline-danger ms-2">
+                                Bỏ ảnh
+                            </button>
+                        </div>
+                    </fieldset>
                     <button id="df-chat-send"
                             type="submit"
                             disabled="@(!Model.CanSend)">
@@ -488,6 +515,55 @@
             let lastSyncedId = null;
             let lastReadId = null;
             let pendingMessage = null;
+            const attachments = document.getElementById("df-chat-attachments");
+            const imageInput = document.getElementById("df-chat-image");
+            const preview = document.getElementById("df-chat-preview");
+            const previewImage = document.getElementById("df-chat-preview-image");
+
+            let previewUrl = null;
+
+            function clearImage() {
+                imageInput.value = "";
+                preview.hidden = true;
+                previewImage.removeAttribute("src");
+
+                if (previewUrl) {
+                    URL.revokeObjectURL(previewUrl);
+                    previewUrl = null;
+                }
+            }
+
+            document.getElementById("df-chat-choose-image")
+                .addEventListener("click", () => imageInput.click());
+
+            document.getElementById("df-chat-remove-image")
+                .addEventListener("click", clearImage);
+
+            imageInput.addEventListener("change", () => {
+                const file = imageInput.files[0];
+
+                if (!file) {
+                    clearImage();
+                    return;
+                }
+
+                if (!/\.(jpe?g|png|webp)$/i.test(file.name)
+                    || file.size === 0
+                    || file.size > 5 * 1024 * 1024) {
+                    clearImage();
+                    showError("Chọn ảnh JPG, PNG hoặc WebP có dung lượng từ trên 0 đến 5 MB.");
+                    return;
+                }
+
+                if (previewUrl) {
+                    URL.revokeObjectURL(previewUrl);
+                }
+
+                previewUrl = URL.createObjectURL(file);
+                previewImage.src = previewUrl;
+                preview.hidden = false;
+                status.hidden = true;
+            });
 
             const timeFormatter = new Intl.DateTimeFormat("vi-VN", {
                 timeZone: "Asia/Ho_Chi_Minh",
@@ -525,6 +601,7 @@
 
                     if (!previous
                         || previous.body !== item.body
+                        || previous.imageUrl !== item.imageUrl
                         || previous.isRead !== item.isRead) {
                         changed = true;
                     }
@@ -565,8 +642,38 @@
                     const bubble = document.createElement("div");
                     bubble.className = "df-chat-bubble";
 
-                    // Tin nhắn luôn hiển thị dưới dạng văn bản.
-                    bubble.textContent = item.body;
+                    // Tin nhắn luôn hiển thị dưới dạng 
+                    if (item.imageUrl) {
+    const url = new URL(item.imageUrl, window.location.origin);
+
+    if (url.origin === window.location.origin) {
+        const link = document.createElement("a");
+        link.href = url.href;
+        link.target = "_blank";
+        link.rel = "noopener";
+        link.className = "d-block";
+        link.setAttribute("aria-label", "Mở ảnh đính kèm trong tab mới");
+
+        const image = document.createElement("img");
+        image.src = url.href;
+        image.alt = "Ảnh đính kèm tin nhắn";
+        image.className = "rounded";
+        image.style.cssText =
+            "display:block;width:200px;max-width:100%;height:140px;object-fit:contain";
+
+        link.appendChild(image);
+        bubble.appendChild(link);
+    }
+}
+
+if (item.body) {
+    const text = document.createElement("div");
+    text.textContent = item.body;
+    if (bubble.childElementCount > 0) {
+        text.className = "mt-2";
+    }
+    bubble.appendChild(text);
+}
 
                     const meta = document.createElement("div");
                     meta.className = "df-chat-meta";
@@ -783,68 +890,72 @@
                     }
                 }
             });
-
             form.addEventListener("submit", async event => {
-                event.preventDefault();
+    event.preventDefault();
 
-                if (sending || stopped || input.disabled) return;
+    if (sending || stopped || input.disabled) return;
 
-                const body = input.value.trim();
+    const body = input.value.trim();
+    const image = imageInput.files[0] ?? null;
 
-                if (!body) {
-                    input.focus();
-                    return;
-                }
+    if (!body && !image) {
+        showError("Anh hãy nhập tin nhắn hoặc chọn một ảnh.");
+        input.focus();
+        return;
+    }
 
-                // Giữ nguyên mã khi gửi lại cùng nội dung bị lỗi mạng.
-                if (!pendingMessage || pendingMessage.body !== body) {
-                    pendingMessage = {
-                        body,
-                        clientMessageId: crypto.randomUUID()
-                    };
-                }
+    if (!pendingMessage
+        || pendingMessage.body !== body
+        || pendingMessage.image !== image) {
+        pendingMessage = {
+            body,
+            image,
+            clientMessageId: crypto.randomUUID()
+        };
+    }
 
-                sending = true;
-                input.disabled = true;
-                sendButton.disabled = true;
-                sendButton.textContent = "Đang gửi";
+    sending = true;
+    attachments.disabled = true;
+    input.disabled = true;
+    sendButton.disabled = true;
+    sendButton.textContent = "Đang gửi";
 
-                try {
-                    const data = postData();
-                    data.append("Body", pendingMessage.body);
-                    data.append(
-                        "ClientMessageId",
-                        pendingMessage.clientMessageId
-                    );
+    try {
+        const data = postData();
+        data.append("Body", pendingMessage.body);
+        data.append("ClientMessageId", pendingMessage.clientMessageId);
 
-                    const result = await requestJson(
-                        root.dataset.sendUrl,
-                        {
-                            method: "POST",
-                            body: data
-                        }
-                    );
+        if (pendingMessage.image) {
+            data.append("Image", pendingMessage.image);
+        }
 
-                    mergeMessages([result.item]);
-                    renderMessages(true);
+        const result = await requestJson(root.dataset.sendUrl, {
+            method: "POST",
+            body: data
+        });
 
-                    input.value = "";
-                    counter.textContent = "0/2000 ký tự";
-                    pendingMessage = null;
-                    status.hidden = true;
+        mergeMessages([result.item]);
+        renderMessages(true);
 
-                    await syncMessages();
-                } catch (error) {
-                    showError(error.message);
-                } finally {
-                    sending = false;
-                    input.disabled = stopped;
-                    sendButton.disabled = stopped;
-                    sendButton.textContent = "Gửi";
+        input.value = "";
+        clearImage();
+        counter.textContent = "0/2000 ký tự";
+        pendingMessage = null;
+        status.hidden = true;
 
-                    if (!stopped) input.focus();
-                }
-            });
+        await syncMessages();
+    } catch (error) {
+        showError(error.message);
+    } finally {
+        sending = false;
+        attachments.disabled = stopped;
+        input.disabled = stopped;
+        sendButton.disabled = stopped;
+        sendButton.textContent = "Gửi";
+
+        if (!stopped) input.focus();
+    }
+});
 
             history.addEventListener("scroll", markRead);
 
