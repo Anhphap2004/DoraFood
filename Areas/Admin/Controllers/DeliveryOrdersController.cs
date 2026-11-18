@@ -1,10 +1,4 @@
-﻿using System;
-using System.Data;
-using System.Globalization;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using DoraFood.Areas.Admin.Filters;
 using DoraFood.Areas.Admin.ViewModels;
 using DoraFood.Data;
 using DoraFood.Models;
@@ -13,8 +7,15 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using System;
+using System;
+using System.Data;
+using System.Globalization;
 using System.Linq;
+using System.Linq;
+using System.Security.Claims;
 using System.Threading;
+using System.Threading;
+using System.Threading.Tasks;
 using System.Threading.Tasks;
 
 
@@ -22,6 +23,7 @@ namespace DoraFood.Areas.Admin.Controllers;
 
 [Area("Admin")]
 [Authorize(Roles = "ADMIN,MANAGER")]
+[RequirePermission("orders.update")]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public class DeliveryOrdersController : Controller
 {

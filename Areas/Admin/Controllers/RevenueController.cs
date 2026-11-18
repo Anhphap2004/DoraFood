@@ -9,11 +9,13 @@ using DoraFood.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using DoraFood.Areas.Admin.Filters;
 
 namespace DoraFood.Areas.Admin.Controllers;
 
 [Area("Admin")]
 [Authorize(Roles = "ADMIN,MANAGER")]
+[RequirePermission("reports.view")]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public sealed class RevenueController : Controller
 {
@@ -25,6 +27,7 @@ public sealed class RevenueController : Controller
     }
 
     [HttpGet]
+    [RequirePermission("reports.view")]
     public async Task<IActionResult> Index(
         DateTime? fromDate,
         DateTime? toDate,

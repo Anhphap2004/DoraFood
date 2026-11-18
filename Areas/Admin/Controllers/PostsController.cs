@@ -1,29 +1,31 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading;
-using System.Threading.Tasks;
-using AngleSharp.Html.Parser;
+﻿using AngleSharp.Html.Parser;
+using DoraFood.Areas.Admin.Filters;
 using DoraFood.Areas.Admin.ViewModels;
 using DoraFood.Data;
 using DoraFood.Helpers;
 using DoraFood.Models;
 using Ganss.Xss;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Hosting;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Data.SqlClient;
-using System.IO;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Http;
-using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading;
+using System.Threading.Tasks;
 
 namespace DoraFood.Areas.Admin.Controllers;
 
 [Area("Admin")]
 [Authorize(Roles = "ADMIN,MANAGER")]
+[RequirePermission("content.manage")]
 [Route("admin/posts")]
 public class PostsController : Controller
 {

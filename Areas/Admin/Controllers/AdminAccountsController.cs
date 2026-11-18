@@ -1,9 +1,4 @@
-using System;
-using System.Collections.Generic;
-using System.Globalization;
-using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
+using DoraFood.Areas.Admin.Filters;
 using DoraFood.Areas.Admin.ViewModels;
 using DoraFood.Data;
 using DoraFood.Models;
@@ -11,77 +6,167 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using AccountUser = DoraFood.Models.User;
 
 namespace DoraFood.Areas.Admin.Controllers;
 
 [Area("Admin")]
 [Authorize(Roles = "ADMIN")]
+[RequirePermission("users.manage")]
 [Route("admin/accounts")]
 [ResponseCache(NoStore = true, Location = ResponseCacheLocation.None)]
 public sealed class AdminAccountsController : AdminModuleController
 {
+    private const int PageSize = 10;
+
     protected override string[] AllowedRoles => new[] { "ADMIN" };
 
-    public AdminAccountsController(DoraFoodContext db) : base(db) { }
+    public AdminAccountsController(DoraFoodContext db) : base(db)
+    {
+    }
 
     [HttpGet]
-    public async Task<IActionResult> Index(CancellationToken cancellationToken,
-        string? keyword = null, string state = "all", long? roleId = null, int pageNumber = 1)
+    public async Task<IActionResult> Index(
+        CancellationToken cancellationToken,
+        string? keyword = null,
+        string state = "all",
+        long? roleId = null,
+        int pageNumber = 1)
     {
-        if (!ModelState.IsValid || keyword?.Length > 200 || state is not ("all" or "active" or "inactive"))
-            return BadRequest("Bộ lọc tài khoản không hợp lệ.");
-
         keyword = keyword?.Trim();
+
+        if (!ModelState.IsValid
+            || keyword?.Length > 200
+            || state is not ("all" or "active" or "inactive")
+            || roleId is <= 0)
+        {
+            return BadRequest("Bộ lọc tài khoản không hợp lệ.");
+        }
+
         var query = Db.Set<AccountUser>().AsNoTracking();
+
         if (!string.IsNullOrEmpty(keyword))
-            query = query.Where(user => user.UserName.Contains(keyword)
-                || (user.Email != null && user.Email.Contains(keyword)));
-        if (state != "all") query = query.Where(user => user.IsActive == (state == "active"));
-        if (roleId.HasValue) query = query.Where(user => user.Roles.Any(role => role.Id == roleId.Value));
+        {
+            query = query.Where(account =>
+                account.UserName.Contains(keyword)
+                || (account.Email != null && account.Email.Contains(keyword)));
+        }
+
+        if (state != "all")
+        {
+            var isActive = state == "active";
+            query = query.Where(account => account.IsActive == isActive);
+        }
+
+        if (roleId.HasValue)
+        {
+            query = query.Where(account =>
+                account.Roles.Any(role => role.Id == roleId.Value));
+        }
 
         var total = await query.CountAsync(cancellationToken);
-        var pages = Math.Max(1, (int)Math.Ceiling(total / 10d));
-        pageNumber = Math.Clamp(pageNumber, 1, pages);
-        var items = await query.OrderByDescending(user => user.CreatedAtUtc).ThenByDescending(user => user.Id)
-            .Skip((pageNumber - 1) * 10).Take(10)
-            .Select(user => new AccountRow(user.Id, user.UserName, user.Email, user.IsActive,
-                user.CreatedAtUtc, user.Roles.OrderBy(role => role.Name).Select(role => role.Name).ToList()))
+        var totalPages = Math.Max(1, (int)Math.Ceiling(total / (double)PageSize));
+        pageNumber = Math.Clamp(pageNumber, 1, totalPages);
+
+        var accounts = await query
+            .OrderByDescending(account => account.CreatedAtUtc)
+            .ThenByDescending(account => account.Id)
+            .Skip((pageNumber - 1) * PageSize)
+            .Take(PageSize)
+            .Select(account => new AccountRow(
+                account.Id,
+                account.UserName,
+                account.Email,
+                account.IsActive,
+                account.CreatedAtUtc,
+                account.Roles
+                    .OrderBy(role => role.Name)
+                    .Select(role => role.Name)
+                    .ToList()))
             .ToListAsync(cancellationToken);
 
-        var filters = new Dictionary<string, string> { ["keyword"] = keyword ?? "", ["state"] = state };
-        if (roleId.HasValue) filters["roleId"] = roleId.Value.ToString(CultureInfo.InvariantCulture);
-        return View(new AccountsIndexModel(items, keyword, state, roleId,
-            await RolesAsync(cancellationToken), total, ActorId,
-            new ManagementPager("AdminAccounts", pageNumber, pages, filters)));
+        // Giữ bộ lọc khi chuyển trang.
+        var filters = new Dictionary<string, string> { ["state"] = state };
+
+        if (!string.IsNullOrEmpty(keyword))
+            filters["keyword"] = keyword;
+
+        if (roleId.HasValue)
+            filters["roleId"] = roleId.Value.ToString(CultureInfo.InvariantCulture);
+
+        var roles = await RolesAsync(cancellationToken);
+        var pager = new ManagementPager(
+            "AdminAccounts", pageNumber, totalPages, filters);
+
+        return View(new AccountsIndexModel(
+            accounts, keyword, state, roleId, roles, total, ActorId, pager));
     }
 
     [HttpGet("{id:long}")]
-    public async Task<IActionResult> Details(long id, CancellationToken cancellationToken)
+    public async Task<IActionResult> Details(
+        long id,
+        CancellationToken cancellationToken)
     {
-        var account = await Db.Set<AccountUser>().AsNoTracking()
-            .Include(user => user.Roles).Include(user => user.UserProfile)
-            .SingleOrDefaultAsync(user => user.Id == id, cancellationToken);
-        if (account is null) return NotFound();
+        var account = await Db.Set<AccountUser>()
+            .AsNoTracking()
+            .Include(item => item.Roles)
+            .Include(item => item.UserProfile)
+            .SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
 
-        return View(new AccountDetailsModel(new AccountRow(account.Id, account.UserName,
-            account.Email, account.IsActive, account.CreatedAtUtc,
-            account.Roles.Select(role => role.Name).OrderBy(name => name).ToList()),
-            account.UserProfile?.FullName, account.UserProfile?.PhoneNumber,
-            account.UserProfile?.DateOfBirth?.ToString("dd/MM/yyyy"), account.UserProfile?.Gender,
-            account.EmailConfirmed, Convert.ToBase64String(account.Version), ActorId));
+        if (account is null)
+            return NotFound();
+
+        var accountRow = new AccountRow(
+            account.Id,
+            account.UserName,
+            account.Email,
+            account.IsActive,
+            account.CreatedAtUtc,
+            account.Roles
+                .OrderBy(role => role.Name)
+                .Select(role => role.Name)
+                .ToList());
+
+        var profile = account.UserProfile;
+
+        return View(new AccountDetailsModel(
+            accountRow,
+            profile?.FullName,
+            profile?.PhoneNumber,
+            profile?.DateOfBirth?.ToString("dd/MM/yyyy"),
+            profile?.Gender,
+            account.EmailConfirmed,
+            Convert.ToBase64String(account.Version),
+            ActorId));
     }
 
     [HttpGet("{id:long}/edit")]
-    public async Task<IActionResult> Edit(long id, CancellationToken cancellationToken)
+    public async Task<IActionResult> Edit(
+        long id,
+        CancellationToken cancellationToken)
     {
-        if (id == ActorId) return Forbid();
-        var account = await Db.Set<AccountUser>().AsNoTracking().Include(user => user.Roles)
-            .SingleOrDefaultAsync(user => user.Id == id, cancellationToken);
-        if (account is null) return NotFound();
+        if (id == ActorId)
+            return Forbid();
+
+        var account = await Db.Set<AccountUser>()
+            .AsNoTracking()
+            .Include(item => item.Roles)
+            .SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
+
+        if (account is null)
+            return NotFound();
+
         return View(new AccountEditInput
         {
-            Id = id, UserName = account.UserName, IsActive = account.IsActive,
+            Id = account.Id,
+            UserName = account.UserName,
+            IsActive = account.IsActive,
             Version = Convert.ToBase64String(account.Version),
             RoleIds = account.Roles.Select(role => role.Id).ToArray(),
             AvailableRoles = await RolesAsync(cancellationToken)
@@ -90,121 +175,242 @@ public sealed class AdminAccountsController : AdminModuleController
 
     [HttpPost("{id:long}/edit")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit([FromRoute] long id, AccountEditInput input,
+    public async Task<IActionResult> Edit(
+        [FromRoute] long id,
+        AccountEditInput input,
         CancellationToken cancellationToken)
     {
-        if (id == ActorId) return Forbid();
+        if (id == ActorId)
+            return Forbid();
+
         input.Id = id;
-        input.RoleIds = (input.RoleIds ?? Array.Empty<long>()).Distinct().ToArray();
-        if (input.RoleIds.Length is 0 or > 100)
-            ModelState.AddModelError(nameof(input.RoleIds), "Hãy chọn ít nhất một vai trò hợp lệ.");
+        input.RoleIds = (input.RoleIds ?? Array.Empty<long>())
+            .Distinct()
+            .ToArray();
+
+        if (input.RoleIds.Length is 0 or > 100
+            || input.RoleIds.Any(roleId => roleId <= 0))
+        {
+            ModelState.AddModelError(
+                nameof(input.RoleIds),
+                "Hãy chọn ít nhất một vai trò hợp lệ.");
+        }
 
         if (ModelState.IsValid)
         {
-            var error = await ChangeAccountAsync(id, input, false, cancellationToken);
+            var error = await ChangeAccountAsync(
+                id, input, delete: false, cancellationToken: cancellationToken);
+
             if (error is null)
             {
-                TempData["ManagementSuccess"] = "Đã cập nhật trạng thái và vai trò tài khoản.";
+                TempData["ManagementSuccess"] =
+                    "Đã lưu vai trò và trạng thái tài khoản.";
+
                 return RedirectToAction(nameof(Details), new { id });
             }
+
             ModelState.AddModelError(string.Empty, error);
         }
 
-        input.UserName = await Db.Set<AccountUser>().AsNoTracking().Where(user => user.Id == id)
-            .Select(user => user.UserName).SingleOrDefaultAsync(cancellationToken) ?? "Tài khoản";
+        var userName = await Db.Set<AccountUser>()
+            .AsNoTracking()
+            .Where(account => account.Id == id)
+            .Select(account => account.UserName)
+            .SingleOrDefaultAsync(cancellationToken);
+
+        if (userName is null)
+            return NotFound();
+
+        input.UserName = userName;
         input.AvailableRoles = await RolesAsync(cancellationToken);
+
         return View(input);
     }
 
     [HttpPost("{id:long}/delete")]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Delete(long id, string? version, CancellationToken cancellationToken)
+    public async Task<IActionResult> Delete(
+        [FromRoute] long id,
+        [FromForm] string? version,
+        CancellationToken cancellationToken)
     {
-        if (id == ActorId) return Forbid();
-        var error = await ChangeAccountAsync(id,
-            new AccountEditInput { Version = version ?? "" }, true, cancellationToken);
-        TempData[error is null ? "ManagementSuccess" : "ManagementError"] =
-            error ?? "Đã xóa tài khoản chưa có dữ liệu nghiệp vụ liên quan.";
+        if (id == ActorId)
+            return Forbid();
+
+        var error = await ChangeAccountAsync(
+            id,
+            new AccountEditInput { Version = version ?? string.Empty },
+            delete: true,
+            cancellationToken: cancellationToken);
+
+        if (error is not null)
+        {
+            TempData["ManagementError"] = error;
+            return RedirectToAction(nameof(Details), new { id });
+        }
+
+        TempData["ManagementSuccess"] = "Đã xóa tài khoản.";
         return RedirectToAction(nameof(Index));
     }
 
-    private Task<List<AccountRoleOption>> RolesAsync(CancellationToken cancellationToken) =>
-        Db.Set<Role>().AsNoTracking().OrderBy(role => role.Name)
+    private Task<List<AccountRoleOption>> RolesAsync(
+        CancellationToken cancellationToken)
+    {
+        return Db.Set<Role>()
+            .AsNoTracking()
+            .OrderBy(role => role.Name)
+            .ThenBy(role => role.Id)
             .Select(role => new AccountRoleOption(role.Id, role.Code, role.Name))
             .ToListAsync(cancellationToken);
+    }
 
-    private async Task<string?> ChangeAccountAsync(long id, AccountEditInput input, bool delete,
+    private async Task<string?> ChangeAccountAsync(
+        long id,
+        AccountEditInput input,
+        bool delete,
         CancellationToken cancellationToken)
     {
         var version = new byte[8];
-        if (!Convert.TryFromBase64String(input.Version ?? "", version, out var length) || length != 8)
+
+        if (!Convert.TryFromBase64String(
+                input.Version ?? string.Empty, version, out var length)
+            || length != version.Length)
+        {
             return "Phiên sửa không hợp lệ. Hãy mở lại tài khoản.";
+        }
 
         try
         {
             return await Db.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
             {
                 Db.ChangeTracker.Clear();
-                await using var transaction = await Db.Database.BeginTransactionAsync(cancellationToken);
 
-                // Cùng khóa một dòng vai trò để hai thao tác quản trị tài khoản chạy lần lượt.
-                var adminRoleId = await Db.Database.SqlQuery<long>($"""
-                    SELECT Id AS [Value] FROM dbo.Roles WITH (UPDLOCK, HOLDLOCK) WHERE Code = 'ADMIN'
+                await using var transaction =
+                    await Db.Database.BeginTransactionAsync(cancellationToken);
+
+                // Các thao tác sửa và xóa tài khoản lần lượt lấy cùng khóa này.
+                var adminRoleId = await Db.Database.SqlQueryRaw<long>("""
+                    SELECT Id AS [Value]
+                    FROM dbo.Roles WITH (UPDLOCK, HOLDLOCK)
+                    WHERE Code = 'ADMIN'
                     """).SingleOrDefaultAsync(cancellationToken);
-                if (adminRoleId == 0) return "Chưa có vai trò ADMIN trong cơ sở dữ liệu.";
 
-                var actorIsValid = await Db.Set<AccountUser>().AsNoTracking().AnyAsync(user =>
-                    user.Id == ActorId && user.IsActive && user.SecurityStamp == ActorStamp
-                    && user.Roles.Any(role => role.Code == "ADMIN"), cancellationToken);
-                if (!actorIsValid) return "Phiên quản trị đã thay đổi. Hãy đăng nhập lại.";
+                if (adminRoleId == 0)
+                    return "Chưa có vai trò ADMIN trong cơ sở dữ liệu.";
 
-                var account = await Db.Set<AccountUser>().AsTracking().Include(user => user.Roles)
-                    .SingleOrDefaultAsync(user => user.Id == id, cancellationToken);
-                if (account is null) return "Tài khoản đã bị xóa.";
+                var actorIsValid = await Db.Set<AccountUser>().AsNoTracking()
+                    .AnyAsync(account =>
+                        account.Id == ActorId
+                        && account.IsActive
+                        && account.SecurityStamp == ActorStamp
+                        && account.Roles.Any(role => role.Id == adminRoleId),
+                        cancellationToken);
+
+                if (!actorIsValid)
+                    return "Phiên quản trị đã thay đổi. Hãy đăng nhập lại.";
+
+                var account = await Db.Set<AccountUser>()
+                    .AsTracking()
+                    .Include(item => item.Roles)
+                    .SingleOrDefaultAsync(item => item.Id == id, cancellationToken);
+
+                if (account is null)
+                    return "Tài khoản đã bị xóa.";
+
                 if (!account.Version.AsSpan().SequenceEqual(version))
-                    return "Tài khoản vừa thay đổi. Hãy mở bản mới nhất để đối chiếu.";
+                    return "Tài khoản vừa thay đổi. Hãy mở bản mới nhất trước khi lưu.";
 
-                var roles = delete ? new List<Role>() : await Db.Set<Role>()
-                    .Where(role => input.RoleIds.Contains(role.Id)).ToListAsync(cancellationToken);
-                if (!delete && roles.Count != input.RoleIds.Length)
+                var selectedRoles = delete
+                    ? new List<Role>()
+                    : await Db.Set<Role>()
+                        .AsTracking()
+                        .Where(role => input.RoleIds.Contains(role.Id))
+                        .ToListAsync(cancellationToken);
+
+                if (!delete && selectedRoles.Count != input.RoleIds.Length)
                     return "Danh sách vai trò đã thay đổi. Hãy tải lại trang.";
 
-                var wasActiveAdmin = account.IsActive && account.Roles.Any(role => role.Code == "ADMIN");
-                var remainsActiveAdmin = !delete && input.IsActive && roles.Any(role => role.Code == "ADMIN");
-                if (wasActiveAdmin && !remainsActiveAdmin && !await Db.Set<AccountUser>().AnyAsync(user =>
-                    user.Id != id && user.IsActive && user.Roles.Any(role => role.Code == "ADMIN"),
-                    cancellationToken))
-                    return "Cần giữ ít nhất một tài khoản ADMIN đang hoạt động.";
+                var currentRoleIds = account.Roles.Select(role => role.Id).ToHashSet();
+                var selectedRoleIds = selectedRoles.Select(role => role.Id).ToHashSet();
 
-                account.Roles.Clear();
+                var wasActiveAdmin = account.IsActive && currentRoleIds.Contains(adminRoleId);
+                var remainsActiveAdmin = !delete && input.IsActive
+                    && selectedRoleIds.Contains(adminRoleId);
+
+                if (wasActiveAdmin && !remainsActiveAdmin)
+                {
+                    var anotherAdminExists = await Db.Set<AccountUser>()
+                        .AsNoTracking()
+                        .AnyAsync(item =>
+                            item.Id != id
+                            && item.IsActive
+                            && item.Roles.Any(role => role.Id == adminRoleId),
+                            cancellationToken);
+
+                    if (!anotherAdminExists)
+                        return "Cần giữ ít nhất một tài khoản ADMIN đang hoạt động.";
+                }
+
                 if (delete)
                 {
-                    // Chỉ dọn dữ liệu phụ thuộc của hồ sơ. Khóa ngoại bảo vệ đơn, hóa đơn và lịch sử.
+                    account.Roles.Clear();
+
                     await Db.Database.ExecuteSqlInterpolatedAsync($"""
                         DELETE FROM dbo.UserTokens WHERE UserId = {id};
                         DELETE FROM dbo.UserAddresses WHERE UserId = {id};
                         DELETE FROM dbo.UserProfiles WHERE UserId = {id};
                         """, cancellationToken);
+
                     Db.Set<AccountUser>().Remove(account);
+
+                    RecordAudit(
+                        "users.delete", "Users", id,
+                        "Xóa tài khoản chưa có dữ liệu nghiệp vụ tham chiếu.");
                 }
                 else
                 {
-                    foreach (var role in roles) account.Roles.Add(role);
+                    var statusChanged = account.IsActive != input.IsActive;
+                    var rolesChanged = !currentRoleIds.SetEquals(selectedRoleIds);
+
+                    if (!statusChanged && !rolesChanged)
+                        return (string?)null;
+
+                    foreach (var role in account.Roles
+                        .Where(role => !selectedRoleIds.Contains(role.Id))
+                        .ToList())
+                    {
+                        account.Roles.Remove(role);
+                    }
+
+                    foreach (var role in selectedRoles
+                        .Where(role => !currentRoleIds.Contains(role.Id)))
+                    {
+                        account.Roles.Add(role);
+                    }
+
                     account.IsActive = input.IsActive;
-                    if (input.IsActive)
+
+                    if (statusChanged && input.IsActive)
                     {
                         account.AccessFailedCount = 0;
                         account.LockoutEndUtc = null;
                     }
+
                     account.SecurityStamp = Guid.NewGuid();
                     account.UpdatedAtUtc = DateTime.UtcNow;
+
+                    var roleCodes = string.Join(", ",
+                        selectedRoles.Select(role => role.Code).OrderBy(code => code));
+
+                    RecordAudit(
+                        "users.access.update", "Users", id,
+                        $"Trạng thái: {(input.IsActive ? "Hoạt động" : "Đã khóa")}. "
+                        + $"Vai trò: {roleCodes}.");
                 }
 
-                RecordAudit(delete ? "users.delete" : "users.access.update", "Users", id,
-                    delete ? "Xóa tài khoản chưa có dữ liệu nghiệp vụ."
-                    : $"Hoạt động: {input.IsActive}; vai trò: {string.Join(", ", roles.Select(role => role.Code))}.");
                 await Db.SaveChangesAsync(cancellationToken);
                 await transaction.CommitAsync(cancellationToken);
+
                 return (string?)null;
             });
         }
@@ -212,13 +418,18 @@ public sealed class AdminAccountsController : AdminModuleController
         {
             return "Tài khoản vừa thay đổi. Hãy mở lại trước khi lưu.";
         }
-        catch (DbUpdateException exception) when (exception.InnerException is SqlException { Number: 547 })
+        catch (DbUpdateException exception)
+            when (exception.InnerException is SqlException { Number: 547 })
         {
-            return "Tài khoản có dữ liệu liên quan nên chưa thể xóa. Anh có thể khóa tài khoản.";
+            return delete
+                ? "Tài khoản có dữ liệu liên quan. Anh có thể khóa tài khoản."
+                : "Dữ liệu vai trò vừa thay đổi. Hãy tải lại trang.";
         }
         catch (SqlException exception) when (exception.Number == 547)
         {
-            return "Dữ liệu tài khoản vừa thay đổi. Hãy tải lại trang.";
+            return delete
+                ? "Tài khoản có dữ liệu liên quan. Anh có thể khóa tài khoản."
+                : "Dữ liệu tài khoản vừa thay đổi. Hãy tải lại trang.";
         }
         catch (SqlException exception) when (exception.Number == 1205)
         {

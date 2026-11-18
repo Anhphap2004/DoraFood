@@ -1,23 +1,25 @@
-﻿using System;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using DoraFood.Areas.Admin.Filters;
 using DoraFood.Areas.Admin.ViewModels;
 using DoraFood.Data;
 using Ganss.Xss;
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using System.IO;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.IO;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading;
+using System.Threading.Tasks;
 using ContentPage = DoraFood.Models.Page;
 
 namespace DoraFood.Areas.Admin.Controllers;
 
 [Area("Admin")]
 [Authorize(Roles = "ADMIN,MANAGER")]
+[RequirePermission("content.manage")]
 public class AboutPageController : Controller
 {
     // Đổi giá trị này nếu HomeController.About() dùng slug khác.

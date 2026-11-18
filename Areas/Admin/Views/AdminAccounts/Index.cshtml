@@ -1,75 +1,250 @@
 @using DoraFood.Areas.Admin.ViewModels
 @model AccountsIndexModel
-@{ ViewData["Title"] = "Quản lý tài khoản"; }
-<div class="container-fluid dm">
-    <partial name="_AdminManagementMessages" />
-    <div class="card dm-card">
-        <div class="card-header bg-transparent py-3"><strong>@Model.Total tài khoản phù hợp</strong></div>
-        <div class="card-body">
-            <form asp-area="Admin" asp-controller="AdminAccounts" asp-action="Index" method="get"
+
+@{
+    ViewData["Title"] = "Quản lý tài khoản";
+    var pager = Model.Pager;
+}
+
+<div class="container-fluid dm py-3">
+    <header class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-3">
+        <div>
+            <h1 class="h3 mb-1">Quản lý tài khoản</h1>
+            <p class="text-body-secondary mb-0">
+                Tìm tài khoản, xem hồ sơ và gán vai trò.
+            </p>
+        </div>
+
+        <a asp-area="Admin"
+           asp-controller="AdminPermissions"
+           asp-action="Index"
+           class="btn btn-outline-primary">
+            Phân quyền theo vai trò
+        </a>
+    </header>
+
+    @if (TempData["ManagementSuccess"] is string success)
+    {
+        <div class="alert alert-success" role="status">@success</div>
+    }
+
+    @if (TempData["ManagementError"] is string error)
+    {
+        <div class="alert alert-warning" role="alert">@error</div>
+    }
+
+    <div class="card dm-card shadow-sm">
+        <div class="card-body p-3 p-md-4 border-bottom">
+            <form asp-area="Admin"
+                  asp-controller="AdminAccounts"
+                  asp-action="Index"
+                  method="get"
                   class="row g-3 align-items-end">
+
                 <div class="col-lg-4">
-                    <label for="keyword" class="form-label">Tên đăng nhập hoặc email</label>
-                    <input id="keyword" name="keyword" value="@Model.Keyword" maxlength="200" class="form-control" />
+                    <label for="account-keyword" class="form-label">
+                        Tên đăng nhập hoặc email
+                    </label>
+
+                    <input id="account-keyword"
+                           name="keyword"
+                           value="@Model.Keyword"
+                           maxlength="200"
+                           class="form-control"
+                           placeholder="Ví dụ: managerdora" />
                 </div>
+
                 <div class="col-sm-6 col-lg-3">
-                    <label for="state" class="form-label">Trạng thái</label>
-                    <select id="state" name="state" class="form-select">
+                    <label for="account-role" class="form-label">Vai trò</label>
+
+                    <select id="account-role" name="roleId" class="form-select">
+                        <option value="">Tất cả vai trò</option>
+
+                        @foreach (var role in Model.Roles)
+                        {
+                            <option value="@role.Id" selected="@(Model.RoleId == role.Id)">
+                                @role.Name (@role.Code)
+                            </option>
+                        }
+                    </select>
+                </div>
+
+                <div class="col-sm-6 col-lg-3">
+                    <label for="account-state" class="form-label">Trạng thái</label>
+
+                    <select id="account-state" name="state" class="form-select">
                         <option value="all" selected="@(Model.State == "all")">Tất cả</option>
                         <option value="active" selected="@(Model.State == "active")">Hoạt động</option>
                         <option value="inactive" selected="@(Model.State == "inactive")">Đã khóa</option>
                     </select>
                 </div>
-                <div class="col-sm-6 col-lg-3">
-                    <label for="roleId" class="form-label">Vai trò</label>
-                    <select id="roleId" name="roleId" class="form-select">
-                        <option value="">Tất cả vai trò</option>
-                        @foreach (var role in Model.Roles)
-                        {
-                            <option value="@role.Id" selected="@(Model.RoleId == role.Id)">@role.Name</option>
-                        }
-                    </select>
-                </div>
-                <div class="col-lg-2 d-flex gap-2">
+
+                <div class="col-lg-2 d-flex flex-wrap gap-2">
                     <button type="submit" class="btn btn-primary">Lọc</button>
-                    <a asp-area="Admin" asp-controller="AdminAccounts" asp-action="Index"
-                       class="btn btn-outline-secondary text-nowrap">Xóa lọc</a>
+
+                    <a asp-area="Admin"
+                       asp-controller="AdminAccounts"
+                       asp-action="Index"
+                       class="btn btn-outline-secondary text-nowrap">
+                        Xóa lọc
+                    </a>
                 </div>
             </form>
         </div>
+
+        <div class="px-3 px-md-4 py-2 border-bottom">
+            <strong>@Model.Total</strong> tài khoản phù hợp
+        </div>
+
         @if (Model.Items.Count == 0)
         {
-            <div class="dm-empty">Không tìm thấy tài khoản phù hợp.</div>
+            <p class="text-center text-body-secondary py-4 mb-0">
+                Không tìm thấy tài khoản phù hợp.
+            </p>
         }
         else
         {
             <div class="table-responsive">
-                <table class="table table-hover align-middle dm-table mb-0">
-                    <thead class="table-light"><tr><th>Tài khoản</th><th>Vai trò</th><th>Trạng thái</th><th>Ngày tạo</th><th class="text-end">Thao tác</th></tr></thead>
-                    <tbody>
-                    @foreach (var account in Model.Items)
-                    {
+                <table class="table table-hover align-middle dm-table mb-0"
+                       aria-label="Danh sách tài khoản">
+                    <thead class="table-light">
                         <tr>
-                            <td class="text-break"><strong>@account.UserName</strong><div class="small text-body-secondary">@account.Email</div>
-                                @if (account.Id == Model.ActorId) { <span class="badge text-bg-light border">Đang đăng nhập</span> }
-                            </td>
-                            <td>@string.Join(", ", account.Roles)</td>
-                            <td><span class="badge @(account.IsActive ? "text-bg-success" : "text-bg-secondary")">@(account.IsActive ? "Hoạt động" : "Đã khóa")</span></td>
-                            <td class="text-nowrap">@account.CreatedAtUtc.AddHours(7).ToString("dd/MM/yyyy")</td>
-                            <td class="text-end">
-                                <a asp-area="Admin" asp-controller="AdminAccounts" asp-action="Details" asp-route-id="@account.Id"
-                                   class="btn btn-sm btn-outline-primary text-nowrap">Xem hồ sơ</a>
-                            </td>
+                            <th scope="col">Tài khoản</th>
+                            <th scope="col">Vai trò</th>
+                            <th scope="col">Trạng thái</th>
+                            <th scope="col">Ngày tạo</th>
+                            <th scope="col" class="text-end">Thao tác</th>
                         </tr>
-                    }
+                    </thead>
+
+                    <tbody>
+                        @foreach (var account in Model.Items)
+                        {
+                            var isCurrentAccount = account.Id == Model.ActorId;
+
+                            <tr>
+                                <th scope="row" class="text-break">
+                                    @account.UserName
+
+                                    <div class="small fw-normal text-body-secondary">
+                                        @(string.IsNullOrWhiteSpace(account.Email)
+                                            ? "Chưa cập nhật email"
+                                            : account.Email)
+                                    </div>
+
+                                    @if (isCurrentAccount)
+                                    {
+                                        <span class="badge text-bg-light border mt-1">
+                                            Đang đăng nhập
+                                        </span>
+                                    }
+                                </th>
+
+                                <td>
+                                    @if (account.Roles.Count == 0)
+                                    {
+                                        <span class="small text-body-secondary">
+                                            Chưa có vai trò
+                                        </span>
+                                    }
+                                    else
+                                    {
+                                        <div class="d-flex flex-wrap gap-1">
+                                            @foreach (var roleName in account.Roles)
+                                            {
+                                                <span class="badge text-bg-light border">
+                                                    @roleName
+                                                </span>
+                                            }
+                                        </div>
+                                    }
+                                </td>
+
+                                <td>
+                                    @if (account.IsActive)
+                                    {
+                                        <span class="badge text-bg-success">Hoạt động</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge text-bg-secondary">Đã khóa</span>
+                                    }
+                                </td>
+
+                                <td class="text-nowrap">
+                                    @(account.CreatedAtUtc.AddHours(7).ToString("dd/MM/yyyy"))
+                                </td>
+
+                                <td>
+                                    <div class="d-flex flex-wrap justify-content-end gap-2">
+                                        <a asp-area="Admin"
+                                           asp-controller="AdminAccounts"
+                                           asp-action="Details"
+                                           asp-route-id="@account.Id"
+                                           class="btn btn-sm btn-outline-primary text-nowrap">
+                                            Xem hồ sơ
+                                        </a>
+
+                                        @if (!isCurrentAccount)
+                                        {
+                                            <a asp-area="Admin"
+                                               asp-controller="AdminAccounts"
+                                               asp-action="Edit"
+                                               asp-route-id="@account.Id"
+                                               class="btn btn-sm btn-outline-secondary text-nowrap">
+                                                Sửa vai trò
+                                            </a>
+                                        }
+                                    </div>
+                                </td>
+                            </tr>
+                        }
                     </tbody>
                 </table>
             </div>
         }
-        <partial name="_AdminManagementPager" model="Model.Pager" />
+
+        @if (pager.TotalPages > 1)
+        {
+            <nav class="card-footer bg-transparent d-flex flex-wrap align-items-center justify-content-between gap-2"
+                 aria-label="Phân trang tài khoản">
+
+                <span class="small text-body-secondary">
+                    Trang @pager.PageNumber / @pager.TotalPages
+                </span>
+
+                <div class="d-flex flex-wrap gap-2">
+                    @if (pager.PageNumber > 1)
+                    {
+                        <a asp-area="Admin"
+                           asp-controller="AdminAccounts"
+                           asp-action="Index"
+                           asp-all-route-data="@pager.Filters"
+                           asp-route-pageNumber="@(pager.PageNumber - 1)"
+                           class="btn btn-sm btn-outline-secondary">
+                            Trang trước
+                        </a>
+                    }
+
+                    @if (pager.PageNumber < pager.TotalPages)
+                    {
+                        <a asp-area="Admin"
+                           asp-controller="AdminAccounts"
+                           asp-action="Index"
+                           asp-all-route-data="@pager.Filters"
+                           asp-route-pageNumber="@(pager.PageNumber + 1)"
+                           class="btn btn-sm btn-outline-secondary">
+                            Trang sau
+                        </a>
+                    }
+                </div>
+            </nav>
+        }
     </div>
 </div>
 
 @section Styles {
-    <link rel="stylesheet" href="~/admin/css/admin-management.css" asp-append-version="true" />
+    <link rel="stylesheet"
+          href="~/admin/css/admin-management.css"
+          asp-append-version="true" />
 }

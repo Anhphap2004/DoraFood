@@ -1,0 +1,128 @@
+﻿@using System.Linq
+@model DoraFood.Areas.Admin.Controllers.AdminPermissionsController.PageModel
+
+@{
+    ViewData["Title"] = "Phân quyền";
+    var selected = Model.SelectedRole;
+    var assignedCount = Model.Permissions.Count(permission => permission.Assigned);
+    var canEdit = selected != null
+    && selected.Code != "ADMIN"
+    && selected.Code != "CUSTOMER";
+}
+
+<div class="container-fluid py-3">
+    <header class="mb-4">
+        <h1 class="h3 mb-1">Phân quyền</h1>
+        <p class="text-body-secondary mb-0">
+            Chọn một vai trò để xem các quyền đã được gán.
+        </p>
+    </header>
+
+    <div class="card shadow-sm">
+        <div class="row g-0">
+            <aside class="col-lg-3 bg-body-tertiary p-3">
+                <h2 class="h6 mb-3">Vai trò tài khoản</h2>
+
+                <nav class="list-group" aria-label="Vai trò tài khoản">
+                    @foreach (var role in Model.Roles)
+                    {
+                        var isSelected = selected?.Id == role.Id;
+
+                        <a asp-area="Admin"
+                           asp-controller="AdminPermissions"
+                           asp-action="Index"
+                           asp-route-roleId="@role.Id"
+                           class="list-group-item list-group-item-action @(isSelected ? "active" : "")"
+                           aria-current="@(isSelected ? "page" : null)">
+                            <span class="fw-semibold d-block">@role.Name</span>
+                            <small>@role.Code</small>
+                        </a>
+                    }
+                </nav>
+            </aside>
+
+            <section class="col-lg-9 p-3 p-md-4" aria-labelledby="role-title">
+               @if (selected == null)
+{
+    <h2 class="h5" id="role-title">Chưa có vai trò</h2>
+}
+else
+{
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+        <h2 class="h5 mb-0" id="role-title">
+            @selected.Name
+            <span class="text-body-secondary">(@selected.Code)</span>
+        </h2>
+
+        <span class="badge bg-primary">
+            @assignedCount / @Model.Permissions.Count quyền đã gán
+        </span>
+    </div>
+
+    @if (TempData["PermissionSuccess"] is string message)
+    {
+        <div class="alert alert-success" role="status">@message</div>
+    }
+
+    <form asp-area="Admin"
+          asp-controller="AdminPermissions"
+          asp-action="Save"
+          asp-antiforgery="true"
+          method="post">
+        <input type="hidden" name="roleId" value="@selected.Id" />
+
+        @foreach (var group in Model.Permissions.GroupBy(permission => permission.Group))
+        {
+            <fieldset class="mb-4">
+                <legend class="h6 border-bottom pb-2">@group.Key</legend>
+
+                <div class="row g-2">
+                    @foreach (var permission in group)
+                    {
+                        var adminOnly = permission.Code is "roles.manage" or "users.manage";
+                        var inputId = $"permission-{permission.Id}";
+
+                        <div class="col-md-6">
+                            <div class="border rounded p-3 h-100">
+                                <div class="form-check">
+                                    <input class="form-check-input"
+                                           type="checkbox"
+                                           id="@inputId"
+                                           name="permissionIds"
+                                           value="@permission.Id"
+                                           checked="@permission.Assigned"
+                                           disabled="@(!canEdit || adminOnly)" />
+
+                                    <label class="form-check-label fw-semibold" for="@inputId">
+                                        @permission.Name
+                                    </label>
+                                </div>
+
+                                <small class="text-body-secondary d-block">
+                                    @permission.Code
+                                    @if (adminOnly)
+                                    {
+                                        <span> · Chỉ ADMIN</span>
+                                    }
+                                </small>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </fieldset>
+        }
+
+        @if (canEdit)
+        {
+            <button type="submit" class="btn btn-success px-4">Lưu quyền</button>
+        }
+        else
+        {
+            <p class="text-body-secondary mb-0">Vai trò này chỉ xem quyền đã gán.</p>
+        }
+    </form>
+}
+            </section>
+        </div>
+    </div>
+</div>

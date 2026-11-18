@@ -1,4 +1,11 @@
-﻿using System;
+﻿using DoraFood.Areas.Admin.Filters;
+using DoraFood.Areas.Admin.ViewModels;
+using DoraFood.Models;
+using Microsoft.AspNetCore.DataProtection;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
+using System;
 using System.Globalization;
 using System.Linq;
 using System.Security.Claims;
@@ -6,12 +13,6 @@ using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
-using DoraFood.Areas.Admin.ViewModels;
-using DoraFood.Models;
-using Microsoft.AspNetCore.DataProtection;
-using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 
 namespace DoraFood.Controllers;
 

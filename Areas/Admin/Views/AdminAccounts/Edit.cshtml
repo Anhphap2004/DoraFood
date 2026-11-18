@@ -1,43 +1,142 @@
+@using System
 @using System.Linq
 @using DoraFood.Areas.Admin.ViewModels
 @model AccountEditInput
-@{ ViewData["Title"] = "Quyền và trạng thái tài khoản"; }
-<div class="container-fluid dm">
-    <div class="dm-form">
-        <a asp-area="Admin" asp-controller="AdminAccounts" asp-action="Details" asp-route-id="@Model.Id"
-           class="btn btn-outline-secondary mb-3">Mở bản mới nhất / Về hồ sơ</a>
-        <form asp-area="Admin" asp-controller="AdminAccounts" asp-action="Edit" asp-route-id="@Model.Id"
-              asp-antiforgery="true" method="post" class="card dm-card">
-            <input asp-for="Version" type="hidden" />
-            <div class="card-body p-4">
-                <h2 class="h5 text-break mb-3">@Model.UserName</h2>
-                <div asp-validation-summary="All" class="text-danger" role="alert"></div>
-                <div class="form-check form-switch my-4">
-                    <input asp-for="IsActive" class="form-check-input" />
-                    <label asp-for="IsActive" class="form-check-label">Cho phép tài khoản hoạt động</label>
+
+@{
+    ViewData["Title"] = "Sửa vai trò và trạng thái";
+    var selectedRoleIds = Model.RoleIds ?? Array.Empty<long>();
+}
+
+<div class="container-fluid dm py-3">
+    <div class="d-flex flex-wrap align-items-start justify-content-between gap-3 mb-3">
+        <div>
+            <h1 class="h3 mb-1">Sửa vai trò và trạng thái</h1>
+            <p class="text-body-secondary mb-0 text-break">
+                Tài khoản <strong>@Model.UserName</strong>
+            </p>
+        </div>
+
+        <a asp-area="Admin"
+           asp-controller="AdminAccounts"
+           asp-action="Details"
+           asp-route-id="@Model.Id"
+           class="btn btn-outline-secondary">
+            Về hồ sơ
+        </a>
+    </div>
+
+    <form asp-area="Admin"
+          asp-controller="AdminAccounts"
+          asp-action="Edit"
+          asp-route-id="@Model.Id"
+          asp-antiforgery="true"
+          method="post"
+          class="card dm-card shadow-sm">
+
+        <input asp-for="Version" type="hidden" />
+
+        <div class="card-body p-3 p-md-4">
+            @if (!ViewData.ModelState.IsValid)
+            {
+                <div asp-validation-summary="All"
+                     class="alert alert-danger"
+                     role="alert"></div>
+
+                <a asp-area="Admin"
+                   asp-controller="AdminAccounts"
+                   asp-action="Edit"
+                   asp-route-id="@Model.Id"
+                   class="btn btn-sm btn-outline-secondary mb-3">
+                    Tải lại dữ liệu hiện tại
+                </a>
+            }
+
+            <section class="border-bottom pb-3 mb-4" aria-labelledby="account-status-title">
+                <h2 id="account-status-title" class="h6 mb-3">Trạng thái tài khoản</h2>
+
+                <div class="form-check form-switch">
+                    <input asp-for="IsActive"
+                           class="form-check-input"
+                           aria-describedby="account-status-help" />
+
+                    <label asp-for="IsActive" class="form-check-label fw-semibold">
+                        Cho phép tài khoản hoạt động
+                    </label>
                 </div>
-                <fieldset>
-                    <legend class="h6">Vai trò được cấp</legend>
-                    <div class="row g-3">
+
+                <p id="account-status-help" class="small text-body-secondary mb-0 mt-2">
+                    Tắt công tắc để khóa đăng nhập. Bật lại để mở tài khoản.
+                </p>
+            </section>
+
+            <fieldset>
+                <legend class="h6 mb-2">Vai trò được cấp</legend>
+
+                <p class="small text-body-secondary mb-3">
+                    Chọn ít nhất một vai trò. Bấm <strong>Xem quyền</strong> để mở cấu hình
+                    của vai trò đó ở tab mới và giữ nguyên lựa chọn đang sửa.
+                </p>
+
+                <div class="row g-3">
                     @foreach (var role in Model.AvailableRoles)
                     {
-                        <div class="col-sm-6"><div class="border rounded p-3 h-100">
-                            <div class="form-check">
-                                <input type="checkbox" id="role-@role.Id" name="RoleIds" value="@role.Id"
-                                       checked="@Model.RoleIds.Contains(role.Id)" class="form-check-input" />
-                                <label for="role-@role.Id" class="form-check-label">@role.Name <small class="d-block text-body-secondary">@role.Code</small></label>
+                        var checkboxId = $"role-{role.Id}";
+
+                        <div class="col-md-6">
+                            <div class="border rounded p-3 h-100">
+                                <div class="form-check">
+                                    <input type="checkbox"
+                                           class="form-check-input"
+                                           id="@checkboxId"
+                                           name="RoleIds"
+                                           value="@role.Id"
+                                           checked="@selectedRoleIds.Contains(role.Id)" />
+
+                                    <label for="@checkboxId" class="form-check-label fw-semibold">
+                                        @role.Name
+                                        <span class="small text-body-secondary">(@role.Code)</span>
+                                    </label>
+                                </div>
+
+                                <a asp-area="Admin"
+                                   asp-controller="AdminPermissions"
+                                   asp-action="Index"
+                                   asp-route-roleId="@role.Id"
+                                   target="_blank"
+                                   rel="noopener"
+                                   class="small d-inline-block mt-2">
+                                    Xem quyền của @role.Name (tab mới)
+                                </a>
                             </div>
-                        </div></div>
+                        </div>
                     }
-                    </div>
-                </fieldset>
-                <p class="small text-body-secondary mt-4 mb-0">Sau khi lưu, người dùng cần đăng nhập lại để nhận quyền mới.</p>
-            </div>
-            <div class="card-footer bg-transparent text-end p-3"><button type="submit" class="btn btn-primary">Lưu thay đổi</button></div>
-        </form>
-    </div>
+                </div>
+            </fieldset>
+
+            <p class="small text-body-secondary mt-4 mb-0">
+                Khi đổi vai trò, người dùng cần đăng nhập lại để nhận vai trò mới.
+            </p>
+        </div>
+
+        <div class="card-footer bg-transparent d-flex flex-wrap justify-content-end gap-2 p-3">
+            <a asp-area="Admin"
+               asp-controller="AdminAccounts"
+               asp-action="Details"
+               asp-route-id="@Model.Id"
+               class="btn btn-outline-secondary">
+                Hủy
+            </a>
+
+            <button type="submit" class="btn btn-primary">
+                Lưu thay đổi
+            </button>
+        </div>
+    </form>
 </div>
 
 @section Styles {
-    <link rel="stylesheet" href="~/admin/css/admin-management.css" asp-append-version="true" />
+    <link rel="stylesheet"
+          href="~/admin/css/admin-management.css"
+          asp-append-version="true" />
 }

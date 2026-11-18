@@ -1,18 +1,20 @@
-﻿using System.Linq;
-using System.Threading;
-using System.Threading.Tasks;
+﻿using DoraFood.Areas.Admin.Filters;
 using DoraFood.Areas.Admin.ViewModels;
 using DoraFood.Data;
 using DoraFood.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.Data.SqlClient;
+using Microsoft.EntityFrameworkCore;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 namespace DoraFood.Areas.Admin.Controllers;
 
 [Area("Admin")]
 [Authorize(Roles = "ADMIN,MANAGER")]
+[RequirePermission("content.manage")]
 public class NavigationItemsController : Controller
 {
     private readonly DoraFoodContext _context;
