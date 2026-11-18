@@ -144,6 +144,17 @@
                                 <i class="fas fa-ticket-alt" aria-hidden="true"></i>
                                 Ưu đãi của tôi
                             </a>
+   @if (User.IsInRole("ADMIN") || User.IsInRole("MANAGER"))
+{
+    <a asp-area="Admin"
+       asp-controller="Dashboard"
+       asp-action="Index"
+       class="dropdown-item">
+        <i class="fas fa-tachometer-alt" aria-hidden="true"></i>
+        Vào trang quản trị
+    </a>
+}
+
                             <div class="dropdown-divider"></div>
                             <form action="@Url.Action("Logout", "Account")" method="post">@Html.AntiForgeryToken()<button type="submit" class="dropdown-item df-logout"><i class="fas fa-sign-out-alt" aria-hidden="true"></i> Đăng xuất</button></form>
                         </div>
