@@ -5,307 +5,529 @@
 @{
     ViewData["Title"] = "Sơ đồ bàn";
 
-    var activeCount = Model.Tables.Count(t => t.IsActive);
-    var occupiedCount = Model.Tables.Count(t => t.IsOccupiedNow);
+    string StatusOf(DoraFood.Controllers.BookingManagementController.TableMapItem table) =>
+        table.IsOccupiedNow ? "occupied"
+        : !table.IsActive ? "inactive"
+        : table.HasScheduleConflict ? "reserved"
+        : "available";
 
-    var availableCount = Model.Tables.Count(t =>
-        t.IsActive && !t.HasScheduleConflict && !t.IsOccupiedNow);
-
-    string StatusText(string status) => status switch
+    var states = new[]
     {
-        "PENDING" => "Chờ xác nhận",
-        "CONFIRMED" => "Đã xác nhận",
-        "SEATED" => "Khách đã vào bàn",
-        _ => status
+        (Code: "all", Label: "Tất cả bàn"),
+        (Code: "available", Label: "Trống theo bộ lọc"),
+        (Code: "reserved", Label: "Có lịch trong buổi"),
+        (Code: "occupied", Label: "Đang có khách"),
+        (Code: "inactive", Label: "Ngừng hoạt động")
     };
+
+    var areaGroups = Model.Tables.GroupBy(table => table.AreaId).ToList();
 }
 
-<div class="container py-5">
-    <div class="d-flex flex-wrap justify-content-between
-        align-items-center gap-3 mb-4">
+<div id="df-table-map" class="container-fluid py-3 py-lg-4">
+    <div class="df-map-hero d-flex flex-wrap justify-content-between align-items-center gap-3 mb-3">
         <div>
-            <h1 class="h3 fw-bold mb-2"
-                style="font-family: 'Segoe UI', Arial, sans-serif;">
-                Sơ đồ bàn
+            <h1 class="h3 mb-1">
+                <i class="bi bi-grid-3x3-gap-fill me-2" aria-hidden="true"></i>Sơ đồ bàn
             </h1>
-
-            <p class="text-muted mb-0">
-                Kiểm tra các bàn được giữ theo ngày và buổi phục vụ, theo giờ Việt Nam.
+            <p class="mb-0">
+                @Model.ServiceDate.ToString("dd/MM/yyyy") · @Model.SessionLabel
+                · @Model.StartsAtLocal.ToString("HH:mm")–@Model.EndsAtLocal.ToString("HH:mm")
             </p>
         </div>
 
         <a href="@Url.RouteUrl("DoraFoodManageBookings")"
-           class="btn btn-outline-secondary rounded-pill px-4">
+           class="btn df-map-link">
             Danh sách đặt bàn
         </a>
     </div>
 
-    <!-- Bộ lọc -->
-    <div class="card border-0 shadow-sm mb-4">
-        <div class="card-body p-4">
-            <form action="@Url.RouteUrl("DoraFoodTableMap")"
-                  method="get"
-                  class="row g-3 align-items-end">
-
-                <div class="col-md-6 col-lg-3">
-                    <label asp-for="ServiceDate" class="form-label">Ngày phục vụ</label>
-                    <input asp-for="ServiceDate"
-                           asp-format="{0:yyyy-MM-dd}"
-                           type="date"
-                           class="form-control"
-                           required />
-                </div>
-
-                <div class="col-md-6 col-lg-3">
-                    <label for="table-map-session" class="form-label">Buổi phục vụ</label>
-                    <select id="table-map-session" name="session" class="form-select">
-                        <option value="LUNCH" selected="@(Model.Session == "LUNCH")">Buổi trưa · 10:00–14:00</option>
-                        <option value="DINNER" selected="@(Model.Session == "DINNER")">Buổi tối · 16:00–22:00</option>
-                    </select>
-                </div>
-
-                <div class="col-md-6 col-lg-3">
-                    <label for="table-map-area" class="form-label">
-                        Khu vực
-                    </label>
-
-                    <select id="table-map-area"
-                            name="areaId"
-                            class="form-select">
-                        <option value=""
-                                selected="@(!Model.AreaId.HasValue)">
-                            Tất cả khu vực
-                        </option>
-
-                        @foreach (var area in Model.Areas)
-                        {
-                            <option value="@area.Id"
-                                    selected="@(Model.AreaId == area.Id)">
-                                @area.Name@(area.IsActive ? "" : " (Ngừng hoạt động)")
-                            </option>
-                        }
-                    </select>
-                </div>
-
-                <div class="col-md-6 col-lg-3">
-                    <button type="submit"
-                            class="btn btn-primary rounded-pill px-4">
-                        Xem sơ đồ
-                    </button>
-                </div>
-            </form>
-
-            <a href="@Url.RouteUrl("DoraFoodTableMap")"
-               class="d-inline-block small mt-3">
-                Về ngày hôm nay và buổi mặc định
-            </a>
-        </div>
-    </div>
-
-    <!-- Thống kê theo bộ lọc -->
-    <div class="row g-3 mb-4">
-        <div class="col-6 col-lg-3">
-            <div class="border rounded-3 p-3 h-100">
-                <div class="text-muted small">Tổng số bàn</div>
-                <div class="h3 fw-bold mb-0">@Model.Tables.Count</div>
-            </div>
+    <form action="@Url.RouteUrl("DoraFoodTableMap")"
+          method="get"
+          class="row g-3 align-items-end df-map-panel p-3 m-0 mb-3">
+        <div class="col-sm-6 col-lg-3">
+            <label for="df-service-date" class="form-label">Ngày phục vụ</label>
+            <input id="df-service-date" name="serviceDate" type="date"
+                   value="@Model.ServiceDate.ToString("yyyy-MM-dd")"
+                   class="form-control" required />
         </div>
 
-        <div class="col-6 col-lg-3">
-            <div class="border rounded-3 p-3 h-100">
-                <div class="text-muted small">Đang hoạt động</div>
-                <div class="h3 fw-bold mb-0">@activeCount</div>
-            </div>
+        <div class="col-sm-6 col-lg-3">
+            <label for="df-session" class="form-label">Buổi phục vụ</label>
+            <select id="df-session" name="session" class="form-select">
+                <option value="LUNCH" selected="@(Model.Session == "LUNCH")">
+                    Trưa · 10:00–14:00
+                </option>
+                <option value="DINNER" selected="@(Model.Session == "DINNER")">
+                    Tối · 16:00–22:00
+                </option>
+            </select>
         </div>
 
-        <div class="col-6 col-lg-3">
-            <div class="border rounded-3 p-3 h-100">
-                <div class="text-muted small">Đang có khách hiện tại</div>
-                <div class="h3 fw-bold text-danger mb-0">
-                    @occupiedCount
-                </div>
-            </div>
+        <div class="col-sm-6 col-lg-4">
+            <label for="df-area" class="form-label">Khu vực</label>
+            <select id="df-area" name="areaId" class="form-select">
+                <option value="">Tất cả khu vực</option>
+                @foreach (var area in Model.Areas)
+                {
+                    <option value="@area.Id" selected="@(Model.AreaId == area.Id)">
+                        @area.Name@(area.IsActive ? "" : " (Ngừng hoạt động)")
+                    </option>
+                }
+            </select>
         </div>
 
-        <div class="col-6 col-lg-3">
-            <div class="border rounded-3 p-3 h-100">
-                <div class="text-muted small">
-                    Đang hoạt động, chưa bị giữ
-                </div>
-                <div class="h3 fw-bold text-success mb-0">
-                    @availableCount
-                </div>
-            </div>
+        <div class="col-sm-6 col-lg-2">
+            <button type="submit" class="btn df-map-submit w-100">Xem sơ đồ</button>
         </div>
-    </div>
+    </form>
 
-    <div class="alert alert-light border small mb-4">
-        <strong>Đang xem:</strong>
-        @Model.ServiceDate.ToString("dd/MM/yyyy") · @Model.SessionLabel
-        (@Model.StartsAtLocal.ToString("HH:mm")–@Model.EndsAtLocal.ToString("HH:mm")).
-        <br />
-        Mỗi bàn chỉ có một lượt giữ còn hiệu lực trong cùng buổi.
-        Bàn đang có khách vẫn bị giữ đến khi hoàn tất lượt trước,
-        kể cả khi giờ hẹn của lượt đó thuộc buổi khác.
-        <br />
-        Chỉ tính yêu cầu đang chờ, đã xác nhận hoặc đang phục vụ;
-        yêu cầu đã hủy, hoàn tất hoặc không đến không giữ bàn.
-        Đây không phải bản ghi lại tình trạng bàn tại một thời điểm trong quá khứ.
-        Tải lại trang để cập nhật dữ liệu mới nhất.
-    </div>
-
-    @if (Model.Tables.Count == 0)
-    {
-        <div class="border rounded-4 text-center p-5">
-            <h2 class="h5">Chưa có bàn phù hợp</h2>
-            <p class="text-muted mb-0">
-                Anh kiểm tra dữ liệu bàn hoặc chọn khu vực khác.
-            </p>
-        </div>
-    }
-    else
-    {
-        @foreach (var area in Model.Tables.GroupBy(t => t.AreaId))
+    <div class="d-flex flex-wrap gap-2 mb-3" role="group" aria-label="Lọc trạng thái bàn">
+        @foreach (var state in states)
         {
-            <section class="mb-5">
-                <h2 class="h5 fw-bold mb-3">
-                    @area.First().AreaName
-                    <span class="text-muted small fw-normal">
-                        · @area.Count() bàn
-                    </span>
-                </h2>
+            var count = state.Code == "all"
+                ? Model.Tables.Count
+                : Model.Tables.Count(table => StatusOf(table) == state.Code);
 
-                <div class="row g-3">
-                    @foreach (var table in area)
-                    {
-                        var borderClass = !table.IsActive
-                            ? "border-secondary"
-                            : table.IsOccupiedNow
-                                ? "border-danger"
-                                : table.HasScheduleConflict
-                                    ? "border-warning"
-                                    : "border-success";
-
-                        <div class="col-md-6 col-xl-4">
-                            <article class="card h-100 @borderClass">
-                                <div class="card-body p-4">
-                                    <div class="d-flex justify-content-between
-                                        align-items-center gap-2 mb-3">
-                                        <h3 class="h5 fw-bold mb-0">
-                                            @table.Code
-                                        </h3>
-
-                                        <span class="text-muted small">
-                                            @table.Capacity chỗ
-                                        </span>
-                                    </div>
-
-                                    <div class="d-flex flex-wrap gap-2 mb-3">
-                                        @if (!table.IsActive)
-                                        {
-                                            <span class="badge bg-secondary">
-                                                Bàn/khu vực ngừng phục vụ
-                                            </span>
-                                        }
-                                        else if (table.IsOccupiedNow)
-                                        {
-                                            <span class="badge bg-danger">Chưa thể phân bàn</span>
-                                        }
-                                        else if (table.HasScheduleConflict)
-                                        {
-                                            <span class="badge bg-warning text-dark">
-                                                Đã giữ trong buổi đã chọn
-                                            </span>
-                                        }
-                                        else
-                                        {
-                                            <span class="badge bg-success">
-                                                Chưa có lượt giữ bàn
-                                            </span>
-                                        }
-
-                                        @if (table.IsOccupiedNow)
-                                        {
-                                            <span class="badge bg-danger">
-                                                Đang có khách hiện tại
-                                            </span>
-                                        }
-                                    </div>
-
-                                    @if (table.Reservations.Count == 0)
-                                    {
-                                        <p class="text-muted small mb-0">
-                                            Chưa có yêu cầu giữ bàn trong buổi đã chọn
-                                            và chưa ghi nhận khách đang ngồi.
-                                        </p>
-                                    }
-                                    else
-                                    {
-                                        <details>
-                                            <summary class="fw-semibold small"
-                                                     style="cursor: pointer;">
-                                                Xem @table.Reservations.Count
-                                                yêu cầu liên quan
-                                            </summary>
-
-                                            <div class="mt-3">
-                                                @foreach (var booking in table.Reservations)
-                                                {
-                                                    var arrivalLocal = booking.StartsAtUtc.AddHours(7);
-                                                    var deadlineLocal = arrivalLocal.AddMinutes(30);
-                                                    var belongsToSelectedSession = arrivalLocal >= Model.StartsAtLocal
-                                                        && arrivalLocal < Model.EndsAtLocal;
-
-                                                    <div class="border-top pt-3 mt-3">
-                                                        <div class="fw-semibold text-break">
-                                                            @booking.GuestName
-                                                        </div>
-
-                                                        <div class="small text-muted mb-2">
-                                                            @booking.PartySize khách
-                                                            · @StatusText(booking.Status)
-                                                        </div>
-
-                                                        <div class="small">
-                                                            Giờ hẹn: @arrivalLocal.ToString("dd/MM/yyyy HH:mm")
-                                                            @if (booking.Status != "SEATED")
-                                                            {
-                                                                <br />
-                                                                <span>Hạn khách đến: @deadlineLocal.ToString("dd/MM/yyyy HH:mm")</span>
-                                                            }
-                                                            else
-                                                            {
-                                                                <br />
-                                                                <span>Giữ bàn đến khi hoàn tất lượt phục vụ.</span>
-                                                            }
-                                                        </div>
-
-                                                        @if (!belongsToSelectedSession
-                                                            && booking.Status == "SEATED")
-                                                        {
-                                                            <p class="small text-danger mt-2">
-                                                                Lượt khách đang ngồi có giờ hẹn thuộc buổi khác.
-                                                                Bàn vẫn được giữ vì lượt này chưa hoàn tất.
-                                                            </p>
-                                                        }
-
-                                                        <a href="@Url.RouteUrl(
-                                                                     "DoraFoodManageBookingDetails",
-                                                                     new { id = booking.Id })"
-                                                           class="d-inline-block small mt-2 text-break">
-                                                            Chi tiết: @booking.Code
-                                                        </a>
-                                                    </div>
-                                                }
-                                            </div>
-                                        </details>
-                                    }
-                                </div>
-                            </article>
-                        </div>
-                    }
-                </div>
-            </section>
+            <button type="button"
+                    class="btn df-state-filter"
+                    data-filter="@state.Code"
+                    aria-pressed="@(state.Code == "all" ? "true" : "false")">
+                @if (state.Code != "all")
+                {
+                    <span class="df-state-dot" aria-hidden="true"></span>
+                }
+                @state.Label <strong>@count</strong>
+            </button>
         }
+    </div>
+
+    <div class="d-flex flex-wrap align-items-end justify-content-between gap-2 mb-3">
+        <div>
+            <label for="df-find-table" class="form-label">Tìm mã bàn hoặc khu vực</label>
+            <input id="df-find-table" type="search" class="form-control"
+                   placeholder="Ví dụ: K3" autocomplete="off" />
+        </div>
+
+        <p id="df-table-count" class="small df-map-muted mb-1" role="status">
+            Hiển thị @Model.Tables.Count bàn
+        </p>
+    </div>
+
+    <p class="small df-map-muted">
+        Lịch đặt theo ngày và buổi đã chọn. Nhãn <strong>Đang có khách</strong>
+        phản ánh tình trạng tại thời điểm tải trang, kể cả khi đang xem lịch ngày khác.
+    </p>
+
+    @foreach (var area in areaGroups)
+    {
+        <section class="mb-4" data-table-area>
+            <h2 class="df-area-title mb-3">@area.First().AreaName</h2>
+
+            <div class="df-table-grid">
+                @foreach (var table in area)
+                {
+                    var state = StatusOf(table);
+                    var label = state switch
+                    {
+                        "available" => "Trống",
+                        "reserved" => "Có lịch",
+                        "occupied" => "Đang có khách",
+                        _ => "Ngừng hoạt động"
+                    };
+                    <details class="df-table-card"
+                             data-table-state="@state"
+                             data-table-search="@(table.Code + " " + table.AreaName)">
+                        <summary class="df-table-summary">
+                            <span class="df-table-icon" aria-hidden="true">
+                                <i class="bi bi-chevron-down df-table-chevron"></i>
+                            </span>
+
+                            <span class="df-table-meta">
+                                <strong class="d-block text-break">@table.Code</strong>
+                                <small>@table.Capacity chỗ</small>
+                            </span>
+
+                            <span class="df-table-status">@label</span>
+                        </summary>
+
+                        <div class="df-table-info">
+                            @if (table.Reservations.Count == 0)
+                            {
+                                <p class="small df-map-muted mb-0">
+                                    @(table.IsActive
+                                        ? "Chưa có lịch liên quan trong buổi này."
+                                        : "Bàn hoặc khu vực đang ngừng hoạt động.")
+                                </p>
+                            }
+                            else
+                            {
+                                @foreach (var booking in table.Reservations)
+                                {
+                                    var arrival = booking.StartsAtUtc.AddHours(7);
+                                    var bookingStatus = booking.Status switch
+                                    {
+                                        "SEATED" => "Đã vào bàn",
+                                        "CONFIRMED" => "Đã xác nhận",
+                                        "PENDING" => "Chờ xác nhận",
+                                        _ => booking.Status
+                                    };
+
+                                    <div class="df-table-booking">
+                                        <strong class="text-break">@booking.GuestName</strong>
+
+                                        <div class="small df-map-muted">
+                                            @booking.PartySize khách · @bookingStatus
+                                        </div>
+
+                                        <div class="small">
+                                            Giờ hẹn @arrival.ToString("dd/MM HH:mm")
+                                        </div>
+
+                                        <a href="@Url.RouteUrl(
+                                                     "DoraFoodManageBookingDetails",
+                                                     new { id = booking.Id })"
+                                           class="small d-inline-block mt-1">
+                                            Xem lượt đặt
+                                        </a>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    </details>
+                }
+            </div>
+        </section>
     }
+
+    <div id="df-map-empty"
+         class="df-map-panel p-4 text-center df-map-muted"
+         hidden="@(Model.Tables.Count > 0)">
+        Không có bàn phù hợp với bộ lọc hiện tại.
+    </div>
 </div>
+
+<style>
+    #df-table-map {
+        --map-ink: #38221d;
+        --map-muted: #6d5149;
+        --map-cream: #f7f4ee;
+        --map-paper: #fffaf3;
+        --map-peach: #eaa77c;
+        --map-wine: #783434;
+        --map-wine-hover: #602727;
+        --map-line: #d9c5b4;
+        background: var(--map-cream);
+        color: var(--map-ink);
+    }
+
+        #df-table-map [hidden] {
+            display: none !important;
+        }
+
+        #df-table-map .df-map-hero {
+            padding: 1rem 1.25rem;
+            border-radius: 1rem;
+            background: var(--map-wine);
+            color: white;
+        }
+
+            #df-table-map .df-map-hero p {
+                color: #f9ddc7;
+            }
+
+        #df-table-map .df-map-link {
+            border: 1px solid #f9ddc7;
+            color: white;
+        }
+
+            #df-table-map .df-map-link:hover {
+                color: var(--map-wine);
+                background: #f9ddc7;
+            }
+
+        #df-table-map .df-map-panel {
+            background: var(--map-paper);
+            border: 1px solid var(--map-line);
+            border-radius: .9rem;
+        }
+
+        #df-table-map .form-label {
+            font-weight: 600;
+        }
+
+        #df-table-map .form-control,
+        #df-table-map .form-select {
+            color: var(--map-ink);
+            background-color: var(--map-paper);
+            border-color: var(--map-line);
+        }
+
+            #df-table-map .form-control:focus,
+            #df-table-map .form-select:focus {
+                border-color: var(--map-wine);
+                box-shadow: 0 0 0 .18rem #78343430;
+            }
+
+        #df-table-map .df-map-submit {
+            color: white;
+            background: var(--map-wine);
+            border-color: var(--map-wine);
+        }
+
+            #df-table-map .df-map-submit:hover {
+                background: var(--map-wine-hover);
+            }
+
+        #df-table-map .df-map-muted {
+            color: var(--map-muted);
+        }
+
+        #df-table-map [data-table-state="available"],
+        #df-table-map [data-filter="available"] {
+            --status-bg: #e6ebe0;
+            --status-ink: #38543a;
+            --status-dot: #52704f;
+        }
+
+        #df-table-map [data-table-state="reserved"],
+        #df-table-map [data-filter="reserved"] {
+            --status-bg: #f1e4cc;
+            --status-ink: #70491f;
+            --status-dot: #946633;
+        }
+
+        #df-table-map [data-table-state="occupied"],
+        #df-table-map [data-filter="occupied"] {
+            --status-bg: #f0dfd9;
+            --status-ink: #793b34;
+            --status-dot: #9b5148;
+        }
+
+        #df-table-map [data-table-state="inactive"],
+        #df-table-map [data-filter="inactive"] {
+            --status-bg: #eae2da;
+            --status-ink: #5e534b;
+            --status-dot: #776d64;
+        }
+
+        #df-table-map .df-state-filter {
+            font-size: .875rem;
+            color: var(--status-ink, var(--map-wine));
+            background: var(--status-bg, var(--map-paper));
+            border-color: var(--map-line);
+        }
+
+            #df-table-map .df-state-filter:hover {
+                border-color: var(--map-wine);
+            }
+
+            #df-table-map .df-state-filter[aria-pressed="true"] {
+                color: white;
+                background: var(--map-wine);
+                border-color: var(--map-wine);
+            }
+
+                #df-table-map .df-state-filter[aria-pressed="true"] .df-state-dot {
+                    background: #f9ddc7;
+                }
+
+        #df-table-map .df-state-dot,
+        #df-table-map .df-table-status::before {
+            display: inline-block;
+            width: .55rem;
+            height: .55rem;
+            flex: 0 0 .55rem;
+            border-radius: 50%;
+            background: var(--status-dot);
+        }
+
+        #df-table-map .df-state-dot {
+            margin-inline-end: .25rem;
+        }
+
+        #df-table-map [data-table-area] {
+            padding: 1rem clamp(.75rem, 2.3vw, 1.25rem);
+            background: var(--map-peach);
+            border: 1px solid var(--map-line);
+            border-radius: 1rem;
+        }
+
+        #df-table-map .df-area-title {
+            display: flex;
+            align-items: center;
+            gap: .65rem;
+            font-size: 1rem;
+            font-weight: 700;
+        }
+
+            #df-table-map .df-area-title::before {
+                content: "";
+                width: .48rem;
+                height: .48rem;
+                flex: 0 0 .48rem;
+                background: currentColor;
+                transform: rotate(45deg);
+            }
+
+        #df-table-map .df-table-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(min(100%, max(15rem, calc((100% - 2.25rem) / 4))), 1fr));
+            align-items: start;
+            gap: .75rem;
+        }
+
+        #df-table-map .df-table-card {
+            min-width: 0;
+            border: 1px solid var(--map-line);
+            border-radius: .8rem;
+            background: var(--map-wine);
+            color: white;
+        }
+
+        #df-table-map .df-table-summary {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: .4rem .65rem;
+            min-height: 5.25rem;
+            padding: .75rem;
+            border-radius: .73rem;
+            cursor: pointer;
+            list-style: none;
+        }
+
+            #df-table-map .df-table-summary::-webkit-details-marker {
+                display: none;
+            }
+
+            #df-table-map .df-table-summary:hover {
+                background: var(--map-wine-hover);
+            }
+
+            #df-table-map .df-table-summary:focus-visible,
+            #df-table-map .df-state-filter:focus-visible,
+            #df-table-map .df-map-submit:focus-visible {
+                outline: 2px solid var(--map-ink);
+                outline-offset: 2px;
+            }
+
+        #df-table-map .df-table-icon {
+            display: grid;
+            place-items: center;
+            width: 2.25rem;
+            height: 2.25rem;
+            flex: 0 0 2.25rem;
+            border-radius: .5rem;
+            background: var(--status-bg);
+            color: var(--status-ink);
+        }
+
+        #df-table-map .df-table-card[open] .df-table-chevron {
+            transform: rotate(180deg);
+        }
+
+        #df-table-map .df-table-meta {
+            flex: 1 1 3.5rem;
+            min-width: 0;
+            line-height: 1.35;
+        }
+
+        #df-table-map .df-table-status {
+            display: inline-flex;
+            align-items: center;
+            gap: .35rem;
+            padding: .25rem .5rem;
+            border-radius: 999px;
+            background: var(--status-bg);
+            color: var(--status-ink);
+            font-size: .78rem;
+            font-weight: 700;
+        }
+
+            #df-table-map .df-table-status::before {
+                content: "";
+            }
+
+        #df-table-map .df-table-info {
+            padding: .75rem;
+            border-radius: 0 0 .73rem .73rem;
+            background: var(--map-paper);
+            color: var(--map-ink);
+        }
+
+        #df-table-map .df-table-booking + .df-table-booking {
+            margin-top: .65rem;
+            padding-top: .65rem;
+            border-top: 1px solid var(--map-line);
+        }
+
+        #df-table-map .df-table-info a {
+            color: var(--map-wine);
+            text-underline-offset: .15em;
+        }
+</style>
+
+
+<script>
+    (() => {
+        const root = document.getElementById('df-table-map');
+        const search = root.querySelector('#df-find-table');
+        const count = root.querySelector('#df-table-count');
+        const empty = root.querySelector('#df-map-empty');
+        const buttons = [...root.querySelectorAll('[data-filter]')];
+        const areas = [...root.querySelectorAll('[data-table-area]')];
+
+        let activeFilter = 'all';
+
+        function normalize(value) {
+            return value.toLocaleLowerCase('vi-VN')
+                .normalize('NFD')
+                .replace(/\p{M}/gu, '')
+                .replace(/đ/g, 'd')
+                .trim();
+        }
+
+        function applyFilters() {
+            const term = normalize(search.value);
+            let visibleCount = 0;
+
+            for (const area of areas) {
+                let areaHasMatches = false;
+
+                for (const table of area.querySelectorAll('[data-table-state]')) {
+                    const matchesStatus = activeFilter === 'all'
+                        || table.dataset.tableState === activeFilter;
+                    const matchesSearch = normalize(table.dataset.tableSearch).includes(term);
+                    const visible = matchesStatus && matchesSearch;
+
+                    table.hidden = !visible;
+                    if (!visible) continue;
+
+                    areaHasMatches = true;
+                    visibleCount++;
+                }
+
+                area.hidden = !areaHasMatches;
+            }
+
+            count.textContent = `Hiển thị ${visibleCount} bàn`;
+            empty.hidden = visibleCount > 0;
+        }
+
+        for (const button of buttons) {
+            button.addEventListener('click', () => {
+                activeFilter = button.dataset.filter;
+
+                for (const option of buttons) {
+                    option.setAttribute('aria-pressed', String(option === button));
+                }
+
+                applyFilters();
+            });
+        }
+
+        search.addEventListener('input', applyFilters);
+        window.addEventListener('pageshow', applyFilters);
+        applyFilters();
+    })();
+</script>
