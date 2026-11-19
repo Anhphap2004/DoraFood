@@ -1,0 +1,151 @@
+@using System
+@using System.Globalization
+@model System.Collections.Generic.IReadOnlyList<DoraFood.ViewModels.PublicVoucherViewModel>
+
+@{
+    ViewData["Title"] = "Ưu đãi & Voucher";
+    var bookingUrl = Url.RouteUrl("DoraFoodBooking") ?? Url.Content("~/dat-ban");
+    var menuUrl = Url.RouteUrl("DoraFoodMenu") ?? Url.Content("~/thuc-don");
+    var homeUrl = Url.Content("~/");
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+    string Money(decimal amount) => amount.ToString("N0", culture) + " ₫";
+}
+
+<link rel="stylesheet" href="~/assets/css/dorafood-vouchers.css" asp-append-version="true">
+
+<div class="df-offers">
+    <div class="df-offers-shell">
+        <a class="df-offers-back" href="@homeUrl">
+            <i class="fas fa-arrow-left" aria-hidden="true"></i> Trang chủ
+        </a>
+
+        <header class="df-offers-hero">
+            <img class="df-offers-hero-photo"
+                 src="~/images/vouchers/hero.webp" alt="" width="1440" height="900"
+                 fetchpriority="high" decoding="async">
+            <span class="df-offers-hero-sparks" aria-hidden="true"><i></i><i></i><i></i></span>
+            <div class="df-offers-hero-copy">
+                <h1>Ưu đãi &amp;<br><em>Voucher</em></h1>
+                <p>Chọn ưu đãi cho bữa tiệc sum vầy tại DoraFood.</p>
+                <a class="df-offers-button df-offers-button-gold" href="#df-offers-list">
+                    Xem voucher <i class="fas fa-arrow-down" aria-hidden="true"></i>
+                </a>
+            </div>
+        </header>
+
+        <section id="df-offers-list" aria-labelledby="df-offers-title">
+            <div class="df-offers-section-heading">
+                <h2 id="df-offers-title">Voucher đang mở</h2>
+                <a class="df-offers-text-link" href="@bookingUrl">
+                    Đặt bàn <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                </a>
+            </div>
+
+            @if (Model.Count == 0)
+            {
+                <div class="df-offers-empty">
+                    <i class="fas fa-ticket-alt" aria-hidden="true"></i>
+                    <div>
+                        <h3>Chưa có voucher công khai</h3>
+                        <p>Xem thực đơn hoặc đặt bàn cho buổi gặp sắp tới.</p>
+                    </div>
+                    <a class="df-offers-button df-offers-button-light" href="@menuUrl">Xem thực đơn</a>
+                </div>
+            }
+            else
+            {
+                <div class="df-offers-grid">
+                    @for (var i = 0; i < Model.Count; i++)
+                    {
+                        var voucher = Model[i];
+                        var isPercent = voucher.DiscountType == "PERCENT";
+                        var endsAt = DateTime.SpecifyKind(voucher.EndsAtUtc, DateTimeKind.Utc);
+                        var endsAtLocal = new DateTimeOffset(endsAt).ToOffset(TimeSpan.FromHours(7));
+                        var benefit = isPercent
+                            ? voucher.DiscountValue.ToString("0.##", culture) + "%"
+                            : Money(voucher.DiscountValue);
+                        var fallbackPhoto = (i % 3) switch
+                        {
+                            0 => "~/images/vouchers/qua.webp",
+                            1 => "~/images/vouchers/bep.webp",
+                            _ => "~/images/vouchers/ban.webp"
+                        };
+                        var coverUrl = !string.IsNullOrWhiteSpace(voucher.CoverUrl)
+                            && Url.IsLocalUrl(voucher.CoverUrl)
+                            ? voucher.CoverUrl
+                            : fallbackPhoto;
+
+                        <article class="df-offers-ticket">
+                            <div class="df-offers-ticket-media">
+                                <img src="@Url.Content(coverUrl)" alt="" width="780" height="520"
+                                     loading="lazy" decoding="async">
+                                <span class="df-offers-ticket-benefit">Giảm @benefit</span>
+                            </div>
+                            <div class="df-offers-ticket-body">
+                                <h3>@voucher.Name</h3>
+                                <dl class="df-offers-terms">
+                                    @if (voucher.MinimumOrder > 0)
+                                    {
+                                        <div><dt>Đơn tối thiểu</dt><dd>@Money(voucher.MinimumOrder)</dd></div>
+                                    }
+                                    @if (isPercent && voucher.MaxDiscount.HasValue)
+                                    {
+                                        <div><dt>Giảm tối đa</dt><dd>@Money(voucher.MaxDiscount.Value)</dd></div>
+                                    }
+                                    @if (voucher.PerCustomerLimit.HasValue)
+                                    {
+                                        <div><dt>Giới hạn mỗi khách</dt><dd>@voucher.PerCustomerLimit.Value lượt</dd></div>
+                                    }
+                                    <div>
+                                        <dt>Hết hạn</dt>
+                                        <dd><time datetime="@endsAtLocal.ToString("o", culture)">@endsAtLocal.ToString("HH:mm · dd/MM/yyyy", culture)</time></dd>
+                                    </div>
+                                </dl>
+                            </div>
+                            <div class="df-offers-ticket-code">
+                                <input type="text" aria-label="Mã voucher @voucher.Name"
+                                       value="@voucher.Code" readonly spellcheck="false" data-df-code>
+                                <button type="button" class="df-offers-copy" data-df-copy hidden>
+                                    <i class="far fa-copy" aria-hidden="true"></i>
+                                    <span>Sao chép</span>
+                                </button>
+                            </div>
+                            <span class="df-offers-copy-status visually-hidden" role="status" data-df-copy-status></span>
+                        </article>
+                    }
+                </div>
+                <p class="df-offers-note">Nhập mã khi thanh toán hoặc đưa mã cho nhân viên. Lượt sử dụng được kiểm tra khi áp mã.</p>
+            }
+        </section>
+
+        <section class="df-offers-gallery" aria-labelledby="df-offers-gallery-title">
+            <div class="df-offers-section-heading">
+                <h2 id="df-offers-gallery-title">Góc Tết tại DoraFood</h2>
+                <a class="df-offers-text-link" href="@menuUrl">
+                    Xem thực đơn <i class="fas fa-arrow-right" aria-hidden="true"></i>
+                </a>
+            </div>
+            <div class="df-offers-gallery-grid">
+                <figure>
+                    <img src="~/images/vouchers/bep.webp" alt="Gà quay, rau thơm và nước chấm bày trên bàn gỗ"
+                         width="780" height="520" loading="lazy" decoding="async">
+                    <figcaption>Món ngon ngày Tết</figcaption>
+                </figure>
+                <figure>
+                    <img src="~/images/vouchers/ban.webp" alt="Bàn tiệc có ấm trà, khăn đỏ và hoa mai"
+                         width="780" height="520" loading="lazy" decoding="async">
+                    <figcaption>Bàn tiệc sum vầy</figcaption>
+                </figure>
+                <figure>
+                    <img src="~/images/vouchers/qua.webp" alt="Phong bao lì xì đỏ viền vàng trên nền vải"
+                         width="780" height="520" loading="lazy" decoding="async">
+                    <figcaption>Sắc xuân</figcaption>
+                </figure>
+            </div>
+        </section>
+    </div>
+</div>
+
+@section Scripts {
+    <script src="~/assets/js/dorafood-vouchers.js" asp-append-version="true" defer></script>
+}

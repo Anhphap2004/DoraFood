@@ -592,6 +592,32 @@ image: input.Image);
         };
     }
 
+    [HttpPost("/Admin/Chat/dat-ban/{id:long}/mo", Name = "DoraFoodAdminOpenBookingChat")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> OpenBookingChat([FromRoute] long id)
+    {
+        try
+        {
+            var conversation = await _chat.OpenConversationAsync(
+                User, id, HttpContext.RequestAborted, fromStaff: true);
+
+            return RedirectToRoute(
+                "DoraFoodAdminChat",
+                new { conversationId = conversation.Id });
+        }
+        catch (ChatException ex)
+        {
+            TempData["BookingManagementError"] = ex.Message;
+            return RedirectToRoute("DoraFoodManageBookingDetails", new { id });
+        }
+        catch (Exception ex) when (ex is DbUpdateException || ex is SqlException)
+        {
+            _logger.LogError(ex, "Không mở được tư vấn món cho lượt đặt {BookingId}.", id);
+            TempData["BookingManagementError"] = "Chưa mở được tư vấn món. Vui lòng thử lại.";
+            return RedirectToRoute("DoraFoodManageBookingDetails", new { id });
+        }
+    }
+
     private IActionResult ChatStorageError(Exception exception)
     {
         _logger.LogError(

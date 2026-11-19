@@ -226,6 +226,16 @@
                                 @(isConfirmed ? "Lập / xem món đặt trước" : "Mở đơn gọi món")
                             </button>
                         </form>
+                        @if (isConfirmed && !arrivalExpired && tables.Count > 0
+    && reservation.CustomerId.HasValue
+    && (User.IsInRole("ADMIN") || User.IsInRole("MANAGER")))
+                        {
+                            <form action="@Url.RouteUrl("DoraFoodAdminOpenBookingChat", routeValues)"
+                                  method="post" class="m-0">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="btn df-outline">Tư vấn món</button>
+                            </form>
+                        }
                     }
                 </div>
             }

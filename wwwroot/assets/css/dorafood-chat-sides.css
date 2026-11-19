@@ -1,0 +1,273 @@
+.df-chat-side-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas: "links" "chat";
+    gap: 12px;
+    align-items: start;
+}
+
+.df-chat-side-layout > .df-chat-side-main {
+    grid-area: chat;
+    min-width: 0;
+    scroll-margin-top: 1rem;
+}
+
+.df-chat-side-art,
+.df-chat-side-gift {
+    display: none;
+}
+
+.df-chat-side-links {
+    grid-area: links;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    min-width: 0;
+}
+
+.df-chat-side-layout .df-chat-side-link,
+.df-chat-side-layout .df-chat-side-menu-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: .55rem;
+    min-height: 44px;
+    padding: .65rem .8rem;
+    border: 1px solid #eddbd5;
+    border-radius: 12px;
+    background: #fffaf6;
+    color: #652432;
+    font-size: .875rem;
+    font-weight: 700;
+    line-height: 1.35;
+    text-decoration: none;
+    transition: background-color .18s ease, border-color .18s ease;
+}
+
+.df-chat-side-layout .df-chat-side-link i {
+    width: 1rem;
+    flex: 0 0 1rem;
+    text-align: center;
+}
+
+.df-chat-side-layout .df-chat-side-link:hover {
+    border-color: #d7a796;
+    background: #fceee7;
+    color: #652432;
+}
+
+.df-chat-side-layout .df-chat-side-voucher {
+    border-color: #d8a858;
+    background: #811f36;
+    color: #fff8ee;
+}
+
+.df-chat-side-layout .df-chat-side-voucher:hover {
+    border-color: #d8a858;
+    background: #9a2c47;
+    color: #fff8ee;
+}
+
+.df-chat-side-layout .df-chat-side-voucher i {
+    color: #f4cf83;
+}
+
+.df-chat-side-layout a:focus-visible,
+.df-chat-side-main:focus-visible {
+    outline: 2px solid #8b2539;
+    outline-offset: 3px;
+}
+
+@media (min-width: 1200px) {
+    .df-chat-side-layout {
+        /* Căn giữa cụm ba cột ngay cả khi khung cha của trang chat hẹp hơn. */
+        --df-chat-wide: min(85rem, calc(100vw - 4rem));
+        width: var(--df-chat-wide);
+        margin-inline-start: calc((100% - var(--df-chat-wide)) / 2);
+        grid-template-columns: clamp(10.5rem, 13vw, 11.75rem) minmax(0, 1fr) clamp(10.5rem, 13vw, 11.75rem);
+        grid-template-areas: "menu chat links";
+        gap: clamp(12px, 1.35vw, 22px);
+    }
+
+    .df-chat-side-art {
+        grid-area: menu;
+        display: grid;
+        gap: 9px;
+        min-width: 0;
+    }
+
+    .df-chat-side-menu {
+        position: relative;
+        display: grid;
+        align-content: end;
+        min-height: 14rem;
+        aspect-ratio: 3 / 4;
+        isolation: isolate;
+        overflow: hidden;
+        padding: 12px;
+        border: 1px solid #cc9d6a;
+        border-radius: 16px;
+        background: #492622;
+        box-shadow: 0 10px 26px #4220201a;
+    }
+
+    .df-chat-side-menu img,
+    .df-chat-side-menu::after {
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        width: 100%;
+        height: 100%;
+    }
+
+    .df-chat-side-menu img {
+        object-fit: cover;
+    }
+
+    .df-chat-side-menu::after {
+        content: "";
+        background: linear-gradient(180deg, #31120d00 56%, #2f120deb);
+    }
+
+    .df-chat-side-layout .df-chat-side-menu-link {
+        border-color: #edca8b;
+        background: #fff6e5;
+    }
+
+    .df-chat-side-layout .df-chat-side-menu-link:hover {
+        background: #ffe6bb;
+    }
+
+    .df-chat-side-links {
+        display: grid;
+    }
+
+    .df-chat-side-gallery {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 7px;
+    }
+
+    .df-chat-side-gallery img,
+    .df-chat-side-gift img {
+        display: block;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        border-radius: 9px;
+        animation: df-chat-side-photo-in .6s ease-out both;
+    }
+
+    .df-chat-side-gallery img {
+        aspect-ratio: 4 / 3;
+    }
+
+    .df-chat-side-gallery img:nth-child(2) {
+        animation-delay: .12s;
+    }
+
+    .df-chat-side-gift {
+        position: relative;
+        display: block;
+        aspect-ratio: 5 / 3;
+        margin-top: 5px;
+    }
+
+    .df-chat-side-gift img {
+        animation-delay: .24s;
+    }
+
+    .df-chat-side-gift span {
+        position: absolute;
+        top: 10px;
+        right: 12px;
+        color: #fff0bc;
+        text-shadow: 0 0 8px #a86723;
+        animation: df-chat-side-glow 1.15s ease-in-out 3;
+    }
+
+    .df-chat-side-voucher-arrow {
+        margin-left: auto;
+        transition: transform .2s ease;
+    }
+
+    .df-chat-side-voucher:hover .df-chat-side-voucher-arrow {
+        transform: translateX(3px);
+    }
+
+    .df-chat-side-layout .df-chat-side-link {
+        justify-content: flex-start;
+        min-height: 52px;
+    }
+
+    .df-chat-side-lantern {
+        position: absolute;
+        top: 14px;
+        right: 15px;
+        width: 29px;
+        height: 24px;
+        border: 1px solid #e7a14d;
+        border-radius: 47%;
+        background: repeating-linear-gradient(90deg, #0000 0 5px, #f7b8574a 5px 6px),
+            radial-gradient(ellipse, #ec6451, #a91e2f 74%);
+        box-shadow: 0 0 16px #df583260;
+        transform-origin: 50% -12px;
+        pointer-events: none;
+        animation: df-chat-lantern-sway 1.45s ease-in-out 3;
+    }
+
+    .df-chat-side-lantern::before,
+    .df-chat-side-lantern::after {
+        position: absolute;
+        left: 50%;
+        width: 2px;
+        content: "";
+        background: #e7a14d;
+        transform: translateX(-50%);
+    }
+
+    .df-chat-side-lantern::before {
+        top: -15px;
+        height: 14px;
+    }
+
+    .df-chat-side-lantern::after {
+        top: 100%;
+        height: 9px;
+    }
+}
+
+@keyframes df-chat-lantern-sway {
+    25% { transform: rotate(8deg); }
+    75% { transform: rotate(-8deg); }
+}
+
+@keyframes df-chat-side-photo-in {
+    from { opacity: 0; transform: translateY(6px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes df-chat-side-glow {
+    50% { opacity: .55; transform: scale(.85); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .df-chat-side-layout .df-chat-side-lantern,
+    .df-chat-side-layout .df-chat-side-gallery img,
+    .df-chat-side-layout .df-chat-side-gift img,
+    .df-chat-side-layout .df-chat-side-gift span {
+        animation: none;
+    }
+
+    .df-chat-side-layout .df-chat-side-link,
+    .df-chat-side-layout .df-chat-side-menu-link,
+    .df-chat-side-layout .df-chat-side-voucher-arrow {
+        transition: none;
+    }
+}
+
+@media (max-width: 370px) {
+    .df-chat-side-layout .df-chat-side-link {
+        padding-inline: .65rem;
+    }
+}

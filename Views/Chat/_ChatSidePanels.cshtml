@@ -1,0 +1,48 @@
+@model DoraFood.ViewModels.CustomerChatViewModel
+
+@{
+    var menuUrl = Url.RouteUrl("DoraFoodMenu") ?? Url.Content("~/thuc-don");
+    var bookingUrl = Url.RouteUrl("DoraFoodBooking") ?? Url.Content("~/dat-ban");
+    var myBookingsUrl = Url.RouteUrl("DoraFoodMyBookings") ?? Url.Content("~/dat-ban/cua-toi");
+    var bookingDetailsUrl = Model.ReservationId.HasValue
+        ? Url.RouteUrl("DoraFoodMyBookingDetails", new { id = Model.ReservationId.Value })
+        : null;
+    var voucherUrl = Url.RouteUrl("DoraFoodVouchers") ?? Url.Content("~/uu-dai");
+}
+
+<aside class="df-chat-side-art" aria-label="Thực đơn DoraFood">
+    <div class="df-chat-side-menu">
+        <img src="@Url.Content("~/assets/images/chat/dorafood-ban-tiec-tet.webp")"
+             alt="" width="560" height="740" decoding="async">
+        <span class="df-chat-side-lantern" aria-hidden="true"></span>
+        <a class="df-chat-side-menu-link" href="@menuUrl">
+            Xem thực đơn <i class="fas fa-arrow-right" aria-hidden="true"></i>
+        </a>
+    </div>
+    <div class="df-chat-side-gallery" aria-hidden="true">
+        <img src="@Url.Content("~/assets/images/vouchers/bep-thumb.webp")"
+             alt="" width="320" height="212" loading="lazy" decoding="async">
+        <img src="@Url.Content("~/assets/images/vouchers/ban-thumb.webp")"
+             alt="" width="320" height="212" loading="lazy" decoding="async">
+    </div>
+</aside>
+
+<nav class="df-chat-side-links" aria-label="Lối tắt DoraFood">
+    <a class="df-chat-side-link" href="@bookingUrl">
+        <i class="fas fa-calendar-alt" aria-hidden="true"></i> <span>Đặt bàn</span>
+    </a>
+    <a class="df-chat-side-link" href="@(bookingDetailsUrl ?? myBookingsUrl)">
+        <i class="fas fa-clipboard-list" aria-hidden="true"></i>
+        <span>@(bookingDetailsUrl != null ? "Chi tiết lượt đặt" : "Đặt bàn của tôi")</span>
+    </a>
+    <a class="df-chat-side-link df-chat-side-voucher" href="@voucherUrl">
+        <i class="fas fa-ticket-alt" aria-hidden="true"></i>
+        <span>Ưu đãi &amp; Voucher</span>
+        <i class="fas fa-arrow-right df-chat-side-voucher-arrow" aria-hidden="true"></i>
+    </a>
+    <div class="df-chat-side-gift" aria-hidden="true">
+        <img src="@Url.Content("~/assets/images/vouchers/qua-thumb.webp")"
+             alt="" width="320" height="212" loading="lazy" decoding="async">
+        <span aria-hidden="true">✦</span>
+    </div>
+</nav>

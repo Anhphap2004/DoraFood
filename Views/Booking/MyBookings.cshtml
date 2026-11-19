@@ -314,7 +314,17 @@
                             Đây không phải giới hạn thời gian dùng bữa.
                         </p>
                     }
-
+                    @if (reservation.Status == "CONFIRMED"
+      && reservation.StartsAtUtc > System.DateTime.UtcNow.AddMinutes(-30))
+                    {
+                        <form action="@Url.RouteUrl("DoraFoodOpenBookingChat", new { id = reservation.Id })"
+                              method="post" class="mt-3">
+                            @Html.AntiForgeryToken()
+                            <button type="submit" class="btn btn-outline-primary btn-sm">
+                                Tư vấn món
+                            </button>
+                        </form>
+                    }
                 </article>
             }
         }

@@ -1,0 +1,227 @@
+﻿@model DoraFood.ViewModels.CustomerChatViewModel
+
+@{
+    var bookingUrl = Model.ReservationId.HasValue
+        ? Url.RouteUrl("DoraFoodMyBookingDetails", new { id = Model.ReservationId.Value })
+            ?? Url.RouteUrl("DoraFoodMyBookings")
+        : null;
+    var menuUrl = Url.RouteUrl("DoraFoodMenu");
+}
+
+@if (Model.ReservationId.HasValue)
+{
+    <style>
+        .df-chat-panel:has(> .df-menu-concierge) > .df-chat-context {
+            display: none;
+        }
+
+        .df-chat-panel:has(> .df-menu-concierge) {
+            min-height: 27rem;
+            border-color: #e4c8b9;
+            background: #fffaf4;
+        }
+
+            .df-chat-panel:has(> .df-menu-concierge) > .df-chat-history {
+                min-height: 7rem;
+                background: #fffaf4;
+            }
+
+            .df-chat-panel:has(> .df-menu-concierge) > .df-chat-compose {
+                flex-shrink: 0;
+            }
+
+        .df-menu-concierge {
+            flex: 0 0 auto;
+            padding: .8rem 1rem;
+            border-bottom: 1px solid #e4c8b9;
+            background: linear-gradient(110deg, #fff8ee, #f8e6d7);
+            color: #38221d;
+        }
+
+            .df-menu-concierge .df-menu-heading {
+                display: flex;
+                flex-wrap: wrap;
+                align-items: center;
+                justify-content: space-between;
+                gap: .35rem .7rem;
+            }
+
+            .df-menu-concierge .df-menu-title {
+                margin: 0;
+                color: #783434;
+                font-family: inherit;
+                font-size: 1rem;
+                font-weight: 700;
+            }
+
+            .df-menu-concierge .df-menu-booking {
+                margin: .2rem 0 0;
+                color: #6d5149;
+                font-size: .8rem;
+                overflow-wrap: anywhere;
+            }
+
+            .df-menu-concierge a {
+                color: #783434;
+                text-underline-offset: .16em;
+            }
+
+            .df-menu-concierge .df-menu-link {
+                border: 1px solid #783434;
+                border-radius: 999px;
+                padding: .3rem .65rem;
+                font-size: .8rem;
+                font-weight: 700;
+                text-decoration: none;
+            }
+
+            .df-menu-concierge .df-menu-prompts {
+                display: flex;
+                flex-wrap: wrap;
+                gap: .35rem;
+                margin-top: .55rem;
+            }
+
+                .df-menu-concierge .df-menu-prompts[hidden] {
+                    display: none;
+                }
+
+                .df-menu-concierge .df-menu-prompts button {
+                    border: 1px solid #d4ac94;
+                    border-radius: 999px;
+                    padding: .28rem .62rem;
+                    background: #fffaf4;
+                    color: #783434;
+                    font: inherit;
+                    font-size: .8rem;
+                }
+
+            .df-menu-concierge button:hover,
+            .df-menu-concierge .df-menu-link:hover {
+                background: #783434;
+                border-color: #783434;
+                color: white;
+            }
+
+            .df-menu-concierge :is(a, button):focus-visible {
+                outline: 2px solid #783434;
+                outline-offset: 2px;
+            }
+
+            .df-menu-concierge .df-menu-feedback {
+                margin: .35rem 0 0;
+                color: #783434;
+                font-size: .8rem;
+            }
+
+                .df-menu-concierge .df-menu-feedback:empty {
+                    display: none;
+                }
+
+        @@media (max-width: 575.98px) {
+            .df-menu-concierge {
+                padding: .65rem .75rem;
+            }
+
+            .df-chat-panel:has(> .df-menu-concierge) {
+                height: auto !important;
+                min-height: 0;
+            }
+
+                .df-chat-panel:has(> .df-menu-concierge) > .df-chat-history {
+                    height: clamp(9rem, 34vh, 19rem);
+                    flex: 0 0 auto;
+                }
+        }
+    </style>
+
+    <section class="df-menu-concierge" aria-labelledby="df-menu-consult-title">
+        <div class="df-menu-heading">
+            <h2 id="df-menu-consult-title" class="df-menu-title">Tư vấn thực đơn cho bàn của bạn</h2>
+
+            @if (!string.IsNullOrEmpty(menuUrl))
+            {
+                <a class="df-menu-link" href="@menuUrl" target="_blank" rel="noopener"
+                   aria-label="Xem thực đơn trong tab mới">
+                    Xem thực đơn <span aria-hidden="true">↗</span>
+                </a>
+            }
+        </div>
+
+        @if (!string.IsNullOrWhiteSpace(Model.ReservationCode))
+        {
+            <p class="df-menu-booking">
+                Mã đặt bàn
+                @if (!string.IsNullOrEmpty(bookingUrl))
+                {
+                    <a href="@bookingUrl">@Model.ReservationCode</a>
+                }
+                else
+                {
+                    <strong>@Model.ReservationCode</strong>
+                }
+            </p>
+        }
+
+        @if (Model.CanSend)
+        {
+            <div class="df-menu-prompts" role="group" aria-label="Gợi ý nội dung tin nhắn" hidden>
+                <button type="button" data-prompt="Nhà hàng gợi ý giúp mình thực đơn phù hợp với số khách của lượt đặt này nhé.">
+                    Gợi ý thực đơn
+                </button>
+                <button type="button" data-prompt="Nhà hàng cho mình hỏi giá và khẩu phần của món mình đang quan tâm nhé.">
+                    Giá và khẩu phần
+                </button>
+                <button type="button" data-prompt="Nhà hàng lưu ý giúp mình về dị ứng hoặc món cần kiêng: ">
+                    Dị ứng và kiêng món
+                </button>
+            </div>
+            <p class="df-menu-feedback" role="status"></p>
+
+            <script>
+                (() => {
+                    const panel = document.currentScript.closest(".df-menu-concierge");
+                    const prompts = panel.querySelector(".df-menu-prompts");
+                    const feedback = panel.querySelector(".df-menu-feedback");
+
+                    // Partial xuất hiện trước ô soạn tin trong View chính.
+                    function connect() {
+                        const input = panel.closest("#df-chat")?.querySelector("#df-chat-body");
+                        if (!input) return;
+
+                        prompts.hidden = false;
+                        prompts.addEventListener("click", event => {
+                            const button = event.target.closest("button[data-prompt]");
+                            if (!button || input.disabled) return;
+
+                            const prompt = button.dataset.prompt;
+                            if (input.value.split("\n").includes(prompt)) {
+                                input.focus();
+                                return;
+                            }
+
+                            const draft = input.value;
+                            const next = draft.trim() ? draft + "\n\n" + prompt : prompt;
+                            if (input.maxLength >= 0 && next.length > input.maxLength) {
+                                feedback.textContent = "Bản nháp đã gần đầy. Bạn có thể rút gọn tin nhắn trước.";
+                                return;
+                            }
+
+                            feedback.textContent = "";
+                            input.value = next;
+                            input.dispatchEvent(new Event("input", { bubbles: true }));
+                            input.focus();
+                            input.setSelectionRange(next.length, next.length);
+                        });
+                    }
+
+                    if (document.readyState === "loading") {
+                        document.addEventListener("DOMContentLoaded", connect, { once: true });
+                    } else {
+                        connect();
+                    }
+                })();
+            </script>
+        }
+    </section>
+}

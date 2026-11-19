@@ -38,100 +38,102 @@ public sealed class ChatService
     // reservationId = null: tư vấn chung.
     // Có reservationId: tư vấn về lượt đặt bàn đó.
     public async Task<ChatConversation> OpenConversationAsync(
-        ClaimsPrincipal user,
-        long? reservationId,
-        CancellationToken cancellationToken)
+    ClaimsPrincipal user,
+    long? reservationId,
+    CancellationToken cancellationToken,
+    bool fromStaff = false)
     {
-        var actor = await GetActorAsync(
-            user,
-            cancellationToken);
+        var actor = await GetActorAsync(user, cancellationToken);
 
-        if (reservationId.HasValue && reservationId.Value <= 0)
+        if (fromStaff && !actor.IsStaff)
         {
-            throw new ChatException(
-                400,
-                "Thông tin đặt bàn không hợp lệ.");
+            throw new ChatException(403, "Tài khoản không có quyền tư vấn đặt bàn.");
         }
 
-        var resource =
-            $"DoraFood.Chat.Open:{actor.Id}:{reservationId ?? 0}";
+        if (reservationId is <= 0 || (fromStaff && !reservationId.HasValue))
+        {
+            throw new ChatException(400, "Thông tin đặt bàn không hợp lệ.");
+        }
 
-        return await WithChatLockAsync(
-            resource,
-            async () =>
+        var resource = reservationId.HasValue
+            ? $"DoraFood.Chat.OpenReservation:{reservationId.Value}"
+            : $"DoraFood.Chat.Open:{actor.Id}:0";
+
+        return await WithChatLockAsync(resource, async () =>
+        {
+            var conversations = _context.Set<ChatConversation>().AsTracking();
+            var customerId = actor.Id;
+            var title = "Tư vấn cùng DoraFood";
+            ChatConversation? existing;
+
+            if (reservationId is long id)
             {
-                string? reservationCode = null;
-
-                if (reservationId.HasValue)
-                {
-                    reservationCode = await _context
-                        .Set<Reservation>()
-                        .AsNoTracking()
-                        .Where(reservation =>
-                            reservation.Id == reservationId.Value
-                            && reservation.CustomerId == actor.Id)
-                        .Select(reservation => reservation.Code)
-                        .SingleOrDefaultAsync(cancellationToken);
-
-                    if (reservationCode == null)
+                var booking = await _context.Set<Reservation>()
+                    .AsNoTracking()
+                    .Where(item => item.Id == id && (fromStaff || item.CustomerId == actor.Id))
+                    .Select(item => new
                     {
-                        throw new ChatException(
-                            404,
-                            "Không tìm thấy lượt đặt bàn.");
-                    }
-                }
-
-                var query = _context.Set<ChatConversation>()
-                    .AsTracking()
-                    .Where(conversation =>
-                        conversation.CustomerId == actor.Id);
-
-                if (reservationId.HasValue)
-                {
-                    // Hội thoại đặt bàn được giữ lại
-                    // kể cả khi đã đóng để xem lịch sử.
-                    query = query.Where(conversation =>
-                        conversation.ReservationId ==
-                            reservationId.Value);
-                }
-                else
-                {
-                    query = query.Where(conversation =>
-                        conversation.ReservationId == null
-                        && conversation.Status == "OPEN");
-                }
-
-                var existing = await query
+                        item.CustomerId,
+                        item.Code,
+                        item.Status,
+                        item.StartsAtUtc,
+                        HasTables = item.Tables.Any()
+                    })
                     .SingleOrDefaultAsync(cancellationToken);
+
+                if (booking == null || booking.CustomerId is not long ownerId)
+                {
+                    throw new ChatException(404, "Không tìm thấy lượt đặt bàn gắn với tài khoản khách.");
+                }
+
+                customerId = ownerId;
+                existing = await conversations.SingleOrDefaultAsync(
+                    item => item.ReservationId == id && item.CustomerId == customerId,
+                    cancellationToken);
 
                 if (existing != null)
                 {
                     return existing;
                 }
 
-                var now = DateTime.UtcNow;
-
-                var conversation = new ChatConversation
+                if (booking.Status != "CONFIRMED"
+                    || !booking.HasTables
+                    || booking.StartsAtUtc <= DateTime.UtcNow.AddMinutes(-30))
                 {
-                    CustomerId = actor.Id,
-                    ReservationId = reservationId,
+                    throw new ChatException(409, "Lượt đặt cần được xác nhận, đã phân bàn và còn hạn giữ bàn để mở tư vấn món.");
+                }
 
-                    Title = reservationCode == null
-                        ? "Tư vấn cùng DoraFood"
-                        : $"Tư vấn đặt bàn {reservationCode}",
+                title = $"Tư vấn đặt bàn {booking.Code}";
+            }
+            else
+            {
+                existing = await conversations.SingleOrDefaultAsync(
+                    item => item.CustomerId == customerId
+                        && item.ReservationId == null
+                        && item.Status == "OPEN",
+                    cancellationToken);
 
-                    Status = "OPEN",
-                    CreatedAtUtc = now,
-                    UpdatedAtUtc = now
-                };
+                if (existing != null)
+                {
+                    return existing;
+                }
+            }
 
-                _context.Set<ChatConversation>().Add(conversation);
+            var now = DateTime.UtcNow;
+            var conversation = new ChatConversation
+            {
+                CustomerId = customerId,
+                ReservationId = reservationId,
+                Title = title,
+                Status = "OPEN",
+                CreatedAtUtc = now,
+                UpdatedAtUtc = now
+            };
 
-                await _context.SaveChangesAsync(cancellationToken);
-
-                return conversation;
-            },
-            cancellationToken);
+            _context.Set<ChatConversation>().Add(conversation);
+            await _context.SaveChangesAsync(cancellationToken);
+            return conversation;
+        }, cancellationToken);
     }
 
     // Controller khách truyền fromStaff: false.

@@ -41,7 +41,7 @@
         .df-chat .df-chat-panel {
             display: flex;
             flex-direction: column;
-            height: 520px;
+            height: 490px;
             min-height: 340px;
             border: 1px solid #e7dce0;
             border-radius: 14px;
@@ -345,144 +345,151 @@
                 : "Về trang chủ")
         </a>
 
-        <div class="df-chat-panel">
+        <link rel="stylesheet" href="@Url.Content("~/assets/css/dorafood-chat-sides.css")" asp-append-version="true">
 
-            <header class="df-chat-header">
-                <div class="df-chat-brand">
-                    <div class="df-chat-avatar" aria-hidden="true">
-                        <i class="fas fa-utensils"></i>
-                    </div>
+        <div class="df-chat-side-layout">
+            @await Html.PartialAsync("_ChatSidePanels", Model)
+            <div id="df-chat-main" class="df-chat-side-main">
+                <div class="df-chat-panel">
 
-                    <div>
-                        <h1 class="df-chat-title">
-                            DoraFood hỗ trợ
-                        </h1>
+                    <header class="df-chat-header">
+                        <div class="df-chat-brand">
+                            <div class="df-chat-avatar" aria-hidden="true">
+                                <i class="fas fa-utensils"></i>
+                            </div>
 
-                        <div class="df-chat-subtitle">
-                            Tư vấn món ăn và đặt bàn
+                            <div>
+                                <h1 class="df-chat-title">
+                                    DoraFood hỗ trợ
+                                </h1>
+
+                                <div class="df-chat-subtitle">
+                                    Tư vấn món ăn và đặt bàn
+                                </div>
+                            </div>
                         </div>
+
+                        <span class="df-chat-state
+                            @(!Model.CanSend ? "is-closed" : "")">
+                            @(Model.CanSend
+                                ? "Hội thoại mở"
+                                : "Đã đóng")
+                        </span>
+                    </header>
+
+                    <div class="df-chat-context">
+                        @if (Model.ReservationId.HasValue)
+                        {
+                            <strong>Đặt bàn:</strong>
+
+                            <a href="@backUrl">
+                                @Model.ReservationCode
+                            </a>
+                        }
+                        else
+                        {
+                            <strong>Tư vấn chung</strong>
+                            <span> · Trao đổi trực tiếp với nhân viên nhà hàng</span>
+                        }
                     </div>
-                </div>
+                    @await Html.PartialAsync("_BookingMenuConsultation", Model)
+                    <div id="df-chat-status"
+                         class="df-chat-status"
+                         role="status"
+                         hidden></div>
 
-                <span class="df-chat-state
-                    @(!Model.CanSend ? "is-closed" : "")">
-                    @(Model.CanSend
-                        ? "Hội thoại mở"
-                        : "Đã đóng")
-                </span>
-            </header>
+                    <div id="df-chat-history"
+                         class="df-chat-history"
+                         aria-label="Lịch sử trò chuyện">
 
-            <div class="df-chat-context">
-                @if (Model.ReservationId.HasValue)
-                {
-                    <strong>Đặt bàn:</strong>
-
-                    <a href="@backUrl">
-                        @Model.ReservationCode
-                    </a>
-                }
-                else
-                {
-                    <strong>Tư vấn chung</strong>
-                    <span> · Trao đổi trực tiếp với nhân viên nhà hàng</span>
-                }
-            </div>
-
-            <div id="df-chat-status"
-                 class="df-chat-status"
-                 role="status"
-                 hidden></div>
-
-            <div id="df-chat-history"
-                 class="df-chat-history"
-                 aria-label="Lịch sử trò chuyện">
-
-                <div class="text-center mb-2">
-                    <button id="df-chat-older"
-                            type="button"
-                            class="btn btn-sm btn-outline-secondary"
-                            hidden>
-                        Xem tin nhắn cũ hơn
-                    </button>
-                </div>
-
-                <div id="df-chat-messages">
-                    <div class="df-chat-empty">
-                        Đang tải tin nhắn...
-                    </div>
-                </div>
-            </div>
-
-            <form id="df-chat-form"
-                  action="@Url.RouteUrl(
-                              "DoraFoodSendChatMessage",
-                              new { id = Model.ConversationId })"
-                  method="post"
-                  class="df-chat-compose">
-
-                @Html.AntiForgeryToken()
-
-                <label for="df-chat-body"
-                       class="visually-hidden">
-                    Tin nhắn của bạn
-                </label>
-
-                <div class="df-chat-compose-row">
-                    <textarea id="df-chat-body"
-                              name="Body"
-                              class="form-control"
-                              rows="2"
-                              maxlength="2000"
-                              disabled="@(!Model.CanSend)"
-                              placeholder="Nhập tin nhắn cho nhà hàng..."></textarea>
-                    <fieldset id="df-chat-attachments"
-                              class="mt-2"
-                              disabled="@(!Model.CanSend)">
-                        <button id="df-chat-choose-image"
-                                type="button"
-                                class="btn btn-sm btn-outline-secondary">
-                            <i class="far fa-image me-1" aria-hidden="true"></i>
-                            Chọn ảnh
-                        </button>
-
-                        <input id="df-chat-image"
-                               name="Image"
-                               type="file"
-                               accept=".jpg,.jpeg,.png,.webp"
-                               hidden />
-
-                        <div id="df-chat-preview" class="mt-2" hidden>
-                            <img id="df-chat-preview-image"
-                                 alt="Ảnh đã chọn"
-                                 class="rounded border"
-                                 style="width: 80px; height: 60px; object-fit: contain;" />
-
-                            <button id="df-chat-remove-image"
+                        <div class="text-center mb-2">
+                            <button id="df-chat-older"
                                     type="button"
-                                    class="btn btn-sm btn-outline-danger ms-2">
-                                Bỏ ảnh
+                                    class="btn btn-sm btn-outline-secondary"
+                                    hidden>
+                                Xem tin nhắn cũ hơn
                             </button>
                         </div>
-                    </fieldset>
-                    <button id="df-chat-send"
-                            type="submit"
-                            disabled="@(!Model.CanSend)">
-                        Gửi
-                    </button>
-                </div>
 
-                <div class="df-chat-compose-help">
-                    <span>
-                        @(Model.CanSend
-                            ? "Enter để gửi · Shift + Enter để xuống dòng"
-                            : "Hội thoại đã đóng · Bạn vẫn xem được lịch sử")
-                    </span>
+                        <div id="df-chat-messages">
+                            <div class="df-chat-empty">
+                                Đang tải tin nhắn...
+                            </div>
+                        </div>
+                    </div>
 
-                    <span id="df-chat-counter">
-                        0/2000 ký tự
-                    </span>
+                    <form id="df-chat-form"
+                          action="@Url.RouteUrl(
+                                      "DoraFoodSendChatMessage",
+                                      new { id = Model.ConversationId })"
+                          method="post"
+                          class="df-chat-compose">
+
+                        @Html.AntiForgeryToken()
+
+                        <label for="df-chat-body"
+                               class="visually-hidden">
+                            Tin nhắn của bạn
+                        </label>
+
+                        <div class="df-chat-compose-row">
+                            <textarea id="df-chat-body"
+                                      name="Body"
+                                      class="form-control"
+                                      rows="2"
+                                      maxlength="2000"
+                                      disabled="@(!Model.CanSend)"
+                                      placeholder="Nhập tin nhắn cho nhà hàng..."></textarea>
+                            <fieldset id="df-chat-attachments"
+                                      class="mt-2"
+                                      disabled="@(!Model.CanSend)">
+                                <button id="df-chat-choose-image"
+                                        type="button"
+                                        class="btn btn-sm btn-outline-secondary">
+                                    <i class="far fa-image me-1" aria-hidden="true"></i>
+                                    Chọn ảnh
+                                </button>
+
+                                <input id="df-chat-image"
+                                       name="Image"
+                                       type="file"
+                                       accept=".jpg,.jpeg,.png,.webp"
+                                       hidden />
+
+                                <div id="df-chat-preview" class="mt-2" hidden>
+                                    <img id="df-chat-preview-image"
+                                         alt="Ảnh đã chọn"
+                                         class="rounded border"
+                                         style="width: 80px; height: 60px; object-fit: contain;" />
+
+                                    <button id="df-chat-remove-image"
+                                            type="button"
+                                            class="btn btn-sm btn-outline-danger ms-2">
+                                        Bỏ ảnh
+                                    </button>
+                                </div>
+                            </fieldset>
+                            <button id="df-chat-send"
+                                    type="submit"
+                                    disabled="@(!Model.CanSend)">
+                                Gửi
+                            </button>
+                        </div>
+
+                        <div class="df-chat-compose-help">
+                            <span>
+                                @(Model.CanSend
+                                    ? "Enter để gửi · Shift + Enter để xuống dòng"
+                                    : "Hội thoại đã đóng · Bạn vẫn xem được lịch sử")
+                            </span>
+
+                            <span id="df-chat-counter">
+                                0/2000 ký tự
+                            </span>
+                        </div>
+                    </form>
                 </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>
@@ -992,7 +999,7 @@ if (item.body) {
                     window.innerHeight - top - 18;
 
                 panel.style.height =
-                    Math.max(340, Math.min(580, availableHeight)) + "px";
+                    Math.max(340, Math.min(520, availableHeight)) + "px";
 
                 if (keepAtBottom) {
                     history.scrollTop = history.scrollHeight;

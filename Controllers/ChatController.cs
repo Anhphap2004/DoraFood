@@ -110,6 +110,33 @@ public sealed class ChatController : Controller
         }
     }
 
+
+    [HttpPost("/tro-chuyen/dat-ban/{id:long}/mo", Name = "DoraFoodOpenBookingChat")]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> OpenBookingChat([FromRoute] long id)
+    {
+        try
+        {
+            var conversation = await _chat.OpenConversationAsync(
+                User, id, HttpContext.RequestAborted);
+
+            return RedirectToRoute(
+                "DoraFoodChatDetails",
+                new { id = conversation.Id });
+        }
+        catch (ChatException ex)
+        {
+            TempData["BookingHistoryError"] = ex.Message;
+            return RedirectToRoute("DoraFoodMyBookings");
+        }
+        catch (Exception ex) when (ex is DbUpdateException || ex is SqlException)
+        {
+            _logger.LogError(ex, "Không mở được tư vấn món cho lượt đặt {BookingId}.", id);
+            TempData["BookingHistoryError"] = "Chưa mở được tư vấn món. Vui lòng thử lại.";
+            return RedirectToRoute("DoraFoodMyBookings");
+        }
+    }
+
     // GET: trang trò chuyện của khách.
     [HttpGet(
         "/tro-chuyen/{id:long}",
