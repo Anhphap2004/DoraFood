@@ -264,7 +264,7 @@
                                 <span asp-validation-for="Note"
                                       class="text-danger small"></span>
                             </div>
-
+                            @await Html.PartialAsync("_BookingServiceOptions", Model)
                             <div class="col-12">
                                 <p class="text-muted small mb-3">
                                     Vui lòng kiểm tra số điện thoại trước

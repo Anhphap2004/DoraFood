@@ -1,0 +1,56 @@
+@using System.Globalization
+@using System.Linq
+@model DoraFood.Controllers.BookingController.BookingInput
+
+@{
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+    var selectedIds = Model.SelectedServiceIds.ToHashSet();
+}
+
+@if (Model.ServiceOptions.Count > 0)
+{
+    <div class="col-12">
+        <fieldset class="border rounded-3 p-3">
+            <legend class="float-none w-auto px-2 fs-6 fw-semibold mb-0">
+                Dịch vụ đi kèm
+            </legend>
+            <p class="small mb-3">Chọn dịch vụ cho lượt đặt bàn, nếu cần.</p>
+
+            <div class="row row-cols-1 row-cols-lg-2 g-2">
+                @foreach (var service in Model.ServiceOptions)
+                {
+                    var checkboxId = $"booking-service-{service.Id}";
+
+                    <div class="col">
+                        <label for="@checkboxId"
+                               class="d-flex align-items-center gap-2 border rounded-3 px-3 py-2 h-100">
+                            <input id="@checkboxId"
+                                   name="SelectedServiceIds"
+                                   value="@service.Id"
+                                   type="checkbox"
+                                   class="form-check-input flex-shrink-0 mt-0"
+                                   checked="@(selectedIds.Contains(service.Id))">
+
+                            @if (!string.IsNullOrWhiteSpace(service.ImageUrl) && Url.IsLocalUrl(service.ImageUrl))
+                            {
+                                <img src="@Url.Content(service.ImageUrl)"
+                                     width="56"
+                                     height="44"
+                                     alt=""
+                                     loading="lazy"
+                                     class="rounded object-fit-cover flex-shrink-0">
+                            }
+
+                            <span>
+                                <span class="d-block fw-semibold text-break">@service.Name</span>
+                                <span class="small">@service.BasePrice.ToString("#,##0.##", culture) ₫</span>
+                            </span>
+                        </label>
+                    </div>
+                }
+            </div>
+        </fieldset>
+    </div>
+}
+
+<span asp-validation-for="SelectedServiceIds" class="col-12 text-danger small"></span>

@@ -378,7 +378,7 @@ namespace DoraFood.Controllers
          .ThenInclude(t => t.Area)
      .Include(r => r.Orders)
          .ThenInclude(order => order.Invoice)
-     .AsSplitQuery()
+     .AsSplitQuery().Include(r => r.ReservationServices)
      .FirstOrDefaultAsync(
          r => r.Id == id,
          cancellationToken);

@@ -1,0 +1,377 @@
+@using System.Globalization
+@using System.Linq
+@model DoraFood.Models.Reservation
+
+@{
+    ViewData["Title"] = "Chi tiết đặt bàn";
+
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+    var arrival = Model.StartsAtUtc.AddHours(7);
+    var historyUrl = Url.RouteUrl("DoraFoodMyBookings");
+    var hasServices = Model.ReservationServices.Any();
+
+    var noelPhoto = Url.Content("~/images/vouchers/noel.webp");
+    var tetPhoto = Url.Content("~/images/chat/dorafood-ban-tiec-tet.webp");
+
+    var (statusLabel, statusTone) = Model.Status switch
+    {
+        "PENDING" => ("Chờ xác nhận", "amber"),
+        "CONFIRMED" => ("Đã xác nhận", "green"),
+        "SEATED" => ("Đã vào bàn", "blue"),
+        "COMPLETED" => ("Đã hoàn thành", "green"),
+        "CANCELLED" => ("Đã hủy", "gray"),
+        "NO_SHOW" => ("Không đến", "rose"),
+        _ => ("Chưa xác định", "gray")
+    };
+}
+
+<section class="df-booking-slip" aria-labelledby="booking-slip-title">
+    <nav class="bs-back" aria-label="Điều hướng đặt bàn">
+        <a href="@historyUrl">
+            <i class="fas fa-arrow-left" aria-hidden="true"></i>
+            Lịch sử đặt bàn
+        </a>
+    </nav>
+
+    <header class="bs-header">
+        <div class="bs-heading">
+            <div class="bs-title-row">
+                <h1 id="booking-slip-title">Chi tiết đặt bàn</h1>
+                <span class="bs-status bs-status--@statusTone">@statusLabel</span>
+            </div>
+
+            <div class="bs-arrival">
+                <span class="bs-time">@arrival.ToString("HH:mm", culture)</span>
+                <span>@arrival.ToString("dd/MM/yyyy", culture)</span>
+                <span class="bs-dot" aria-hidden="true">·</span>
+                <span>@Model.PartySize người</span>
+            </div>
+        </div>
+
+        <div class="bs-season" aria-hidden="true">
+            <span class="bs-photo bs-photo-noel"
+                  style="--bs-photo: url('@noelPhoto')">
+                <i class="fas fa-tree"></i>
+            </span>
+            <span class="bs-photo bs-photo-tet"
+                  style="--bs-photo: url('@tetPhoto')">
+                <span class="bs-lantern"></span>
+            </span>
+        </div>
+    </header>
+
+    <div class="bs-grid">
+        <section class="bs-panel" aria-labelledby="bs-info-title">
+            <h2 id="bs-info-title">Thông tin đặt bàn</h2>
+
+            <dl class="bs-facts">
+                <div>
+                    <dt>Mã yêu cầu</dt>
+                    <dd class="bs-code">@Model.Code</dd>
+                </div>
+                <div>
+                    <dt>Người liên hệ</dt>
+                    <dd>@Model.GuestName</dd>
+                </div>
+                <div>
+                    <dt>Số điện thoại</dt>
+                    <dd>@Model.GuestPhone</dd>
+                </div>
+                @if (!string.IsNullOrWhiteSpace(Model.Note))
+                {
+                    <div>
+                        <dt>Ghi chú</dt>
+                        <dd class="bs-note">@Model.Note</dd>
+                    </div>
+                }
+            </dl>
+        </section>
+
+        <div class="bs-services">
+            @if (hasServices)
+            {
+                @await Html.PartialAsync("_MyBookingServices", Model.ReservationServices)
+            }
+            else
+            {
+                <section class="bs-panel" aria-labelledby="bs-services-title">
+                    <h2 id="bs-services-title">Dịch vụ đi kèm</h2>
+                    <p class="bs-empty">Lượt đặt này chưa chọn dịch vụ đi kèm.</p>
+                </section>
+            }
+        </div>
+    </div>
+</section>
+
+<style>
+    .df-booking-slip {
+        --bs-ink: #382f2c;
+        --bs-muted: #665752;
+        --bs-wine: #78424e;
+        --bs-pine: #345d49;
+        --bs-line: #eadfd6;
+        width: min(calc(100% - 28px), 56rem);
+        margin-inline: auto;
+        padding-block: 14px 26px;
+        color: var(--bs-ink);
+        line-height: 1.45;
+    }
+
+        .df-booking-slip, .df-booking-slip * {
+            box-sizing: border-box;
+        }
+
+    .bs-back {
+        margin-bottom: 10px;
+    }
+
+        .bs-back a {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 5px 9px;
+            border: 1px solid var(--bs-line);
+            border-radius: 7px;
+            background: #fffaf4;
+            color: var(--bs-wine);
+            font-size: .83rem;
+            text-decoration: none;
+        }
+
+            .bs-back a:hover {
+                background: #f6ece5;
+            }
+
+            .bs-back a:focus-visible {
+                outline: 2px solid var(--bs-pine);
+                outline-offset: 2px;
+            }
+
+    .bs-header {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 10px;
+        padding: 12px 14px;
+        border: 1px solid var(--bs-line);
+        border-radius: 12px;
+        background: linear-gradient(105deg, #fff8ee, #fbf6ef 58%, #edf3eb);
+    }
+
+    .bs-title-row, .bs-arrival {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: baseline;
+        gap: 5px 9px;
+    }
+
+    .df-booking-slip h1, .df-booking-slip h2 {
+        margin: 0;
+        color: var(--bs-ink);
+        font-weight: 600;
+        line-height: 1.3;
+    }
+
+    .df-booking-slip h1 {
+        font-size: clamp(1.25rem, 2.6vw, 1.75rem);
+    }
+
+    .df-booking-slip h2 {
+        font-size: 1rem;
+    }
+
+    .bs-arrival {
+        margin-top: 5px;
+        color: var(--bs-muted);
+        font-size: .86rem;
+    }
+
+    .bs-time {
+        color: var(--bs-wine);
+        font-size: 1.12rem;
+        font-weight: 600;
+    }
+
+    .bs-status {
+        padding: 3px 7px;
+        border-radius: 6px;
+        font-size: .74rem;
+        font-weight: 500;
+    }
+
+    .bs-status--amber {
+        background: #fbefd1;
+        color: #6a4c18;
+    }
+
+    .bs-status--green {
+        background: #e5f0e6;
+        color: #34583d;
+    }
+
+    .bs-status--blue {
+        background: #e8eff7;
+        color: #36546d;
+    }
+
+    .bs-status--gray {
+        background: #efeae7;
+        color: #564b48;
+    }
+
+    .bs-status--rose {
+        background: #fae7e8;
+        color: #823a46;
+    }
+
+    .bs-season {
+        display: flex;
+        overflow: hidden;
+        border: 1px solid #e0d0c0;
+        border-radius: 8px;
+    }
+
+    .bs-photo {
+        display: grid;
+        place-items: center;
+        width: 42px;
+        height: 46px;
+        color: #f4edba;
+        background: linear-gradient(var(--bs-shade), var(--bs-shade)), var(--bs-photo) center / cover, var(--bs-photo-base);
+    }
+
+    .bs-photo-noel {
+        --bs-shade: #264b3c96;
+        --bs-photo-base: #3f6652;
+    }
+
+    .bs-photo-tet {
+        --bs-shade: #79344185;
+        --bs-photo-base: #995565;
+    }
+
+    .bs-photo > i,
+    .bs-lantern {
+        animation: bs-festive-sway 1.25s ease-in-out 2;
+    }
+
+    .bs-lantern {
+        position: relative;
+        width: 18px;
+        height: 17px;
+        border: 1px solid #ffe3aa;
+        border-radius: 44%;
+        background: repeating-linear-gradient(90deg, #c95752 0 3px, #ef886a 3px 5px);
+        animation-delay: .15s;
+    }
+
+        .bs-lantern::before, .bs-lantern::after {
+            position: absolute;
+            left: calc(50% - 1px);
+            width: 2px;
+            height: 5px;
+            background: #ffe3aa;
+            content: "";
+        }
+
+        .bs-lantern::before {
+            top: -6px;
+        }
+
+        .bs-lantern::after {
+            bottom: -6px;
+        }
+
+    @@keyframes bs-festive-sway {
+        50% {
+            transform: translateY(-3px) rotate(-6deg);
+        }
+    }
+
+    .bs-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, .9fr);
+        align-items: start;
+        gap: 10px;
+    }
+
+    .bs-panel, .bs-services > section {
+        min-width: 0;
+        padding: 11px 13px;
+        border: 1px solid var(--bs-line);
+        border-radius: 10px;
+        background: #fffefa;
+    }
+
+    .bs-services > section {
+        margin: 0 !important;
+        padding: 11px 13px !important;
+        border-color: var(--bs-line) !important;
+    }
+
+    .bs-services :is(.fw-bold, .fw-semibold, strong) {
+        font-weight: 600 !important;
+    }
+
+    .bs-facts {
+        display: grid;
+        gap: 6px;
+        margin: 8px 0 0;
+        font-size: .85rem;
+    }
+
+        .bs-facts > div {
+            display: grid;
+            grid-template-columns: 7.25rem minmax(0, 1fr);
+            gap: 7px;
+        }
+
+        .bs-facts dt {
+            color: var(--bs-muted);
+            font-weight: 500;
+        }
+
+        .bs-facts dd {
+            margin: 0;
+            overflow-wrap: anywhere;
+        }
+
+    .bs-code {
+        color: var(--bs-wine);
+        font-size: .8rem;
+    }
+
+    .bs-note {
+        white-space: pre-wrap;
+    }
+
+    .bs-empty {
+        margin: 5px 0 0;
+        color: var(--bs-muted);
+        font-size: .85rem;
+    }
+
+    @@media (max-width: 680px) {
+        .bs-grid {
+            grid-template-columns: minmax(0, 1fr);
+        }
+    }
+
+    @@media (max-width: 380px) {
+        .bs-photo {
+            width: 33px;
+            height: 39px;
+        }
+
+        .bs-facts > div {
+            grid-template-columns: 6rem minmax(0, 1fr);
+        }
+    }
+
+    @@media (prefers-reduced-motion: reduce) {
+        .bs-photo > i, .bs-lantern {
+            animation: none;
+        }
+    }
+</style>

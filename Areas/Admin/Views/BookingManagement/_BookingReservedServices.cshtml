@@ -1,0 +1,58 @@
+@using System.Globalization
+@using System.Linq
+@model System.Collections.Generic.IEnumerable<DoraFood.Models.ReservationService>
+
+@{
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+    var services = Model.OrderBy(service => service.Id).ToList();
+    var total = services.Sum(service => service.Quantity * service.UnitPrice);
+
+    string Money(decimal amount) => amount.ToString("#,##0.##", culture) + " ₫";
+}
+
+<section class="df-card mb-3" aria-labelledby="booking-services-title">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <h2 id="booking-services-title" class="h5 fw-bold mb-0">Dịch vụ đi kèm</h2>
+        <span class="small df-muted">@services.Count dịch vụ</span>
+    </div>
+
+    @if (services.Count == 0)
+    {
+        <p class="mb-0">Lượt đặt này chưa chọn dịch vụ đi kèm.</p>
+    }
+    else
+    {
+        <ul class="list-unstyled d-grid gap-2 mb-3">
+            @foreach (var service in services)
+            {
+                var lineTotal = service.Quantity * service.UnitPrice;
+
+                <li class="df-surface">
+                    <h3 class="h6 fw-bold text-break mb-2">@service.NameSnapshot</h3>
+
+                    <dl class="row g-2 mb-0">
+                        <div class="col-12 col-sm-4">
+                            <dt class="small df-muted">Số lượng</dt>
+                            <dd class="fw-semibold mb-0">
+                                @service.Quantity.ToString("#,##0.###", culture)
+                            </dd>
+                        </div>
+                        <div class="col-12 col-sm-4">
+                            <dt class="small df-muted">Đơn giá đã lưu</dt>
+                            <dd class="fw-semibold mb-0 text-break">@Money(service.UnitPrice)</dd>
+                        </div>
+                        <div class="col-12 col-sm-4 text-sm-end">
+                            <dt class="small df-muted">Thành tiền</dt>
+                            <dd class="fw-bold mb-0 text-break">@Money(lineTotal)</dd>
+                        </div>
+                    </dl>
+                </li>
+            }
+        </ul>
+
+        <dl class="d-flex flex-wrap justify-content-between align-items-baseline gap-2 border-top pt-3 mb-0">
+            <dt>Tổng phí dịch vụ</dt>
+            <dd class="fw-bold mb-0 text-break">@Money(total)</dd>
+        </dl>
+    }
+</section>

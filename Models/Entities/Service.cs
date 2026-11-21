@@ -17,5 +17,6 @@ public partial class Service
 
     public bool IsActive { get; set; }
 
+    public string? ImageUrl { get; set; }
     public virtual ICollection<ReservationService> ReservationServices { get; set; } = new List<ReservationService>();
 }

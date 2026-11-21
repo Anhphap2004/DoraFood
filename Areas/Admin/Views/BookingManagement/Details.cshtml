@@ -1,4 +1,4 @@
-﻿@using System
+@using System
 @using System.Linq
 @model DoraFood.Controllers.BookingManagementController.BookingDetailsViewModel
 
@@ -85,101 +85,78 @@
         color: var(--df-ink);
     }
 
-        .df-booking-details .df-muted {
-            color: var(--df-muted);
-        }
+    .df-booking-details .df-muted { color: var(--df-muted); }
+    .df-booking-details .df-link { color: var(--df-wine); }
 
-        .df-booking-details .df-link {
-            color: var(--df-wine);
-        }
+    .df-booking-details .df-card {
+        padding: 1rem;
+        border: 1px solid var(--df-border);
+        border-radius: .9rem;
+        background: var(--df-paper);
+    }
 
-        .df-booking-details .df-card {
-            padding: 1rem;
-            border: 1px solid var(--df-border);
-            border-radius: .9rem;
-            background: var(--df-paper);
-        }
+    .df-booking-details .df-guest-card { border-top: 3px solid var(--df-peach); }
 
-        .df-booking-details .df-guest-card {
-            border-top: 3px solid var(--df-peach);
-        }
+    .df-booking-details .df-surface {
+        padding: .75rem;
+        border-radius: .65rem;
+        background: #f5ede5;
+    }
 
-        .df-booking-details .df-surface {
-            padding: .75rem;
-            border-radius: .65rem;
-            background: #f5ede5;
-        }
+    .df-booking-details .df-status {
+        display: inline-block;
+        padding: .3rem .7rem;
+        border-radius: 999px;
+        background: #f6e3d2;
+        color: #784424;
+        font-size: .84rem;
+        font-weight: 700;
+    }
 
-        .df-booking-details .df-status {
-            display: inline-block;
-            padding: .3rem .7rem;
-            border-radius: 999px;
-            background: #f6e3d2;
-            color: #784424;
-            font-size: .84rem;
-            font-weight: 700;
-        }
+    .df-booking-details .df-status.is-positive { background: #e8eee2; color: #36533a; }
+    .df-booking-details .df-status.is-seated { background: #f1dfdc; color: #783434; }
+    .df-booking-details .df-status.is-closed { background: #ede5df; color: #614a42; }
 
-            .df-booking-details .df-status.is-positive {
-                background: #e8eee2;
-                color: #36533a;
-            }
+    .df-booking-details .df-primary {
+        background: var(--df-wine);
+        border-color: var(--df-wine);
+        color: white;
+    }
 
-            .df-booking-details .df-status.is-seated {
-                background: #f1dfdc;
-                color: #783434;
-            }
+    .df-booking-details .df-primary:hover,
+    .df-booking-details .df-outline:hover {
+        background: #602727;
+        border-color: #602727;
+        color: white;
+    }
 
-            .df-booking-details .df-status.is-closed {
-                background: #ede5df;
-                color: #614a42;
-            }
+    .df-booking-details .df-outline {
+        border-color: var(--df-wine);
+        color: var(--df-wine);
+    }
 
-        .df-booking-details .df-primary {
-            background: var(--df-wine);
-            border-color: var(--df-wine);
-            color: white;
-        }
+    .df-booking-details .btn:focus-visible,
+    .df-booking-details .df-link:focus-visible {
+        outline: 2px solid var(--df-wine);
+        outline-offset: 2px;
+    }
 
-            .df-booking-details .df-primary:hover,
-            .df-booking-details .df-outline:hover {
-                background: #602727;
-                border-color: #602727;
-                color: white;
-            }
+    .df-booking-details .df-table-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
+        gap: .55rem;
+    }
 
-        .df-booking-details .df-outline {
-            border-color: var(--df-wine);
-            color: var(--df-wine);
-        }
+    .df-booking-details .df-table-tile {
+        min-width: 0;
+        padding: .65rem .75rem;
+        border-radius: .55rem;
+        background: var(--df-wine);
+        color: white;
+    }
 
-        .df-booking-details .btn:focus-visible,
-        .df-booking-details .df-link:focus-visible {
-            outline: 2px solid var(--df-wine);
-            outline-offset: 2px;
-        }
-
-        .df-booking-details .df-table-list {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
-            gap: .55rem;
-        }
-
-        .df-booking-details .df-table-tile {
-            min-width: 0;
-            padding: .65rem .75rem;
-            border-radius: .55rem;
-            background: var(--df-wine);
-            color: white;
-        }
-
-        .df-booking-details .df-break {
-            overflow-wrap: anywhere;
-        }
-
-        .df-booking-details .df-note {
-            white-space: pre-wrap;
-        }
+    .df-booking-details .df-break { overflow-wrap: anywhere; }
+    .df-booking-details .df-note { white-space: pre-wrap; }
 </style>
 
 <section class="df-booking-details container-fluid py-4" aria-labelledby="booking-details-title">
@@ -226,16 +203,6 @@
                                 @(isConfirmed ? "Lập / xem món đặt trước" : "Mở đơn gọi món")
                             </button>
                         </form>
-                        @if (isConfirmed && !arrivalExpired && tables.Count > 0
-    && reservation.CustomerId.HasValue
-    && (User.IsInRole("ADMIN") || User.IsInRole("MANAGER")))
-                        {
-                            <form action="@Url.RouteUrl("DoraFoodAdminOpenBookingChat", routeValues)"
-                                  method="post" class="m-0">
-                                @Html.AntiForgeryToken()
-                                <button type="submit" class="btn df-outline">Tư vấn món</button>
-                            </form>
-                        }
                     }
                 </div>
             }
@@ -342,6 +309,8 @@
             </section>
         </div>
     </div>
+
+    @await Html.PartialAsync("_BookingReservedServices", reservation.ReservationServices)
 
     @if (invoiceOrders.Count > 0)
     {

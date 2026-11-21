@@ -1,0 +1,243 @@
+@model DoraFood.Areas.Admin.ViewModels.ServiceAdminInput
+
+@{
+    var editing = Model.Id != 0;
+    var title = editing ? "Sửa dịch vụ" : "Thêm dịch vụ";
+    var formUrl = editing
+        ? Url.Action("Edit", "Services", new { area = "Admin", id = Model.Id })
+        : Url.Action("Create", "Services", new { area = "Admin" });
+    var hasImage = !string.IsNullOrWhiteSpace(Model.ImageUrl)
+        && Url.IsLocalUrl(Model.ImageUrl);
+
+    ViewData["Title"] = title;
+}
+
+<div class="tp-page tp-services-form w-100">
+    <section class="tp-module-intro">
+        <div class="tp-module-icon" aria-hidden="true">
+            <i class="bi @(editing ? "bi-pencil-square" : "bi-plus-lg")"></i>
+        </div>
+
+        <div>
+            <h2 class="m-0">@title</h2>
+            <p class="service-help mt-1">
+                Nhập thông tin, chọn ảnh và đặt trạng thái hiển thị trên trang chủ.
+            </p>
+        </div>
+    </section>
+
+    <form action="@formUrl"
+          method="post"
+          enctype="multipart/form-data"
+          asp-antiforgery="false"
+          class="card tp-card w-100">
+
+        @Html.AntiForgeryToken()
+
+        <div class="card-body">
+            <div asp-validation-summary="ModelOnly"
+                 class="text-danger"
+                 role="alert"></div>
+
+            <div class="row g-4">
+                <section class="col-12 col-xl-8"
+                         aria-labelledby="service-info-title">
+                    <div class="service-panel h-100">
+                        <h3 id="service-info-title" class="service-panel-title">
+                            <i class="bi bi-card-text" aria-hidden="true"></i>
+                            Thông tin dịch vụ
+                        </h3>
+
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <label asp-for="Name" class="form-label"></label>
+                                <input asp-for="Name"
+                                       class="form-control"
+                                       placeholder="Trang trí sinh nhật">
+                                <span asp-validation-for="Name" class="text-danger"></span>
+                            </div>
+
+                            <div class="col-12 col-md-7">
+                                <label asp-for="Slug" class="form-label"></label>
+                                <input asp-for="Slug"
+                                       class="form-control"
+                                       placeholder="trang-tri-sinh-nhat"
+                                       autocapitalize="none"
+                                       spellcheck="false"
+                                       aria-describedby="service-slug-help">
+                                <span asp-validation-for="Slug" class="text-danger"></span>
+                                <div id="service-slug-help" class="service-help mt-1">
+                                    Dùng chữ thường không dấu, số và dấu gạch ngang.
+                                </div>
+                            </div>
+
+                            <div class="col-12 col-md-5">
+                                <label asp-for="BasePrice" class="form-label"></label>
+                                <input asp-for="BasePrice"
+                                       type="text"
+                                       inputmode="decimal"
+                                       class="form-control"
+                                       placeholder="150000">
+                                <span asp-validation-for="BasePrice"
+                                      class="text-danger"></span>
+                            </div>
+
+                            <div class="col-12">
+                                <label asp-for="DescriptionHtml" class="form-label"></label>
+                                <textarea asp-for="DescriptionHtml"
+                                          rows="6"
+                                          class="form-control"
+                                          placeholder="Mô tả dịch vụ gồm những gì"></textarea>
+                                <span asp-validation-for="DescriptionHtml"
+                                      class="text-danger"></span>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="col-12 col-xl-4"
+                         aria-labelledby="service-display-title">
+                    <div class="service-panel h-100">
+                        <h3 id="service-display-title" class="service-panel-title">
+                            <i class="bi bi-image" aria-hidden="true"></i>
+                            Ảnh &amp; hiển thị
+                        </h3>
+
+                        @if (hasImage)
+                        {
+                            <img src="@Url.Content(Model.ImageUrl)"
+                                 alt="Ảnh hiện tại của dịch vụ"
+                                 width="640"
+                                 height="400"
+                                 class="service-cover">
+                        }
+
+                        <div class="mb-3">
+                            <label asp-for="ImageFile" class="form-label"></label>
+                            <input asp-for="ImageFile"
+                                   type="file"
+                                   accept="image/jpeg,image/png,image/webp"
+                                   class="form-control"
+                                   aria-describedby="service-image-help">
+
+                            <span asp-validation-for="ImageFile"
+                                  class="text-danger"></span>
+
+                            <div id="service-image-help" class="service-help mt-2">
+                                JPG, PNG hoặc WebP, tối đa 5 MB.
+                                @if (editing && hasImage)
+                                {
+                                    <span class="d-block">
+                                        Bỏ trống để giữ ảnh hiện tại.
+                                    </span>
+                                }
+                            </div>
+                        </div>
+
+                        <div class="form-check form-switch tp-switch mb-0">
+                            <input asp-for="IsActive" class="form-check-input">
+                            <label asp-for="IsActive" class="form-check-label"></label>
+                        </div>
+                    </div>
+                </section>
+            </div>
+        </div>
+
+        <div class="card-footer tp-card-footer d-flex flex-wrap gap-2">
+            <a asp-area="Admin"
+               asp-controller="Services"
+               asp-action="Index"
+               class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left" aria-hidden="true"></i>
+                Về danh sách
+            </a>
+
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-check-lg" aria-hidden="true"></i>
+                Lưu dịch vụ
+            </button>
+        </div>
+    </form>
+</div>
+
+@section Styles {
+    <link rel="stylesheet"
+          href="~/admin/css/admin-tet-pages.css"
+          asp-append-version="true">
+
+    <style>
+        .tp-services-form {
+            min-width: 0;
+        }
+
+            .tp-services-form .tp-card,
+            .tp-services-form .tp-module-icon {
+                animation: none !important;
+            }
+
+            .tp-services-form .service-panel {
+                min-width: 0;
+                padding: clamp(1rem, 2vw, 1.4rem);
+                border: 1px solid var(--tp-border);
+                border-radius: .75rem;
+                background: var(--tp-panel);
+                color: var(--tp-ink);
+            }
+
+            .tp-services-form .service-panel-title {
+                display: flex;
+                align-items: center;
+                gap: .55rem;
+                margin: 0 0 1rem;
+                padding-bottom: .75rem;
+                border-bottom: 1px solid var(--tp-border);
+                color: var(--tp-ink);
+                font-size: 1rem;
+                font-weight: 750;
+            }
+
+                .tp-services-form .service-panel-title .bi {
+                    color: var(--tp-wine);
+                }
+
+            .tp-services-form .form-label,
+            .tp-services-form .form-control,
+            .tp-services-form .tp-switch .form-check-label {
+                color: var(--tp-ink);
+                font-size: .9375rem;
+            }
+
+                .tp-services-form .form-control::placeholder {
+                    color: var(--bs-secondary-color);
+                    opacity: 1;
+                }
+
+            .tp-services-form .service-help {
+                color: var(--tp-ink);
+                font-size: .875rem;
+                line-height: 1.5;
+            }
+
+            .tp-services-form .service-cover {
+                display: block;
+                width: 100%;
+                height: auto;
+                max-height: 200px;
+                aspect-ratio: 16 / 10;
+                object-fit: contain;
+                margin-bottom: 1rem;
+                border: 1px solid var(--tp-border);
+                border-radius: .65rem;
+                background: var(--tp-soft);
+            }
+
+            .tp-services-form .tp-card-footer .btn {
+                min-height: 42px;
+                font-size: .875rem;
+            }
+
+            .tp-services-form .btn-outline-secondary {
+                --bs-btn-color: var(--tp-ink);
+            }
+    </style>
+}

@@ -1,0 +1,42 @@
+@using System.Globalization
+@using System.Linq
+@model System.Collections.Generic.IEnumerable<DoraFood.Models.ReservationService>
+
+@{
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+    var services = Model.OrderBy(service => service.Id).ToList();
+    var total = services.Sum(service => service.Quantity * service.UnitPrice);
+
+    string Money(decimal amount) => amount.ToString("#,##0.##", culture) + " ₫";
+}
+
+@if (services.Count > 0)
+{
+    <section class="border rounded-3 p-3 mt-3" aria-label="Dịch vụ đi kèm">
+        <h3 class="h6 fw-bold mb-2">Dịch vụ đi kèm</h3>
+
+        <ul class="list-unstyled d-grid gap-2 mb-0">
+            @foreach (var service in services)
+            {
+                var quantity = service.Quantity.ToString("#,##0.###", culture);
+                var lineTotal = service.Quantity * service.UnitPrice;
+
+                <li class="d-flex flex-wrap justify-content-between align-items-baseline gap-2">
+                    <div class="text-break">
+                        <div class="fw-semibold">@service.NameSnapshot</div>
+                        <div class="small">
+                            @quantity lượt × @Money(service.UnitPrice)
+                        </div>
+                    </div>
+
+                    <div class="fw-semibold text-break">@Money(lineTotal)</div>
+                </li>
+            }
+        </ul>
+
+        <div class="d-flex flex-wrap justify-content-between gap-2 border-top pt-2 mt-3">
+            <span>Tổng phí dịch vụ</span>
+            <strong class="text-break">@Money(total)</strong>
+        </div>
+    </section>
+}

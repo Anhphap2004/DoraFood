@@ -90,20 +90,29 @@
                                     <span class="badge text-bg-secondary">Đã ẩn</span>
                                 }
                             </td>
-                            <td class="text-end">
-                                <form asp-area="Admin"
-                                      asp-controller="NavigationItems"
-                                      asp-action="Delete"
-                                      asp-route-id="@item.Id"
-                                      method="post"
-                                      class="d-inline"
-                                      onsubmit="return confirm('Anh chắc chắn muốn xóa mục điều hướng này?');">
+                                <td class="text-end">
+                                    <div class="d-inline-flex flex-wrap justify-content-end gap-2">
+                                        <a class="btn btn-outline-primary btn-sm"
+                                           href="@Url.Action("Edit", "NavigationItems", new { area = "Admin", id = item.Id })"
+                                           aria-label="Sửa mục @item.Label">
+                                            <i class="bi bi-pencil-square me-1" aria-hidden="true"></i>Sửa
+                                        </a>
 
-                                    <button type="submit"
-                                            class="btn btn-outline-danger btn-sm"
-                                            aria-label="Xóa mục @item.Label"><i class="bi bi-trash3 me-1" aria-hidden="true"></i>Xóa</button>
-                                </form>
-                            </td>
+                                        <form asp-area="Admin"
+                                              asp-controller="NavigationItems"
+                                              asp-action="Delete"
+                                              asp-route-id="@item.Id"
+                                              method="post"
+                                              class="m-0"
+                                              onsubmit="return confirm('Anh chắc chắn muốn xóa mục điều hướng này?');">
+                                            <button type="submit"
+                                                    class="btn btn-outline-danger btn-sm"
+                                                    aria-label="Xóa mục @item.Label">
+                                                <i class="bi bi-trash3 me-1" aria-hidden="true"></i>Xóa
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
                         </tr>
                     }
                 </tbody>

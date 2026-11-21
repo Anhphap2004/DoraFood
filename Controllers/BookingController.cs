@@ -1,7 +1,11 @@
-﻿using DoraFood.Data;
+﻿using System;
+using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading.Tasks;
+using DoraFood.Data;
 using DoraFood.Models;
-using DoraFood.Services;
-using DoraFood.ViewModels;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -11,230 +15,24 @@ using Microsoft.AspNetCore.Mvc.ModelBinding.Validation;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading.Tasks;
+
 namespace DoraFood.Controllers
 {
     public class BookingController : Controller
     {
         private readonly DoraFoodContext _context;
         private readonly ILogger<BookingController> _logger;
-        private readonly NotificationService _notifications;
 
-        public BookingController(
-    DoraFoodContext context,
-    ILogger<BookingController> logger,
-    NotificationService notifications)
-        {
-            _context = context;
-            _logger = logger;
-            _notifications = notifications;
-        }
         private static readonly TimeZoneInfo RestaurantTimeZone =
             TimeZoneInfo.FindSystemTimeZoneById(
                 "SE Asia Standard Time");
 
-        [HttpGet(
-    "/dat-ban/cua-toi/{id:long}/hoa-don/{orderId:long}",
-    Name = "DoraFoodMyBookingInvoice")]
-        [Authorize]
-        [ResponseCache(
-    NoStore = true,
-    Location = ResponseCacheLocation.None)]
-        public async Task<IActionResult> MyBookingInvoice(
-    [FromRoute] long id,
-    [FromRoute] long orderId)
+        public BookingController(
+            DoraFoodContext context,
+            ILogger<BookingController> logger)
         {
-            if (!ModelState.IsValid || id <= 0 || orderId <= 0)
-            {
-                return BadRequest("Thông tin hóa đơn không hợp lệ.");
-            }
-
-            var customerId = await GetActiveCustomerIdAsync();
-
-            if (!customerId.HasValue)
-            {
-                return await RestartBookingLoginAsync(
-                    Url.RouteUrl(
-                        "DoraFoodMyBookingInvoice",
-                        new { id, orderId }));
-            }
-
-            var cancellationToken = HttpContext.RequestAborted;
-
-            // Kiểm tra đồng thời:
-            // - Đúng đơn gọi món.
-            // - Đúng lượt đặt bàn.
-            // - Lượt đặt bàn thuộc tài khoản đang đăng nhập.
-            // - Hóa đơn đã xuất.
-            var invoice = await _context.Set<Invoice>()
-                .AsNoTracking()
-                .Include(item => item.InvoiceLines)
-                .Include(item => item.Order)
-                    .ThenInclude(order => order.Reservation)
-                .Include(item => item.Order)
-                    .ThenInclude(order => order.OrderTables)
-                    .ThenInclude(link => link.Table)
-                .AsSplitQuery()
-                .SingleOrDefaultAsync(
-                    item =>
-                        item.OrderId == orderId
-                        && item.Status == "ISSUED"
-                        && item.IssuedAtUtc.HasValue
-                        && item.Order.OrderType == "DINE_IN"
-                        && item.Order.ReservationId == id
-                        && item.Order.Reservation != null
-                        && item.Order.Reservation.CustomerId ==
-                            customerId.Value
-                        && (
-                            item.Order.CustomerId == customerId.Value
-                            || item.Order.CustomerId == null),
-                    cancellationToken);
-
-            if (invoice == null)
-            {
-                return NotFound("Không tìm thấy hóa đơn.");
-            }
-
-            var issuedAtUtc = invoice.IssuedAtUtc!.Value;
-
-            // Chỉ lấy các khoản thu đến thời điểm xuất hóa đơn.
-            var payments = await _context.Set<Payment>()
-                .AsNoTracking()
-                .Where(payment =>
-                    payment.OrderId == orderId
-                    && payment.Status == "SUCCEEDED"
-                    && payment.PaidAtUtc.HasValue
-                    && payment.PaidAtUtc.Value <= issuedAtUtc)
-                .Select(payment => new
-                {
-                    payment.Purpose,
-                    payment.Amount
-                })
-                .ToListAsync(cancellationToken);
-
-            var refundedAmount = await _context.Set<Refund>()
-                .AsNoTracking()
-                .Where(refund =>
-                    refund.Payment.OrderId == orderId
-                    && refund.Status == "SUCCEEDED"
-                    && refund.RefundedAtUtc.HasValue
-                    && refund.RefundedAtUtc.Value <= issuedAtUtc)
-                .SumAsync(
-                    refund => (decimal?)refund.Amount,
-                    cancellationToken)
-                ?? 0m;
-
-            var model = new MyBookingInvoiceViewModel
-            {
-                Invoice = invoice,
-
-                ReservationId = id,
-
-                ReservationCode =
-                    invoice.Order.Reservation!.Code,
-
-                OrderCode = invoice.Order.Code,
-
-                // Lấy cả bàn đã giải phóng để giữ lịch sử phục vụ.
-                TableCodes = invoice.Order.OrderTables
-                    .Select(link => link.Table.Code)
-                    .Distinct()
-                    .OrderBy(code => code)
-                    .ToList(),
-
-                DepositAmount = payments
-                    .Where(payment => payment.Purpose == "DEPOSIT")
-                    .Sum(payment => payment.Amount),
-
-                SettlementAmount = payments
-                    .Where(payment => payment.Purpose == "SETTLEMENT")
-                    .Sum(payment => payment.Amount),
-
-                RefundedAmount = refundedAmount
-            };
-
-            ViewData["Title"] =
-                $"Hóa đơn {invoice.Number}";
-
-            return View("MyBookingInvoice", model);
-        }
-
-        [HttpGet(
-    "/dat-ban/cua-toi/{id:long}",
-    Name = "DoraFoodMyBookingDetails")]
-        [Authorize]
-        [ResponseCache(
-    NoStore = true,
-    Location = ResponseCacheLocation.None)]
-        public async Task<IActionResult> MyBookingDetails(
-    [FromRoute] long id)
-        {
-            if (!ModelState.IsValid || id <= 0)
-            {
-                return BadRequest("Thông tin đặt bàn không hợp lệ.");
-            }
-
-            // Dùng lại hàm kiểm tra tài khoản và SecurityStamp đã có.
-            var customerId = await GetActiveCustomerIdAsync();
-
-            if (!customerId.HasValue)
-            {
-                return await RestartBookingLoginAsync(
-                    Url.RouteUrl(
-                        "DoraFoodMyBookingDetails",
-                        new { id }));
-            }
-
-            var cancellationToken = HttpContext.RequestAborted;
-
-            // Chỉ đọc lượt đặt bàn thuộc tài khoản đang đăng nhập.
-            var reservation = await _context.Set<Reservation>()
-                .AsNoTracking()
-                .Include(item => item.Tables)
-                    .ThenInclude(table => table.Area)
-                .AsSplitQuery()
-                .SingleOrDefaultAsync(
-                    item =>
-                        item.Id == id
-                        && item.CustomerId == customerId.Value,
-                    cancellationToken);
-
-            if (reservation == null)
-            {
-                return NotFound("Không tìm thấy lượt đặt bàn.");
-            }
-
-            var orders = await _context.Set<Order>()
-                .AsNoTracking()
-                .Include(order => order.OrderItems)
-                    .ThenInclude(item => item.OrderItemAddOns)
-                .Include(order => order.Invoice)
-                .Where(order =>
-                    order.ReservationId == reservation.Id
-                    && order.OrderType == "DINE_IN"
-                    && (
-                        order.CustomerId == customerId.Value
-                        || order.CustomerId == null))
-                .OrderByDescending(order => order.OpenedAtUtc)
-                .ThenByDescending(order => order.Id)
-                .AsSplitQuery()
-                .ToListAsync(cancellationToken);
-
-            var model = new MyBookingDetailsViewModel
-            {
-                Reservation = reservation,
-                Orders = orders
-            };
-
-            ViewData["Title"] =
-                $"Đặt bàn {reservation.Code}";
-
-            return View("MyBookingDetails", model);
+            _context = context;
+            _logger = logger;
         }
 
         // Dữ liệu nhận từ form đặt bàn.
@@ -282,7 +80,18 @@ namespace DoraFood.Controllers
                 1000,
                 ErrorMessage = "Ghi chú tối đa 1.000 ký tự.")]
             public string? Note { get; set; }
+
+            [Display(Name = "Dịch vụ đi kèm")]
+            public List<long> SelectedServiceIds { get; set; } = new();
+
+            [BindNever]
+            [ValidateNever]
+            public IReadOnlyList<BookingServiceOption> ServiceOptions { get; set; } =
+                Array.Empty<BookingServiceOption>();
         }
+
+        public sealed record BookingServiceOption(
+            long Id, string Name, decimal BasePrice, string? ImageUrl);
 
         public class MyBookingsViewModel
         {
@@ -301,7 +110,7 @@ namespace DoraFood.Controllers
         [HttpGet("/Booking")]
         [HttpGet("/Booking/Index")]
         [AllowAnonymous]
-        public IActionResult Index()
+        public async Task<IActionResult> Index()
         {
             var localNow = GetRestaurantTime(DateTime.UtcNow);
 
@@ -344,6 +153,7 @@ namespace DoraFood.Controllers
                         : 22)
             };
 
+            model.ServiceOptions = await LoadBookingServiceOptionsAsync();
             return View(model);
         }
 
@@ -356,6 +166,8 @@ namespace DoraFood.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Index(BookingInput input)
         {
+            input.ServiceOptions = await LoadBookingServiceOptionsAsync();
+
             if (!TryPrepareBooking(
                     input,
                     DateTime.UtcNow,
@@ -377,6 +189,20 @@ namespace DoraFood.Controllers
                 {
                     return await RestartBookingLoginAsync();
                 }
+            }
+
+            var selectedIds = input.SelectedServiceIds.ToHashSet();
+            var selectedServices = input.ServiceOptions
+                .Where(service => selectedIds.Contains(service.Id))
+                .ToList();
+
+            if (selectedServices.Count != selectedIds.Count)
+            {
+                ModelState.AddModelError(
+                    nameof(BookingInput.SelectedServiceIds),
+                    "Có dịch vụ đã ngừng nhận đặt. Vui lòng kiểm tra và chọn lại.");
+
+                return View(input);
             }
 
             // Kiểm tra lại sau khi đọc tài khoản,
@@ -418,25 +244,23 @@ namespace DoraFood.Controllers
                 CreatedAtUtc = acceptedAtUtc
             };
 
+            // EF Core lưu lượt đặt và các dịch vụ trong cùng một lần SaveChanges.
             _context.Set<Reservation>().Add(reservation);
+
+            foreach (var service in selectedServices)
+            {
+                _context.Set<ReservationService>().Add(new ReservationService
+                {
+                    Reservation = reservation,
+                    ServiceId = service.Id,
+                    NameSnapshot = service.Name,
+                    Quantity = 1m,
+                    UnitPrice = service.BasePrice
+                });
+            }
 
             try
             {
-                var arrivalText = GetRestaurantTime(
-                    reservation.StartsAtUtc)
-                    .ToString("dd/MM/yyyy HH:mm");
-
-                _notifications.Add(
-                    reservation.CustomerId,
-                    "Đã nhận yêu cầu đặt bàn",
-                    $"DoraFood đã nhận yêu cầu {reservation.Code} " +
-                    $"cho {reservation.PartySize} khách, " +
-                    $"giờ đến {arrivalText}. " +
-                    "Yêu cầu đang chờ nhà hàng xác nhận.",
-                    Url.RouteUrl("DoraFoodMyBookings")
-                        ?? "/dat-ban/cua-toi");
-
-                // Lưu yêu cầu và thông báo cùng một lần.
                 await _context.SaveChangesAsync(
                     HttpContext.RequestAborted);
             }
@@ -459,6 +283,17 @@ namespace DoraFood.Controllers
                 + "Yêu cầu đang chờ nhà hàng xác nhận.";
 
             return RedirectToRoute("DoraFoodBooking");
+        }
+
+        private async Task<IReadOnlyList<BookingServiceOption>> LoadBookingServiceOptionsAsync()
+        {
+            return await _context.Services
+                .AsNoTracking()
+                .Where(service => service.IsActive)
+                .OrderBy(service => service.Id)
+                .Select(service => new BookingServiceOption(
+                    service.Id, service.Name, service.BasePrice, service.ImageUrl))
+                .ToListAsync(HttpContext.RequestAborted);
         }
 
         // Kiểm tra quy định và chuẩn bị thời gian để lưu SQL.
@@ -580,6 +415,8 @@ namespace DoraFood.Controllers
                 Math.Max(1, totalPages));
 
             var reservations = await query
+                .Include(r => r.ReservationServices)
+                .AsSplitQuery()
                 .OrderByDescending(r => r.CreatedAtUtc)
                 .ThenByDescending(r => r.Id)
                 .Skip((page - 1) * pageSize)
@@ -593,6 +430,34 @@ namespace DoraFood.Controllers
                 TotalPages = totalPages,
                 TotalItems = totalItems
             });
+        }
+
+        [HttpGet("/dat-ban/cua-toi/{id:long}", Name = "DoraFoodMyBookingDetails")]
+        [Authorize]
+        public async Task<IActionResult> Details([FromRoute] long id)
+        {
+            if (id <= 0)
+            {
+                return NotFound();
+            }
+
+            var customerId = await GetActiveCustomerIdAsync();
+            if (!customerId.HasValue)
+            {
+                return await RestartBookingLoginAsync(
+                    Url.RouteUrl("DoraFoodMyBookingDetails", new { id }));
+            }
+
+            var reservation = await _context.Set<Reservation>()
+                .AsNoTracking()
+                .Include(r => r.ReservationServices)
+                .FirstOrDefaultAsync(
+                    r => r.Id == id && r.CustomerId == customerId.Value,
+                    HttpContext.RequestAborted);
+
+            return reservation is null
+                ? NotFound()
+                : View("Details", reservation);
         }
 
         // POST: /dat-ban/huy

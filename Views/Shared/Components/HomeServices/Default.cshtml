@@ -1,0 +1,44 @@
+@using System.Globalization
+@model System.Collections.Generic.IReadOnlyList<DoraFood.ViewComponents.HomeServicesViewComponent.ServiceCard>
+
+@{
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+}
+
+<!-- Service Start -->
+<section class="df-section" id="df-services" aria-labelledby="df-services-title">
+    <div class="container">
+        <div class="df-section-head">
+            <span class="df-eyebrow">MÙA CỦA NHỮNG CUỘC HẸN</span>
+            <h2 id="df-services-title">Tết có nhiều cách vui.<br><span>Bạn chọn cuộc hẹn nào?</span></h2>
+            <p>Từ bữa ăn thân mật đến những dịp quây quần đặc biệt.</p>
+        </div>
+
+        <div class="df-services-grid">
+            @for (var i = 0; i < Model.Count; i++)
+            {
+                var card = Model[i];
+                <article class="df-service-card" data-tet-reveal>
+                    <img class="df-tet-service-photo"
+                         src="@card.PhotoUrl" alt="" width="640" height="440" loading="lazy">
+                    <div class="df-service-top" aria-hidden="true">
+                        <i class="fas @card.Icon"></i><span>@((i + 1).ToString("00", culture))</span>
+                    </div>
+                    <h3>@card.Name</h3>
+                    @if (!string.IsNullOrWhiteSpace(card.Description))
+                    {
+                        <p>@card.Description</p>
+                    }
+                    @if (card.BasePrice > 0)
+                    {
+                        <p><strong>Từ @card.BasePrice.ToString("N0", culture) ₫</strong></p>
+                    }
+                    <a class="df-text-link" href="#df-booking" data-occasion="@card.Occasion">
+                        Lên lịch cuộc hẹn <span aria-hidden="true">↗</span>
+                    </a>
+                </article>
+            }
+        </div>
+    </div>
+</section>
+<!-- Service End -->

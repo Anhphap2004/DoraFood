@@ -20,17 +20,9 @@
     </section>
     <!-- Experience End -->
     <!-- Service Start -->
-    <section class="df-section" id="df-services">
-        <div class="container">
-            <div class="df-section-head"><span class="df-eyebrow">MÙA CỦA NHỮNG CUỘC HẸN</span><h2>Tết có nhiều cách vui.<br><span>Bạn chọn cuộc hẹn nào?</span></h2><p>Từ bữa ăn thân mật đến những dịp quây quần đặc biệt.</p></div>
-            <div class="df-services-grid">
-                <article class="df-service-card" data-tet-reveal><img class="df-tet-service-photo" src="@TetPhoto("occasion-01.webp", "~/images/p1.jpg")" alt="Cảm hứng cho cuộc hẹn ngày xuân" width="640" height="440" loading="lazy"><div class="df-service-top"><i class="fas fa-utensils" aria-hidden="true"></i><span>01</span></div><h3>Sum vầy gia đình</h3><p>Quây quần bên bàn ăn, dành thời gian cho những câu chuyện thân quen.</p><a class="df-text-link" href="#df-booking" data-occasion="Gia đình">Lên lịch cuộc hẹn <span aria-hidden="true">↗</span></a></article>
-                <article class="df-service-card" data-tet-reveal><img class="df-tet-service-photo" src="@TetPhoto("occasion-02.webp", "~/images/p4.jpg")" alt="Cảm hứng cho cuộc hẹn ngày xuân" width="640" height="440" loading="lazy"><div class="df-service-top"><i class="fas fa-glass-cheers" aria-hidden="true"></i><span>02</span></div><h3>Khai xuân cùng bạn</h3><p>Thêm món ngon vào buổi gặp gỡ, thêm niềm vui vào những câu chuyện.</p><a class="df-text-link" href="#df-booking" data-occasion="Bạn bè">Lên lịch cuộc hẹn <span aria-hidden="true">↗</span></a></article>
-                <article class="df-service-card" data-tet-reveal><img class="df-tet-service-photo" src="@TetPhoto("occasion-03.webp", "~/images/p2.jpg")" alt="Cảm hứng cho cuộc hẹn ngày xuân" width="640" height="440" loading="lazy"><div class="df-service-top"><i class="fas fa-birthday-cake" aria-hidden="true"></i><span>03</span></div><h3>Dịp vui đầu năm</h3><p>Sinh nhật, kỷ niệm hay một cuộc hẹn bạn muốn lưu giữ thật lâu.</p><a class="df-text-link" href="#df-booking" data-occasion="Sinh nhật">Lên lịch cuộc hẹn <span aria-hidden="true">↗</span></a></article>
-                <article class="df-service-card" data-tet-reveal><img class="df-tet-service-photo" src="@TetPhoto("occasion-04.webp", "~/images/p3.jpg")" alt="Cảm hứng cho cuộc hẹn ngày xuân" width="640" height="440" loading="lazy"><div class="df-service-top"><i class="fas fa-building" aria-hidden="true"></i><span>04</span></div><h3>Gắn kết đồng nghiệp</h3><p>Một bữa ăn để kết nối, chia sẻ và cùng chúc mừng những dấu mốc.</p><a class="df-text-link" href="#df-booking" data-occasion="Doanh nghiệp">Lên lịch cuộc hẹn <span aria-hidden="true">↗</span></a></article>
-            </div>
-        </div>
-    </section><!-- Service End -->
+    @await Component.InvokeAsync("HomeServices")
+
+  <!-- Service End -->
     <!-- Events Start --><section class="df-section df-tinted" id="df-events">
     <div class="container">
         <div class="df-section-head"><span class="df-eyebrow">BỘ SƯU TẬP CẢM HỨNG NGÀY XUÂN</span><h2>Một chút sắc xuân.<br><span>Thêm đầy cảm xúc.</span></h2></div>
@@ -47,25 +39,7 @@
     </div>
 </div>
 </section><!-- Events End -->
-<!-- Menu Start --><section class="df-section" id="df-menu">
-<div class="container">
-    <div class="df-section-head"><span class="df-eyebrow">CẢM HỨNG CHỌN MÓN</span><h2>Đậm đà hương vị.<br><span>Rộn ràng bàn tiệc.</span></h2><p>Một vài hình ảnh gợi ý. Xem thực đơn hiện tại để kiểm tra món, giá và khẩu phần.</p></div>
-    <div class="df-filter" role="group" aria-label="Lọc món ăn">
-        <button type="button" data-filter-group="menu" data-filter="all" aria-pressed="true">Tất cả</button>
-        <button type="button" data-filter-group="menu" data-filter="starter" aria-pressed="false">Khai vị</button>
-        <button type="button" data-filter-group="menu" data-filter="main" aria-pressed="false">Món chính</button>
-        <button type="button" data-filter-group="menu" data-filter="sweet" aria-pressed="false">Món ngọt</button>
-    </div><div class="df-menu-grid">
-    <article class="df-dish" data-card-group="menu" data-category="starter"><div class="df-dish-photo"><img src="~/assets/img/menu-01.jpg" alt="Paneer" class="" loading="lazy"></div><div class="df-dish-body"><span class="df-eyebrow">Khai vị</span><h3>Paneer</h3><a href="#df-booking" class="df-dish-link" data-dish="Paneer" aria-label="Quan tâm món Paneer">Món này cho cuộc hẹn <span aria-hidden="true">↗</span></a></div></article>
-    <article class="df-dish" data-card-group="menu" data-category="starter"><div class="df-dish-photo"><img src="~/assets/img/menu-02.jpg" alt="Sweet Potato" class="" loading="lazy"></div><div class="df-dish-body"><span class="df-eyebrow">Khai vị</span><h3>Sweet Potato</h3><a href="#df-booking" class="df-dish-link" data-dish="Sweet Potato" aria-label="Quan tâm món Sweet Potato">Món này cho cuộc hẹn <span aria-hidden="true">↗</span></a></div></article>
-    <article class="df-dish" data-card-group="menu" data-category="starter"><div class="df-dish-photo"><img src="~/assets/img/menu-03.jpg" alt="Sabudana Tikki" class="" loading="lazy"></div><div class="df-dish-body"><span class="df-eyebrow">Khai vị</span><h3>Sabudana Tikki</h3><a href="#df-booking" class="df-dish-link" data-dish="Sabudana Tikki" aria-label="Quan tâm món Sabudana Tikki">Món này cho cuộc hẹn <span aria-hidden="true">↗</span></a></div></article>
-    <article class="df-dish" data-card-group="menu" data-category="main"><div class="df-dish-photo"><img src="~/assets/img/menu-04.jpg" alt="Pizza" class="" loading="lazy"></div><div class="df-dish-body"><span class="df-eyebrow">Món chính</span><h3>Pizza</h3><a href="#df-booking" class="df-dish-link" data-dish="Pizza" aria-label="Quan tâm món Pizza">Món này cho cuộc hẹn <span aria-hidden="true">↗</span></a></div></article>
-    <article class="df-dish" data-card-group="menu" data-category="main"><div class="df-dish-photo"><img src="~/assets/img/menu-05.jpg" alt="Bacon" class="" loading="lazy"></div><div class="df-dish-body"><span class="df-eyebrow">Món chính</span><h3>Bacon</h3><a href="#df-booking" class="df-dish-link" data-dish="Bacon" aria-label="Quan tâm món Bacon">Món này cho cuộc hẹn <span aria-hidden="true">↗</span></a></div></article>
-    <article class="df-dish" data-card-group="menu" data-category="main"><div class="df-dish-photo"><img src="~/assets/img/menu-06.jpg" alt="Chicken" class="" loading="lazy"></div><div class="df-dish-body"><span class="df-eyebrow">Món chính</span><h3>Chicken</h3><a href="#df-booking" class="df-dish-link" data-dish="Chicken" aria-label="Quan tâm món Chicken">Món này cho cuộc hẹn <span aria-hidden="true">↗</span></a></div></article>
-    <article class="df-dish" data-card-group="menu" data-category="sweet"><div class="df-dish-photo"><img src="~/assets/img/menu-08.jpg" alt="Sweet" class="" loading="lazy"></div><div class="df-dish-body"><span class="df-eyebrow">Món ngọt</span><h3>Sweet</h3><a href="#df-booking" class="df-dish-link" data-dish="Sweet" aria-label="Quan tâm món Sweet">Món này cho cuộc hẹn <span aria-hidden="true">↗</span></a></div></article>
-</div><div class="df-menu-foot"><a class="df-text-link" href="@(Url.RouteUrl("DoraFoodMenu") ?? Url.Content("~/thuc-don"))">Xem thực đơn hiện tại <span aria-hidden="true">↗</span></a><a href="#df-booking" class="df-button df-button-outline">Lên lịch ghé DoraFood <span aria-hidden="true">↗</span></a></div>
-</div>
-</section><!-- Menu End -->
+
 <!-- Booking Start -->
 <section class="df-section df-booking" id="df-booking">
     <div class="container">
@@ -93,17 +67,6 @@
 </section>
 <dialog id="df-booking-preview" class="df-booking-dialog" aria-labelledby="df-preview-title"><div class="df-dialog-top"><span class="df-eyebrow">KẾ HOẠCH CỦA BẠN</span><button type="button" data-close-preview aria-label="Đóng cửa sổ">×</button></div><h2 id="df-preview-title">Hẹn nhau tại DoraFood</h2><dl id="df-preview-content"></dl><p class="df-preview-note">Đây là bản xem lại. Thông tin chưa được gửi và bàn chưa được xác nhận.</p><button type="button" class="df-button df-button-red" data-close-preview>Chỉnh sửa thông tin</button></dialog>
 <!-- Booking End -->
-<!-- Team Start --><section class="df-section" id="df-team">
-<div class="container">
-    <div class="df-section-head"><span class="df-eyebrow">PHÍA SAU MỖI BỮA ĂN</span><h2>Những bàn tay chăm chút.<br><span>Những trải nghiệm có tâm.</span></h2></div>
-    <div class="df-team-grid">
-        <article class="df-person"><div class="df-person-photo"><img src="~/assets/img/team-1.jpg" alt="Ảnh đầu bếp minh họa" class="" loading="lazy"></div><div><span class="df-eyebrow">DORAFOOD KITCHEN</span><h3>Cảm hứng trong gian bếp</h3><p>Nơi hương vị được bắt đầu.</p></div></article>
-        <article class="df-person"><div class="df-person-photo"><img src="~/assets/img/team-2.jpg" alt="Ảnh đầu bếp minh họa" class="" loading="lazy"></div><div><span class="df-eyebrow">DORAFOOD KITCHEN</span><h3>Chỉn chu trong từng món</h3><p>Những chi tiết làm nên bữa ăn.</p></div></article>
-        <article class="df-person"><div class="df-person-photo"><img src="~/assets/img/team-3.jpg" alt="Ảnh đầu bếp minh họa" class="" loading="lazy"></div><div><span class="df-eyebrow">DORAFOOD KITCHEN</span><h3>Tinh tế khi bày biện</h3><p>Để món ngon thêm phần cuốn hút.</p></div></article>
-        <article class="df-person"><div class="df-person-photo"><img src="~/assets/img/team-4.jpg" alt="Ảnh đầu bếp minh họa" class="" loading="lazy"></div><div><span class="df-eyebrow">DORAFOOD KITCHEN</span><h3>Đồng điệu khi sẻ chia</h3><p>Cùng nhau tạo nên trải nghiệm.</p></div></article>
-    </div>
-</div>
-</section><!-- Team End -->
 <!-- Testimonial Start --><section class="df-section df-feedback" id="df-feedback"><div class="container"><div class="df-feedback-shell"><span class="df-feedback-symbol" aria-hidden="true">“</span><div><span class="df-eyebrow">LẮNG NGHE ĐỂ CHĂM CHÚT HƠN</span><h2>Câu chuyện của bạn.<br><span>Cảm hứng của DoraFood.</span></h2><p>Những điều bạn yêu thích và những điều có thể tốt hơn đều đáng được lắng nghe.</p><div class="df-feedback-empty">Chưa có đánh giá được công bố.</div></div><div class="df-feedback-aside"><span aria-hidden="true">✦</span><p>Hẹn một bữa ngon.<br>Giữ một kỷ niệm đẹp.</p></div></div></div></section><!-- Testimonial End -->
 <!-- Blog Start --><section class="df-section" id="df-journal">
 <div class="container">

@@ -1,0 +1,292 @@
+@using System.Globalization
+@model System.Collections.Generic.IReadOnlyList<DoraFood.Areas.Admin.ViewModels.ServiceAdminRow>
+
+@{
+    ViewData["Title"] = "Quản lý dịch vụ";
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+}
+
+<div class="tp-page tp-services-index w-100">
+    <section class="tp-module-intro flex-wrap">
+        <div class="tp-module-icon" aria-hidden="true">
+            <i class="bi bi-briefcase"></i>
+        </div>
+
+        <div class="flex-grow-1">
+            <h2 class="m-0">Quản lý dịch vụ</h2>
+            <p class="service-page-note mt-1">
+                Cập nhật thông tin, hình ảnh và trạng thái hiển thị.
+            </p>
+        </div>
+
+        <a asp-area="Admin"
+           asp-controller="Services"
+           asp-action="Create"
+           class="btn btn-primary">
+            <i class="bi bi-plus-lg" aria-hidden="true"></i>
+            Thêm dịch vụ
+        </a>
+    </section>
+
+    @if (TempData["ServiceSuccess"] is string success)
+    {
+        <div class="alert alert-success" role="status">@success</div>
+    }
+
+    @if (TempData["ServiceError"] is string error)
+    {
+        <div class="alert alert-warning" role="alert">@error</div>
+    }
+
+    <section class="card tp-card w-100" aria-labelledby="service-list-title">
+        <div class="card-header tp-card-header d-flex flex-wrap align-items-center">
+            <h3 id="service-list-title" class="h6 fw-bold mb-0">
+                Danh sách dịch vụ
+            </h3>
+            <span class="service-count">@Model.Count dịch vụ</span>
+        </div>
+
+        @if (Model.Count == 0)
+        {
+            <div class="card-body text-center">
+                <i class="bi bi-inbox fs-3" aria-hidden="true"></i>
+                <p class="fw-semibold mt-2 mb-0">Chưa có dịch vụ nào.</p>
+            </div>
+        }
+        else
+        {
+            <div class="service-row service-column-head" aria-hidden="true">
+                <span>Dịch vụ</span>
+                <span>Giá gốc</span>
+                <span>Trạng thái</span>
+                <span class="text-end">Thao tác</span>
+            </div>
+
+            <ul class="list-unstyled mb-0">
+                @foreach (var item in Model)
+                {
+                    var visibilityAction = item.IsActive ? "Ẩn" : "Bật";
+                    var nextVisibility = item.IsActive ? "false" : "true";
+                    var hasImage = !string.IsNullOrWhiteSpace(item.ImageUrl)
+                        && Url.IsLocalUrl(item.ImageUrl);
+
+                    <li class="service-row">
+                        <div class="service-identity">
+                            @if (hasImage)
+                            {
+                                <img class="service-thumb"
+                                     src="@Url.Content(item.ImageUrl)"
+                                     alt=""
+                                     width="68"
+                                     height="52"
+                                     loading="lazy">
+                            }
+                            else
+                            {
+                                <span class="service-thumb service-thumb-placeholder"
+                                      aria-hidden="true">
+                                    <i class="bi bi-image"></i>
+                                </span>
+                            }
+
+                            <div class="service-identity-text">
+                                <div class="service-name">@item.Name</div>
+                                <div class="service-slug">@item.Slug</div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <span class="service-field-label">Giá gốc</span>
+                            <span class="fw-semibold">
+                                @item.BasePrice.ToString("#,##0.##", culture) ₫
+                            </span>
+                        </div>
+
+                        <div>
+                            <span class="service-field-label">Trạng thái</span>
+                            <span class="badge @(item.IsActive ? "text-bg-success" : "text-bg-secondary")">
+                                @(item.IsActive ? "Đang bật" : "Đã ẩn")
+                            </span>
+                        </div>
+
+                        <div class="service-actions">
+                            <a asp-area="Admin"
+                               asp-controller="Services"
+                               asp-action="Edit"
+                               asp-route-id="@item.Id"
+                               class="btn btn-outline-primary btn-sm"
+                               aria-label="Sửa @item.Name">
+                                <i class="bi bi-pencil-square" aria-hidden="true"></i>
+                                Sửa
+                            </a>
+
+                            <form asp-area="Admin"
+                                  asp-controller="Services"
+                                  asp-action="SetVisibility"
+                                  asp-route-id="@item.Id"
+                                  asp-antiforgery="true"
+                                  method="post"
+                                  class="m-0">
+                                <input type="hidden"
+                                       name="isActive"
+                                       value="@nextVisibility">
+
+                                <button type="submit"
+                                        class="btn btn-outline-secondary btn-sm"
+                                        aria-label="@visibilityAction @item.Name">
+                                    <i class="bi @(item.IsActive ? "bi-eye-slash" : "bi-eye")"
+                                       aria-hidden="true"></i>
+                                    @visibilityAction
+                                </button>
+                            </form>
+                        </div>
+                    </li>
+                }
+            </ul>
+        }
+    </section>
+</div>
+
+@section Styles {
+    <link rel="stylesheet"
+          href="~/admin/css/admin-tet-pages.css"
+          asp-append-version="true">
+
+    <style>
+        .tp-services-index {
+            min-width: 0;
+        }
+
+            .tp-services-index .tp-card,
+            .tp-services-index .tp-module-icon {
+                animation: none !important;
+            }
+
+            .tp-services-index .service-page-note {
+                color: var(--tp-ink);
+                font-size: .875rem;
+            }
+
+            .tp-services-index .service-count {
+                padding: .25rem .65rem;
+                border: 1px solid var(--tp-border);
+                border-radius: 999px;
+                background: var(--tp-soft);
+                color: var(--tp-ink);
+                font-size: .8125rem;
+                font-weight: 650;
+            }
+
+            .tp-services-index .service-row {
+                display: grid;
+                grid-template-columns: minmax(0, 1.8fr) minmax(6rem, .75fr) minmax(6rem, .7fr) minmax(9rem, auto);
+                align-items: center;
+                gap: .75rem 1rem;
+                padding: .875rem 1.25rem;
+                border-bottom: 1px solid var(--tp-border);
+                color: var(--tp-ink);
+                font-size: .9375rem;
+            }
+
+            .tp-services-index li.service-row:last-child {
+                border-bottom: 0;
+            }
+
+            .tp-services-index .service-column-head {
+                background: var(--tp-soft);
+                font-size: .8125rem;
+                font-weight: 750;
+            }
+
+            .tp-services-index .service-identity,
+            .tp-services-index .service-actions {
+                display: flex;
+                align-items: center;
+                gap: .65rem;
+                min-width: 0;
+            }
+
+            .tp-services-index .service-actions {
+                justify-content: flex-end;
+                flex-wrap: wrap;
+            }
+
+            .tp-services-index .service-thumb {
+                display: block;
+                flex: 0 0 68px;
+                width: 68px;
+                height: 52px;
+                object-fit: cover;
+                border: 1px solid var(--tp-border);
+                border-radius: .6rem;
+            }
+
+            .tp-services-index .service-thumb-placeholder {
+                display: grid;
+                place-items: center;
+                background: var(--tp-soft);
+                color: var(--tp-wine);
+            }
+
+            .tp-services-index .service-identity-text {
+                min-width: 0;
+                overflow-wrap: anywhere;
+            }
+
+            .tp-services-index .service-name {
+                font-weight: 750;
+            }
+
+            .tp-services-index .service-slug {
+                margin-top: .15rem;
+                color: var(--tp-ink);
+                font-size: .8125rem;
+            }
+
+            .tp-services-index .service-field-label {
+                display: none;
+            }
+
+            .tp-services-index .badge,
+            .tp-services-index .service-actions .btn {
+                font-size: .8125rem;
+            }
+
+            .tp-services-index .service-actions .btn-outline-secondary {
+                --bs-btn-color: var(--tp-ink);
+            }
+
+        @@media (max-width: 991.98px) {
+            .tp-services-index .service-column-head {
+                display: none;
+            }
+
+            .tp-services-index .service-row {
+                grid-template-columns: repeat(2, minmax(0, 1fr));
+                padding: .875rem 1rem;
+            }
+
+            .tp-services-index .service-identity,
+            .tp-services-index .service-actions {
+                grid-column: 1 / -1;
+            }
+
+            .tp-services-index .service-actions {
+                justify-content: flex-start;
+            }
+
+            .tp-services-index .service-field-label {
+                display: block;
+                margin-bottom: .2rem;
+                font-size: .8125rem;
+                font-weight: 650;
+            }
+        }
+
+        @@media (max-width: 575.98px) {
+            .tp-services-index .tp-module-intro > .btn {
+                width: 100%;
+            }
+        }
+    </style>
+}
