@@ -6,6 +6,7 @@ using System.Security.Claims;
 using System.Threading.Tasks;
 using DoraFood.Data;
 using DoraFood.Models;
+using DoraFood.Services;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
@@ -126,31 +127,13 @@ namespace DoraFood.Controllers
                 0,
                 DateTimeKind.Unspecified);
 
-            var time = suggested.TimeOfDay;
-
-            if (time < TimeSpan.FromHours(10))
-            {
-                suggested = suggested.Date.AddHours(10);
-            }
-            else if (time >= TimeSpan.FromHours(14)
-                && time < TimeSpan.FromHours(16))
-            {
-                suggested = suggested.Date.AddHours(16);
-            }
-            else if (time >= TimeSpan.FromHours(22))
-            {
-                suggested = suggested.Date.AddDays(1).AddHours(10);
-            }
+            suggested = BookingHours.GetSuggestedArrival(suggested);
 
             var model = new BookingInput
             {
                 PartySize = 2,
                 StartsAtLocal = suggested,
-
-                EndsAtLocal = suggested.Date.AddHours(
-                    suggested.TimeOfDay < TimeSpan.FromHours(14)
-                        ? 14
-                        : 22)
+                EndsAtLocal = BookingHours.GetSessionEnd(suggested)
             };
 
             model.ServiceOptions = await LoadBookingServiceOptionsAsync();
@@ -327,28 +310,13 @@ namespace DoraFood.Controllers
                     "Giờ đến phải nằm trong tương lai.");
             }
 
-            var arrivalTime = arrival.TimeOfDay;
+            input.EndsAtLocal = BookingHours.GetSessionEnd(arrival);
 
-            var isLunch =
-                arrivalTime >= TimeSpan.FromHours(10)
-                && arrivalTime < TimeSpan.FromHours(14);
-
-            var isDinner =
-                arrivalTime >= TimeSpan.FromHours(16)
-                && arrivalTime < TimeSpan.FromHours(22);
-
-            if (!isLunch && !isDinner)
+            if (!input.EndsAtLocal.HasValue)
             {
                 ModelState.AddModelError(
                     nameof(BookingInput.StartsAtLocal),
-                    "Giờ đến phải từ 10:00 đến trước 14:00 "
-                    + "hoặc từ 16:00 đến trước 22:00.");
-            }
-            else
-            {
-                input.EndsAtLocal = DateTime.SpecifyKind(
-                    arrival.Date.AddHours(isLunch ? 14 : 22),
-                    DateTimeKind.Unspecified);
+                    $"Giờ đến phải từ {BookingHours.ArrivalWindowsText}.");
             }
 
             if (!ModelState.IsValid)

@@ -6,6 +6,8 @@ using System.Security.Claims;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.EntityFrameworkCore;
 using DoraFood.Services;
+using Microsoft.AspNetCore.RateLimiting;
+using System.Threading.RateLimiting;
 
 var builder = WebApplication.CreateBuilder(args);
                      // Tự động hủy yêu cầu đặt bàn quá hạn.
@@ -115,6 +117,30 @@ builder.Services.AddScoped<VoucherImageService>();
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<ChatService>();
 builder.Services.AddScoped<ChatImageService>();
+builder.Services.AddHttpClient("DoraFoodOpenAI", client =>
+{
+    client.BaseAddress = new Uri("https://api.openai.com/v1/");
+    client.Timeout = TimeSpan.FromSeconds(45);
+});
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.RejectionStatusCode = StatusCodes.Status429TooManyRequests;
+
+    options.AddPolicy("DoraFoodAiMenu", context =>
+        RateLimitPartition.GetFixedWindowLimiter(
+            partitionKey: context.User.Identity?.Name
+                ?? context.Connection.RemoteIpAddress?.ToString()
+                ?? "unknown",
+            factory: _ => new FixedWindowRateLimiterOptions
+            {
+                PermitLimit = 4,
+                Window = TimeSpan.FromMinutes(1),
+                QueueLimit = 0,
+                AutoReplenishment = true
+            }));
+});
+
 var app = builder.Build();
 
 // Xử lý lỗi ngoài môi trường Development.
@@ -127,6 +153,7 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 app.UseRouting();
+app.UseRateLimiter();
 
 // Đọc cookie và xác định người dùng hiện tại.
 app.UseAuthentication();
@@ -145,4 +172,12 @@ app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
+var routeBuilder = (Microsoft.AspNetCore.Routing.IEndpointRouteBuilder)app;
+
+var hasAiRoute = routeBuilder.DataSources
+    .SelectMany(source => source.Endpoints)
+    .OfType<Microsoft.AspNetCore.Routing.RouteEndpoint>()
+    .Any(endpoint => endpoint.RoutePattern.RawText?.TrimStart('/') == "hoi-dorafood");
+
+System.Diagnostics.Debug.WriteLine($"[DoraFood] Route /hoi-dorafood: {hasAiRoute}");
 app.Run();

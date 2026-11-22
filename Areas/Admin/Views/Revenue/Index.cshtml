@@ -45,7 +45,11 @@
             @Model.ToDate.ToString("dd/MM/yyyy")
         </span>
     </div>
-
+           <a class="btn btn-outline-primary"
+   href="@Url.Action("Forecast", "Revenue", new { area = "Admin" })">
+    <i class="bi bi-graph-up-arrow me-1" aria-hidden="true"></i>
+    Dự báo doanh thu
+</a>
     <!-- Bộ lọc -->
     <div class="card border-0 shadow-sm mb-4">
         <div class="card-body p-4">

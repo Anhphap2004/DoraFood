@@ -1,0 +1,101 @@
+﻿@using System.Globalization
+@model DoraFood.Areas.Admin.ViewModels.RevenueForecastViewModel
+
+@{
+    ViewData["Title"] = "Dự báo doanh thu";
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+
+    string Money(decimal amount) => $"{amount.ToString("N0", culture)} ₫";
+}
+
+<div class="tp-page">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <h2 class="h4 mb-0">Dự báo doanh thu</h2>
+        <a class="btn btn-outline-secondary btn-sm"
+           href="@Url.Action("Index", "Revenue", new { area = "Admin" })">
+            Về báo cáo doanh thu
+        </a>
+    </div>
+
+    <section class="card tp-card mb-3" aria-labelledby="forecast-total">
+        <div class="card-body">
+            <h3 id="forecast-total" class="h6 mb-1">
+                Doanh thu thuần dự kiến trong 7 ngày tới
+            </h3>
+
+            @if (Model.PredictedTotal is decimal total)
+            {
+                <p class="h4 mb-2">@Money(total)</p>
+            }
+            else
+            {
+                <p class="mb-2">
+                    Chưa đủ dữ liệu để tính tổng dự báo cho cả 7 ngày.
+                </p>
+            }
+
+            @if (Model.HistoryFrom is DateTime firstDay)
+            {
+                <p class="small text-body-secondary mb-0">
+                    Dữ liệu từ @firstDay.ToString("dd/MM/yyyy")
+                    đến @Model.HistoryTo.ToString("dd/MM/yyyy") · Giờ Việt Nam
+                </p>
+            }
+            else
+            {
+                <p class="small text-body-secondary mb-0">
+                    Chưa có giao dịch thanh toán hoặc hoàn tiền trong kỳ lịch sử.
+                </p>
+            }
+        </div>
+    </section>
+
+    <div class="card tp-card">
+        <div class="table-responsive">
+            <table class="table align-middle mb-0 tp-table">
+                <caption class="visually-hidden">Dự báo doanh thu theo ngày</caption>
+                <thead>
+                    <tr>
+                        <th scope="col">Ngày</th>
+                        <th scope="col" class="text-center">Số ngày tham chiếu</th>
+                        <th scope="col" class="text-end">Dự báo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var day in Model.Days)
+                    {
+                        <tr>
+                            <th scope="row" class="fw-normal">
+                                <span>@culture.DateTimeFormat.GetDayName(day.Date.DayOfWeek)</span>
+                                <small class="d-block text-body-secondary">
+                                    @day.Date.ToString("dd/MM/yyyy")
+                                </small>
+                            </th>
+                            <td class="text-center">@day.SampleCount</td>
+                            <td class="text-end">
+                                @if (day.PredictedNetRevenue is decimal prediction)
+                                {
+                                    <span class="fw-semibold text-nowrap">@Money(prediction)</span>
+                                }
+                                else
+                                {
+                                    <span class="text-body-secondary">Thiếu dữ liệu</span>
+                                }
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <p class="small text-body-secondary mt-2 mb-0">
+        Mỗi ngày cần ít nhất 3 ngày cùng thứ trong lịch sử để lập dự báo.
+    </p>
+</div>
+
+@section Styles {
+    <link rel="stylesheet"
+          href="~/admin/css/admin-tet-pages.css"
+          asp-append-version="true" />
+}

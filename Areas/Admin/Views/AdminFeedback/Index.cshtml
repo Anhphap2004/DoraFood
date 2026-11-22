@@ -15,6 +15,107 @@
         </div>
         <span class="text-body-secondary">@Model.Total nội dung phù hợp</span>
     </div>
+    @if (isReview)
+    {
+        <section class="card dm-card mb-3" aria-labelledby="review-summary-title">
+            <div class="card-body">
+                <div class="d-flex flex-wrap align-items-center justify-content-between gap-2">
+                    <h2 id="review-summary-title" class="h6 mb-0">
+                        Tổng hợp đánh giá món ăn
+                    </h2>
+
+                    <form id="review-summary-form"
+                          asp-area="Admin"
+                          asp-controller="AdminFeedback"
+                          asp-action="SummarizeReviews"
+                          asp-antiforgery="true"
+                          method="post"
+                          class="m-0">
+                        <button type="submit" class="btn btn-outline-primary btn-sm">
+                            <span data-summary-spinner
+                                  class="spinner-border spinner-border-sm me-1"
+                                  aria-hidden="true"
+                                  hidden></span>
+                            Tóm tắt đánh giá 7 ngày qua
+                        </button>
+                    </form>
+                </div>
+
+                <p id="review-summary-status"
+                   class="small mt-2 mb-0"
+                   role="status"
+                   hidden></p>
+
+                <div id="review-summary-result"
+                     class="border rounded bg-light p-3 mt-3 text-break"
+                     style="white-space: pre-wrap"
+                     hidden></div>
+            </div>
+        </section>
+
+        <script>
+            (() => {
+                const form = document.getElementById("review-summary-form");
+                const button = form.querySelector("button");
+                const spinner = form.querySelector("[data-summary-spinner]");
+                const status = document.getElementById("review-summary-status");
+                const result = document.getElementById("review-summary-result");
+
+                form.addEventListener("submit", async (event) => {
+                    event.preventDefault();
+
+                    const formData = new FormData(form);
+                    button.disabled = true;
+                    spinner.hidden = false;
+                    status.hidden = false;
+                    status.classList.remove("text-danger");
+                    status.textContent = "Đang đọc và tổng hợp đánh giá…";
+                    result.hidden = true;
+                    result.textContent = "";
+
+                    try {
+                        const response = await fetch(form.action, {
+                            method: "POST",
+                            body: formData,
+                            headers: { Accept: "application/json" }
+                        });
+
+                        const contentType = response.headers.get("content-type") ?? "";
+                        const data = contentType.includes("application/json")
+                            ? await response.json()
+                            : null;
+
+                        if (!response.ok || !data?.summary) {
+                            throw new Error(
+                                data?.message
+                                ?? "Không tải được bản tóm tắt. Vui lòng kiểm tra phiên đăng nhập và thử lại."
+                            );
+                        }
+
+                        if (data.reviewCount === 0) {
+                            status.textContent = data.summary;
+                            return;
+                        }
+
+                        status.textContent = data.limited
+                            ? `Đã tổng hợp ${data.reviewCount} đánh giá mới nhất trong 7 ngày qua.`
+                            : `Đã tổng hợp ${data.reviewCount} đánh giá trong 7 ngày qua.`;
+
+                        result.textContent = data.summary;
+                        result.hidden = false;
+                    } catch (error) {
+                        status.classList.add("text-danger");
+                        status.textContent = error instanceof Error
+                            ? error.message
+                            : "Chưa tạo được bản tóm tắt. Vui lòng thử lại.";
+                    } finally {
+                        button.disabled = false;
+                        spinner.hidden = true;
+                    }
+                });
+            })();
+        </script>
+    }
     <div class="card dm-card">
         <div class="card-body">
             <form asp-area="Admin" asp-controller="AdminFeedback" asp-action="Index" method="get" class="row g-3 align-items-end">

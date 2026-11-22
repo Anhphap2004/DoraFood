@@ -203,6 +203,17 @@
                         {
                             <li class="nav-item"><a href="@(item.Controller == "BookingManagement" ? bookingUrl : Url.Action("Index", item.Controller, new { area = "Admin" }))" class="nav-link @Active(item.Controller)" aria-current="@(Active(item.Controller) == "active" ? "page" : null)"><i class="nav-icon bi @item.Icon" aria-hidden="true"></i><p>@item.Label</p></a></li>
                         }
+                        @if (User.IsInRole("ADMIN") || User.IsInRole("MANAGER"))
+                        {
+                            <li class="nav-item">
+                                <a href="@Url.Action("Index", "Services", new { area = "Admin" })"
+                                   class="nav-link @Active("Services")"
+                                   aria-current="@(Active("Services") == "active" ? "page" : null)">
+                                    <i class="nav-icon bi bi-briefcase" aria-hidden="true"></i>
+                                    <p>Dịch vụ</p>
+                                </a>
+                            </li>
+                        }
                         <li class="nav-header">NỘI DUNG & KHÁCH HÀNG</li>
                         @foreach (var item in contentLinks)
                         {

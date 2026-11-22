@@ -1,0 +1,340 @@
+@{
+    ViewData["Title"] = "Hỏi DoraFood";
+}
+
+<style>
+    .df-assistant {
+        --df-ink: #2c2023;
+        --df-accent: #872637;
+        --df-border: #e9d9dd;
+        width: min(840px, calc(100% - 24px));
+        margin: clamp(20px, 4vw, 48px) auto;
+        color: var(--df-ink);
+    }
+
+    .df-assistant-shell {
+        overflow: hidden;
+        background: #fff;
+        border: 1px solid var(--df-border);
+        border-radius: 18px;
+        box-shadow: 0 12px 34px rgb(72 29 38 / 8%);
+    }
+
+    .df-assistant-header,
+    .df-assistant-form {
+        padding: 18px clamp(14px, 4vw, 28px);
+    }
+
+    .df-assistant-header {
+        background: #fcf3f2;
+        border-bottom: 1px solid var(--df-border);
+    }
+
+        .df-assistant-header h1 {
+            margin: 0 0 6px;
+            font-size: clamp(1.5rem, 4vw, 2rem);
+            color: var(--df-accent);
+        }
+
+        .df-assistant-header p,
+        #df-assistant-status {
+            margin: 0;
+        }
+
+    .df-assistant-messages {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+        min-height: 220px;
+        max-height: min(52vh, 480px);
+        margin: 0;
+        padding: 20px clamp(14px, 4vw, 28px);
+        overflow-y: auto;
+        list-style: none;
+    }
+
+    .df-assistant-message {
+        width: fit-content;
+        max-width: 92%;
+        padding: 10px 14px;
+        background: #faf7f7;
+        border: 1px solid var(--df-border);
+        border-radius: 12px;
+        overflow-wrap: anywhere;
+    }
+
+        .df-assistant-message.is-user {
+            align-self: flex-end;
+            background: #f7e7ea;
+        }
+
+        .df-assistant-message strong {
+            display: block;
+            margin-bottom: 4px;
+            color: var(--df-accent);
+        }
+
+        .df-assistant-message p {
+            margin: 0;
+            white-space: pre-wrap;
+        }
+
+    .df-assistant-loading-dots {
+        display: inline-flex;
+        gap: 4px;
+        margin-inline-start: 8px;
+        vertical-align: middle;
+    }
+
+        .df-assistant-loading-dots span {
+            width: 5px;
+            height: 5px;
+            border-radius: 50%;
+            background: currentColor;
+            animation: df-assistant-dot .9s ease-in-out infinite alternate;
+        }
+
+            .df-assistant-loading-dots span:nth-child(2) {
+                animation-delay: .15s;
+            }
+
+            .df-assistant-loading-dots span:nth-child(3) {
+                animation-delay: .3s;
+            }
+
+    @@keyframes df-assistant-dot {
+        from {
+            opacity: .4;
+            transform: translateY(0);
+        }
+
+        to {
+            opacity: 1;
+            transform: translateY(-3px);
+        }
+    }
+
+    @@media (prefers-reduced-motion: reduce) {
+        .df-assistant-loading-dots span {
+            animation: none;
+        }
+    }
+
+    .df-assistant-send-error {
+        display: block;
+        margin-top: 6px;
+        color: var(--df-accent);
+    }
+
+    .df-assistant-menu {
+        margin-top: 12px;
+        padding-top: 10px;
+        border-top: 1px solid var(--df-border);
+    }
+
+        .df-assistant-menu ul {
+            margin: 0 0 8px;
+            padding-inline-start: 18px;
+        }
+
+        .df-assistant-menu li + li {
+            margin-top: 5px;
+        }
+
+    .df-assistant-form {
+        display: grid;
+        gap: 8px;
+        border-top: 1px solid var(--df-border);
+    }
+
+    .df-assistant-input {
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+    }
+
+        .df-assistant-input textarea {
+            min-height: 50px;
+            resize: vertical;
+        }
+
+        .df-assistant-input button {
+            flex-shrink: 0;
+        }
+
+    #df-assistant-status {
+        min-height: 1.4em;
+        font-size: .875rem;
+    }
+</style>
+
+<main class="df-assistant">
+    <section class="df-assistant-shell" aria-labelledby="df-assistant-title">
+        <header class="df-assistant-header">
+            <h1 id="df-assistant-title">Hỏi DoraFood</h1>
+            <p>Hỏi về nhà hàng, tra món và ưu đãi hoặc yêu cầu gợi ý thực đơn theo ngân sách.</p>
+        </header>
+
+        <ol id="df-assistant-messages" class="df-assistant-messages"
+            role="log" aria-label="Hội thoại với DoraFood" tabindex="0"></ol>
+
+        <form id="df-assistant-form" action="@Url.RouteUrl("DoraFoodAiFaqAsk")"
+              method="post" asp-antiforgery="false" class="df-assistant-form">
+            @Html.AntiForgeryToken()
+            <label for="df-assistant-question">Câu hỏi</label>
+            <div class="df-assistant-input">
+                <textarea id="df-assistant-question" name="question" class="form-control" rows="2"
+                          maxlength="300" required placeholder="Ví dụ: Gợi ý thực đơn cho 6 người với 1,2 triệu đồng"></textarea>
+                <button type="submit" class="btn btn-danger">Gửi</button>
+            </div>
+            <p id="df-assistant-status" role="status"></p>
+        </form>
+    </section>
+</main>
+
+@section Scripts {
+    <script>
+        (() => {
+            const form = document.getElementById("df-assistant-form");
+            const question = document.getElementById("df-assistant-question");
+            const messages = document.getElementById("df-assistant-messages");
+            const status = document.getElementById("df-assistant-status");
+            const button = form.querySelector('[type="submit"]');
+            const history = [];
+            let failedTurn = null;
+            const money = new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" });
+
+            function textElement(tag, value) {
+                const element = document.createElement(tag);
+                element.textContent = value;
+                return element;
+            }
+
+            function addMessage(speaker, text, isUser = false, menu = null) {
+                const bubble = document.createElement("li");
+                bubble.className = isUser ? "df-assistant-message is-user" : "df-assistant-message";
+                bubble.append(textElement("strong", speaker), textElement("p", text));
+
+                if (Array.isArray(menu?.items) && menu.items.length > 0) {
+                    const summary = document.createElement("div");
+                    summary.className = "df-assistant-menu";
+                    const list = document.createElement("ul");
+
+                    for (const item of menu.items) {
+                        const variant = item.variant && item.variant !== item.dish
+                            ? " (" + item.variant + ")" : "";
+                        list.append(textElement("li", item.dish + variant + " · "
+                            + item.quantity + " " + item.unit + " × " + money.format(item.unitPriceVnd)
+                            + " = " + money.format(item.subtotalVnd)));
+                    }
+
+                    summary.append(list, textElement("strong", "Tổng tiền món " + money.format(menu.totalVnd)));
+                    if (typeof menu.remainingVnd === "number")
+                        summary.append(textElement("p", "Còn trong ngân sách " + money.format(menu.remainingVnd)));
+
+                    bubble.append(summary);
+                }
+
+                return bubble;
+            }
+
+            function scrollToLatest() {
+                messages.scrollTop = messages.scrollHeight;
+            }
+
+            form.addEventListener("submit", async event => {
+                event.preventDefault();
+                if (button.disabled) return;
+
+                const text = question.value.trim();
+                if (!text) {
+                    status.textContent = "Vui lòng nhập câu hỏi.";
+                    question.focus();
+                    return;
+                }
+
+                const data = new FormData(form);
+                data.set("question", text);
+                history.forEach((message, index) => data.append("history[" + index + "]", message));
+                button.disabled = true;
+                question.readOnly = true;
+                question.value = "";
+                status.textContent = "";
+
+                let userBubble;
+                if (failedTurn?.text === text) {
+                    userBubble = failedTurn.bubble;
+                    failedTurn.notice.remove();
+                } else {
+                    userBubble = addMessage("Bạn", text, true);
+                    messages.append(userBubble);
+                }
+                failedTurn = null;
+
+                const loading = addMessage("DoraFood", "Đang tìm thông tin");
+                const dots = document.createElement("span");
+                dots.className = "df-assistant-loading-dots";
+                dots.setAttribute("aria-hidden", "true");
+                dots.append(document.createElement("span"), document.createElement("span"),
+                    document.createElement("span"));
+                loading.lastElementChild.append(dots);
+                messages.append(loading);
+                scrollToLatest();
+
+                let errorMessage = "";
+                try {
+                    const response = await fetch(form.action, {
+                        method: "POST",
+                        headers: { Accept: "application/json" },
+                        body: data
+                    });
+
+                    if (response.redirected || response.status === 401) {
+                        errorMessage = "Phiên đăng nhập đã hết. Vui lòng đăng nhập lại.";
+                        return;
+                    }
+                    if (response.status === 429) {
+                        errorMessage = "Đang có nhiều yêu cầu. Vui lòng thử lại sau.";
+                        return;
+                    }
+
+                    const result = await response.json().catch(() => null);
+                    if (!response.ok || typeof result?.answer !== "string" || !result.answer.trim()) {
+                        errorMessage = result?.message ?? "DoraFood chưa phản hồi được. Vui lòng thử lại.";
+                        return;
+                    }
+
+                    loading.replaceWith(addMessage("DoraFood", result.answer, false, result.menu));
+
+                    const menu = result.menu;
+                    const context = Array.isArray(menu?.items) && menu.items.length > 0
+                        ? "\nThực đơn: " + menu.items.map(item =>
+                            item.dish + " (" + item.variant + ") × " + item.quantity).join(", ")
+                        + ". Tổng tiền: " + menu.totalVnd + " VND."
+                        + (typeof menu.remainingVnd === "number"
+                            ? " Ngân sách: " + (menu.totalVnd + menu.remainingVnd) + " VND."
+                            : "")
+                        : "";
+
+                    history.push(text, (context + "\n" + result.answer).trim().slice(0, 1200));
+                    if (history.length > 6) history.splice(0, 2);
+                } catch {
+                    errorMessage = "Kết nối bị gián đoạn. Vui lòng thử lại.";
+                } finally {
+                    loading.remove();
+                    if (errorMessage) {
+                        const notice = textElement("small", errorMessage);
+                        notice.className = "df-assistant-send-error";
+                        userBubble.append(notice);
+                        failedTurn = { text, bubble: userBubble, notice };
+                        question.value = text;
+                    }
+                    scrollToLatest();
+                    button.disabled = false;
+                    question.readOnly = false;
+                    question.focus();
+                }
+            });
+        })();
+    </script>
+}

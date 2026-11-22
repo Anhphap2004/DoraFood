@@ -1,14 +1,24 @@
-﻿@{
+﻿@inject Microsoft.Extensions.Configuration.IConfiguration Configuration
+
+@{
     var pageTitle = ViewData["Title"] as string;
     var description = ViewData["Description"] as string ?? "DoraFood — hương vị tinh tế cho những cuộc hẹn đáng nhớ.";
     var homeUrl = Url.Content("~/");
     var menuUrl = Url.RouteUrl("DoraFoodMenu") ?? Url.Content("~/thuc-don");
     // Giữ đường dẫn gốc khi chưa được cung cấp route đặt bàn thật.
     var bookingUrl = ViewData["BookingUrl"] as string ?? Url.Content("~/book.html");
-    var address = ViewData["RestaurantAddress"] as string;
-    var phone = ViewData["RestaurantPhone"] as string;
-    var email = ViewData["RestaurantEmail"] as string;
-    var hours = ViewData["RestaurantHours"] as string;
+    var address = Configuration["DoraFood:PublicContact:Address"]?.Trim();
+    if (string.IsNullOrWhiteSpace(address))
+        address = ViewData["RestaurantAddress"] as string;
+    var phone = Configuration["DoraFood:PublicContact:Phone"]?.Trim();
+    if (string.IsNullOrWhiteSpace(phone))
+        phone = ViewData["RestaurantPhone"] as string;
+    var email = Configuration["DoraFood:PublicContact:Email"]?.Trim();
+    if (string.IsNullOrWhiteSpace(email))
+        email = ViewData["RestaurantEmail"] as string;
+    var hours = Configuration["DoraFood:PublicContact:Hours"]?.Trim();
+    if (string.IsNullOrWhiteSpace(hours))
+        hours = ViewData["RestaurantHours"] as string;
     var hasContact = !string.IsNullOrWhiteSpace(address) || !string.IsNullOrWhiteSpace(phone)
         || !string.IsNullOrWhiteSpace(email) || !string.IsNullOrWhiteSpace(hours);
 }

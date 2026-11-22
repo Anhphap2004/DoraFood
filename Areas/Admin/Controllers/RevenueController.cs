@@ -7,6 +7,7 @@ using DoraFood.Areas.Admin.ViewModels;
 using DoraFood.Data;
 using DoraFood.Models;
 using Microsoft.AspNetCore.Authorization;
+using System.Collections.Generic;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using DoraFood.Areas.Admin.Filters;
@@ -93,51 +94,8 @@ public sealed class RevenueController : Controller
             return BadRequest("Ngày thống kê vượt giới hạn cho phép.");
         }
 
-        // 1. TIỀN THANH TOÁN ĐÃ THU
-        // Amount đã là tiền sau giảm giá.
-        var collectedByDay = await _context.Set<Payment>()
-            .AsNoTracking()
-            .Where(payment =>
-                payment.Status == "SUCCEEDED"
-                && payment.Purpose == "SETTLEMENT"
-                && payment.PaidAtUtc.HasValue
-                && payment.PaidAtUtc.Value >= startUtc
-                && payment.PaidAtUtc.Value < endUtc)
-            .GroupBy(payment =>
-                payment.PaidAtUtc!.Value.AddHours(7).Date)
-            .Select(group => new
-            {
-                Date = group.Key,
-                Amount = group.Sum(payment => payment.Amount)
-            })
-            .ToDictionaryAsync(
-                item => item.Date,
-                item => item.Amount,
-                cancellationToken);
-
-        // 2. TIỀN ĐÃ HOÀN
-        // Lọc theo ngày hoàn, kể cả khoản thu thuộc kỳ trước.
-        var refundedByDay = await (
-            from refund in _context.Set<Refund>().AsNoTracking()
-            join payment in _context.Set<Payment>().AsNoTracking()
-                on refund.PaymentId equals payment.Id
-            where refund.Status == "SUCCEEDED"
-                && payment.Purpose == "SETTLEMENT"
-                && refund.RefundedAtUtc.HasValue
-                && refund.RefundedAtUtc.Value >= startUtc
-                && refund.RefundedAtUtc.Value < endUtc
-            group refund by
-                refund.RefundedAtUtc!.Value.AddHours(7).Date
-                into daily
-            select new
-            {
-                Date = daily.Key,
-                Amount = daily.Sum(refund => refund.Amount)
-            })
-            .ToDictionaryAsync(
-                item => item.Date,
-                item => item.Amount,
-                cancellationToken);
+        var (collectedByDay, refundedByDay) =
+    await LoadSettlementByDayAsync(startUtc, endUtc, cancellationToken);
 
         // 3. ĐƠN HOÀN TẤT TRONG KỲ
         var completedOrders = _context.Set<Order>()
@@ -209,7 +167,127 @@ public sealed class RevenueController : Controller
             Days = days
         });
     }
+    [HttpGet]
+    [RequirePermission("reports.view")]
+    public async Task<IActionResult> Forecast(CancellationToken cancellationToken)
+    {
+        if (!await CanViewAsync(cancellationToken))
+        {
+            return Forbid();
+        }
 
+        const int historyDays = 56;
+        const int forecastDays = 7;
+        const int minimumSamples = 3;
+
+        var today = DateTime.SpecifyKind(
+            DateTime.UtcNow.AddHours(7).Date,
+            DateTimeKind.Unspecified);
+
+        var historyStart = today.AddDays(-historyDays);
+
+        // Lấy 56 ngày đã kết thúc theo giờ Việt Nam.
+        var startUtc = DateTime.SpecifyKind(
+            historyStart.AddHours(-7), DateTimeKind.Utc);
+
+        var endUtc = DateTime.SpecifyKind(
+            today.AddHours(-7), DateTimeKind.Utc);
+
+        var (collectedByDay, refundedByDay) =
+            await LoadSettlementByDayAsync(startUtc, endUtc, cancellationToken);
+
+        // Bắt đầu từ ngày đầu tiên có giao dịch trong khoảng lịch sử.
+        var firstObservedDay = collectedByDay.Keys
+            .Concat(refundedByDay.Keys)
+            .Select(date => (DateTime?)date)
+            .Min();
+
+        var history = Enumerable.Range(0, historyDays)
+            .Select(offset => historyStart.AddDays(offset))
+            .Where(date => firstObservedDay.HasValue
+                && date >= firstObservedDay.Value)
+            .GroupBy(date => date.DayOfWeek)
+            .ToDictionary(
+                group => group.Key,
+                group => new
+                {
+                    Count = group.Count(),
+                    Average = group.Average(date =>
+                        collectedByDay.GetValueOrDefault(date)
+                        - refundedByDay.GetValueOrDefault(date))
+                });
+
+        var forecast = new List<RevenueForecastRow>(forecastDays);
+
+        for (var offset = 1; offset <= forecastDays; offset++)
+        {
+            var date = today.AddDays(offset);
+            history.TryGetValue(date.DayOfWeek, out var sample);
+
+            var sampleCount = sample?.Count ?? 0;
+            decimal? prediction = sampleCount >= minimumSamples
+                ? Math.Round(sample!.Average, 0, MidpointRounding.AwayFromZero)
+                : null;
+
+            forecast.Add(new RevenueForecastRow(date, prediction, sampleCount));
+        }
+
+        decimal? total = forecast.All(day => day.PredictedNetRevenue.HasValue)
+            ? forecast.Sum(day => day.PredictedNetRevenue.GetValueOrDefault())
+            : null;
+
+        return View(new RevenueForecastViewModel(
+            firstObservedDay,
+            today.AddDays(-1),
+            forecast,
+            total));
+    }
+
+    private async Task<(
+        Dictionary<DateTime, decimal> Collected,
+        Dictionary<DateTime, decimal> Refunded)> LoadSettlementByDayAsync(
+            DateTime startUtc,
+            DateTime endUtc,
+            CancellationToken cancellationToken)
+    {
+        var collected = await _context.Set<Payment>()
+            .AsNoTracking()
+            .Where(payment =>
+                payment.Status == "SUCCEEDED"
+                && payment.Purpose == "SETTLEMENT"
+                && payment.PaidAtUtc.HasValue
+                && payment.PaidAtUtc.Value >= startUtc
+                && payment.PaidAtUtc.Value < endUtc)
+            .GroupBy(payment => payment.PaidAtUtc!.Value.AddHours(7).Date)
+            .Select(group => new
+            {
+                Date = group.Key,
+                Amount = group.Sum(payment => payment.Amount)
+            })
+            .ToDictionaryAsync(
+                item => item.Date, item => item.Amount, cancellationToken);
+
+        var refunded = await (
+            from refund in _context.Set<Refund>().AsNoTracking()
+            join payment in _context.Set<Payment>().AsNoTracking()
+                on refund.PaymentId equals payment.Id
+            where refund.Status == "SUCCEEDED"
+                && payment.Purpose == "SETTLEMENT"
+                && refund.RefundedAtUtc.HasValue
+                && refund.RefundedAtUtc.Value >= startUtc
+                && refund.RefundedAtUtc.Value < endUtc
+            group refund by refund.RefundedAtUtc!.Value.AddHours(7).Date
+            into daily
+            select new
+            {
+                Date = daily.Key,
+                Amount = daily.Sum(refund => refund.Amount)
+            })
+            .ToDictionaryAsync(
+                item => item.Date, item => item.Amount, cancellationToken);
+
+        return (collected, refunded);
+    }
     private async Task<bool> CanViewAsync(
         CancellationToken cancellationToken)
     {
