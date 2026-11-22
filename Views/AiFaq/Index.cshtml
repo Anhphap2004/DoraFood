@@ -178,8 +178,12 @@
         <ol id="df-assistant-messages" class="df-assistant-messages"
             role="log" aria-label="Hội thoại với DoraFood" tabindex="0"></ol>
 
-        <form id="df-assistant-form" action="@Url.RouteUrl("DoraFoodAiFaqAsk")"
-              method="post" asp-antiforgery="false" class="df-assistant-form">
+        <form id="df-assistant-form"
+              data-account-id="@(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value)"
+              action="@Url.RouteUrl("DoraFoodAiFaqAsk")"
+              method="post"
+              asp-antiforgery="false"
+              class="df-assistant-form">
             @Html.AntiForgeryToken()
             <label for="df-assistant-question">Câu hỏi</label>
             <div class="df-assistant-input">
@@ -200,7 +204,27 @@
             const messages = document.getElementById("df-assistant-messages");
             const status = document.getElementById("df-assistant-status");
             const button = form.querySelector('[type="submit"]');
-            const history = [];
+            const accountId = form.dataset.accountId;
+            const historyKey = accountId ? `dorafood-ai-faq:v1:${accountId}` : null;
+            const savedTurns = readSavedTurns();
+
+            function readSavedTurns() {
+                if (!historyKey) return [];
+
+                try {
+                    const items = JSON.parse(localStorage.getItem(historyKey) ?? "[]");
+
+                    return Array.isArray(items)
+                        ? items.filter(turn =>
+                            typeof turn?.question === "string" && turn.question.trim()
+                            && typeof turn.answer === "string" && turn.answer.trim()
+                            && typeof turn.context === "string" && turn.context.trim()
+                        ).slice(-20)
+                        : [];
+                } catch {
+                    return [];
+                }
+            }
             let failedTurn = null;
             const money = new Intl.NumberFormat("vi-VN", { style: "currency", currency: "VND" });
 
@@ -210,7 +234,34 @@
                 return element;
             }
 
-            function addMessage(speaker, text, isUser = false, menu = null) {
+            function appendDishLinks(bubble, dishLinks) {
+                if (!Array.isArray(dishLinks) || dishLinks.length === 0) return;
+
+                const tags = document.createElement("div");
+                tags.className = "d-flex flex-wrap gap-2 mt-3";
+
+                for (const item of dishLinks) {
+                    if (typeof item?.label !== "string" || typeof item.url !== "string") continue;
+
+                    let url;
+                    try {
+                        url = new URL(item.url, window.location.origin);
+                    } catch {
+                        continue;
+                    }
+
+                    if (url.origin !== window.location.origin) continue;
+
+                    const link = textElement("a", item.label);
+                    link.className = "btn btn-sm btn-outline-danger rounded-pill";
+                    link.href = url.href;
+                    link.setAttribute("aria-label", "Xem món " + item.label);
+                    tags.append(link);
+                }
+
+                if (tags.children.length > 0) bubble.append(tags);
+            }
+            function addMessage(speaker, text, isUser = false, menu = null, dishLinks = null) {
                 const bubble = document.createElement("li");
                 bubble.className = isUser ? "df-assistant-message is-user" : "df-assistant-message";
                 bubble.append(textElement("strong", speaker), textElement("p", text));
@@ -234,14 +285,21 @@
 
                     bubble.append(summary);
                 }
-
+                appendDishLinks(bubble, dishLinks);
                 return bubble;
             }
 
             function scrollToLatest() {
                 messages.scrollTop = messages.scrollHeight;
             }
+            for (const turn of savedTurns) {
+                messages.append(
+                    addMessage("Bạn", turn.question, true),
+                    addMessage("DoraFood", turn.answer, false, turn.menu, turn.dishLinks)
+                );
+            }
 
+            if (savedTurns.length > 0) scrollToLatest();
             form.addEventListener("submit", async event => {
                 event.preventDefault();
                 if (button.disabled) return;
@@ -255,7 +313,14 @@
 
                 const data = new FormData(form);
                 data.set("question", text);
-                history.forEach((message, index) => data.append("history[" + index + "]", message));
+                const history = savedTurns.slice(-3).flatMap(turn => [
+                    turn.question.slice(0, 300),
+                    turn.context.slice(0, 1200)
+                ]);
+
+                history.forEach((message, index) => {
+                    data.append(`history[${index}]`, message);
+                });
                 button.disabled = true;
                 question.readOnly = true;
                 question.value = "";
@@ -304,7 +369,9 @@
                         return;
                     }
 
-                    loading.replaceWith(addMessage("DoraFood", result.answer, false, result.menu));
+                    loading.replaceWith(
+                        addMessage("DoraFood", result.answer, false, result.menu, result.dishLinks)
+                    );  
 
                     const menu = result.menu;
                     const context = Array.isArray(menu?.items) && menu.items.length > 0
@@ -316,8 +383,25 @@
                             : "")
                         : "";
 
-                    history.push(text, (context + "\n" + result.answer).trim().slice(0, 1200));
-                    if (history.length > 6) history.splice(0, 2);
+                    savedTurns.push({
+                        question: text,
+                        answer: result.answer,
+                        context: (context + "\n" + result.answer).trim().slice(0, 1200),
+                        menu: result.menu ?? null,
+                        dishLinks: result.dishLinks ?? []
+                    });
+
+                    if (savedTurns.length > 20) {
+                        savedTurns.splice(0, savedTurns.length - 20);
+                    }
+
+                    if (historyKey) {
+                        try {
+                            localStorage.setItem(historyKey, JSON.stringify(savedTurns));
+                        } catch {
+                            // Chat vẫn chạy nếu trình duyệt chặn lưu hoặc hết dung lượng.
+                        }
+                    }
                 } catch {
                     errorMessage = "Kết nối bị gián đoạn. Vui lòng thử lại.";
                 } finally {

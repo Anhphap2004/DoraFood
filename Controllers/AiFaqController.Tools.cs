@@ -225,12 +225,13 @@ public sealed partial class AiFaqController
     }
 
     private sealed record MenuLine(
-        string Dish,
-        string Variant,
-        string Unit,
-        int Quantity,
-        decimal UnitPriceVnd,
-        decimal SubtotalVnd);
+       long DishId,
+       string Dish,
+       string Variant,
+       string Unit,
+       int Quantity,
+       decimal UnitPriceVnd,
+       decimal SubtotalVnd);
 
     private sealed record MenuQuote(
         List<MenuLine> Items,
@@ -284,6 +285,7 @@ public sealed partial class AiFaqController
             .Select(variant => new
             {
                 variant.Id,
+                variant.DishId,
                 Dish = variant.Dish.Name,
                 Variant = variant.Name,
                 Unit = variant.SellingUnit,
@@ -301,6 +303,7 @@ public sealed partial class AiFaqController
             var variant = variants[id];
 
             lines.Add(new MenuLine(
+                variant.DishId,
                 variant.Dish,
                 variant.Variant,
                 variant.Unit,
@@ -443,4 +446,5 @@ public sealed partial class AiFaqController
             maxDiscountVnd = voucher.MaxDiscount
         };
     }
+
 }

@@ -262,9 +262,17 @@ public sealed partial class AiFaqController : Controller
 
                     var answer = string.Join("\n", parts).Trim();
 
-                    return answer.Length == 0
-                        ? Unavailable()
-                        : Json(new { answer, menu });
+                    var dishLinks = menu?.Items
+      .DistinctBy(item => item.DishId)
+      .Select(item => new
+      {
+          label = item.Dish,
+          url = Url.RouteUrl("DoraFoodDishDetails", new { id = item.DishId })
+      })
+      .Where(link => Url.IsLocalUrl(link.url))
+      .ToArray();
+
+                    return Json(new { answer, menu, dishLinks });
                 }
 
                 if (!allowTools)
