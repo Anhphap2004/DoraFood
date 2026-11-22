@@ -9,6 +9,7 @@ using DoraFood.ViewModels;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
+using DoraFood.Services;
 using Microsoft.EntityFrameworkCore;
 
 namespace DoraFood.Controllers;
@@ -220,7 +221,16 @@ public sealed class ProfileOrdersController : Controller
             Discounts = discounts,
             History = history
         };
-
+        if (order.Status == "COMPLETED"
+&& await DeliveryInvoiceService.Issued(_context)
+   .AnyAsync(invoice =>
+       invoice.OrderId == id
+       && invoice.Order.CustomerId == userId,
+       cancellationToken))
+        {
+            ViewData["DeliveryInvoiceUrl"] = Url.RouteUrl(
+                "DoraFood.MyDeliveryInvoice", new { id });
+        }
         return View(model);
     }
     [HttpPost("{id:long}/huy", Name = "DoraFood.CancelMyOrder")]
@@ -421,5 +431,33 @@ public sealed class ProfileOrdersController : Controller
             cancellationToken);
 
         return isActive ? userId : null;
+    }
+    [HttpGet("{id:long}/hoa-don", Name = "DoraFood.MyDeliveryInvoice")]
+    public async Task<IActionResult> Invoice(
+    [FromRoute] long id,
+    CancellationToken cancellationToken)
+    {
+        if (await GetActiveUserIdAsync(cancellationToken) is not long userId)
+        {
+            return Forbid();
+        }
+
+        var invoice = await DeliveryInvoiceService.Issued(_context)
+            .Include(item => item.Order)
+            .Include(item => item.InvoiceLines)
+            .SingleOrDefaultAsync(item =>
+                item.OrderId == id
+                && item.Order.CustomerId == userId,
+                cancellationToken);
+
+        if (invoice is null)
+        {
+            return NotFound();
+        }
+
+        ViewData["BackUrl"] = Url.RouteUrl(
+            "DoraFood.MyOrderDetails", new { id });
+
+        return View("~/Views/Shared/DeliveryInvoice.cshtml", invoice);
     }
 }

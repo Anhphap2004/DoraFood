@@ -1,0 +1,87 @@
+﻿@using System.Globalization
+@using System.Linq
+@model DoraFood.Models.Invoice
+
+@{
+    ViewData["Title"] = "Hóa đơn mua hàng";
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+    var backUrl = ViewData["BackUrl"] as string;
+    var issuedAt = Model.IssuedAtUtc?.AddHours(7);
+
+    string Money(decimal value) => $"{value.ToString("N0", culture)} ₫";
+}
+
+<div class="container py-4" style="max-width: 920px">
+    @if (!string.IsNullOrWhiteSpace(backUrl))
+    {
+        <a class="btn btn-outline-secondary btn-sm mb-3" href="@backUrl">
+            ← Về chi tiết đơn
+        </a>
+    }
+
+    <section class="card shadow-sm">
+        <div class="card-body p-3 p-md-4">
+            <header class="d-flex flex-wrap justify-content-between align-items-start gap-2 border-bottom pb-3">
+                <div>
+                    <h1 class="h4 mb-1">Hóa đơn mua hàng</h1>
+                    <div class="text-body-secondary">@Model.Number · Đơn @Model.Order.Code</div>
+                </div>
+                <span class="badge bg-success">Đã thanh toán</span>
+            </header>
+
+            <div class="row g-3 py-3 small">
+                <div class="col-md-6">
+                    <div class="text-body-secondary">Người nhận</div>
+                    <div>@(Model.CustomerName ?? "—")</div>
+                    <div class="text-break">@(Model.CustomerAddress ?? "—")</div>
+                </div>
+                <div class="col-md-6 text-md-end">
+                    <div class="text-body-secondary">Thời điểm lập · Giờ Việt Nam</div>
+                    <div>@(issuedAt?.ToString("dd/MM/yyyy HH:mm", culture) ?? "—")</div>
+                </div>
+            </div>
+
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">Món</th>
+                            <th scope="col" class="text-end text-nowrap">SL</th>
+                            <th scope="col" class="text-end text-nowrap">Đơn giá</th>
+                            <th scope="col" class="text-end text-nowrap">Tiền món</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var line in Model.InvoiceLines.OrderBy(item => item.LineNumber))
+                        {
+                            <tr>
+                                <th scope="row" class="fw-normal">@line.Description</th>
+                                <td class="text-end">@line.Quantity.ToString("0.###", culture)</td>
+                                <td class="text-end text-nowrap">@Money(line.UnitPrice)</td>
+                                <td class="text-end text-nowrap">
+                                    @Money(line.LineSubtotal.GetValueOrDefault())
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <dl class="row g-2 mt-3 mb-0">
+                <dt class="col-7 fw-normal">Tạm tính</dt>
+                <dd class="col-5 text-end mb-0">@Money(Model.Subtotal)</dd>
+
+                @if (Model.DiscountAmount > 0m)
+                {
+                    <dt class="col-7 fw-normal">Giảm giá</dt>
+                    <dd class="col-5 text-end mb-0">−@Money(Model.DiscountAmount)</dd>
+                }
+
+                <dt class="col-7 border-top pt-2">Tổng đã thanh toán</dt>
+                <dd class="col-5 border-top pt-2 text-end fw-semibold mb-0">
+                    @Money(Model.GrandTotal.GetValueOrDefault())
+                </dd>
+            </dl>
+        </div>
+    </section>
+</div>

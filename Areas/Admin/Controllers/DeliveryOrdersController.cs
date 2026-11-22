@@ -1,23 +1,19 @@
-﻿using DoraFood.Areas.Admin.Filters;
+﻿using System;
+using System.Data;
+using System.Globalization;
+using System.Linq;
+using System.Security.Claims;
+using System.Threading;
+using System.Threading.Tasks;
+using DoraFood.Areas.Admin.Filters;
 using DoraFood.Areas.Admin.ViewModels;
 using DoraFood.Data;
 using DoraFood.Models;
+using DoraFood.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Data.SqlClient;
 using Microsoft.EntityFrameworkCore;
-using System;
-using System;
-using System.Data;
-using System.Globalization;
-using System.Linq;
-using System.Linq;
-using System.Security.Claims;
-using System.Threading;
-using System.Threading;
-using System.Threading.Tasks;
-using System.Threading.Tasks;
-
 
 namespace DoraFood.Areas.Admin.Controllers;
 
@@ -558,8 +554,126 @@ public class DeliveryOrdersController : Controller
                     pendingCancellation.CustomerName,
                     pendingCancellation.Reason,
                     pendingCancellation.RequestedAtUtc);
+
+        ViewData["HasDeliveryInvoice"] = order.Status == "COMPLETED"
+            && await DeliveryInvoiceService.Issued(_context)
+                .AnyAsync(invoice => invoice.OrderId == order.Id, cancellationToken);
+
         return View(model);
     }
+
+    [HttpGet]
+    public async Task<IActionResult> Invoice(
+        string? code,
+        int page = 1,
+        CancellationToken cancellationToken = default)
+    {
+        if (!ModelState.IsValid || !ValidCode(code))
+        {
+            return NotFound();
+        }
+
+        if (await GetActorIdAsync(cancellationToken) is null)
+        {
+            return Forbid();
+        }
+
+        var orderCode = code!.Trim();
+        var invoice = await DeliveryInvoiceService.Issued(_context)
+            .Include(item => item.Order)
+            .Include(item => item.InvoiceLines)
+            .SingleOrDefaultAsync(item => item.Order.Code == orderCode, cancellationToken);
+
+        if (invoice is null)
+        {
+            return NotFound();
+        }
+
+        ViewData["BackUrl"] = Url.Action(nameof(Details),
+            new { area = "Admin", code = orderCode, page = Math.Max(1, page) });
+
+        return View("~/Areas/Admin/Views/DeliveryOrders/Invoice.cshtml", invoice);
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> CreateInvoice(
+        [FromForm] string? code,
+        [FromForm] int page = 1,
+        CancellationToken cancellationToken = default)
+    {
+        if (!ModelState.IsValid || !ValidCode(code))
+        {
+            return NotFound();
+        }
+
+        if (await GetActorIdAsync(cancellationToken) is not long actorId)
+        {
+            return Forbid();
+        }
+
+        var orderCode = code!.Trim();
+        page = Math.Max(1, page);
+        string? error;
+
+        try
+        {
+            error = await _context.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
+            {
+                _context.ChangeTracker.Clear();
+
+                await using var transaction = await _context.Database.BeginTransactionAsync(
+                    IsolationLevel.Serializable, cancellationToken);
+
+                var cashSettlements = CashSettlements();
+                var orderId = await _context.Set<Order>()
+                    .AsNoTracking()
+                    .Where(order => order.Code == orderCode
+                        && order.OrderType == "DELIVERY"
+                        && order.Status == "COMPLETED"
+                        && cashSettlements.Any(payment =>
+                            payment.OrderId == order.Id
+                            && payment.Status == "SUCCEEDED"
+                            && payment.PaidAtUtc.HasValue))
+                    .Select(order => (long?)order.Id)
+                    .SingleOrDefaultAsync(cancellationToken);
+
+                if (orderId is null)
+                {
+                    return "Chỉ tạo hóa đơn cho đơn giao hàng đã hoàn tất và đã thu tiền mặt.";
+                }
+
+                var issueError = await DeliveryInvoiceService.IssueAsync(
+                    _context, orderId.Value, actorId, DateTime.UtcNow, cancellationToken);
+
+                if (issueError is not null)
+                {
+                    return issueError;
+                }
+
+                await transaction.CommitAsync(cancellationToken);
+                return (string?)null;
+            });
+        }
+        catch (DbUpdateException exception)
+            when (exception.InnerException is SqlException { Number: 2601 or 2627 or 1205 })
+        {
+            error = "Đơn đang được xử lý. Hãy tải lại chi tiết để kiểm tra hóa đơn.";
+        }
+        catch (SqlException exception) when (exception.Number == 1205)
+        {
+            error = "Đơn đang được xử lý. Hãy tải lại chi tiết để kiểm tra hóa đơn.";
+        }
+
+        if (error is not null)
+        {
+            return BackToDetails(orderCode, page, error);
+        }
+
+        return RedirectToAction(nameof(Invoice),
+            new { area = "Admin", code = orderCode, page });
+    }
+
     // OPEN -> IN_PROGRESS: nhà hàng tiếp nhận và chuẩn bị món.
     [HttpPost]
     [ValidateAntiForgeryToken]
@@ -609,6 +723,7 @@ public class DeliveryOrdersController : Controller
             // Phù hợp cả khi kết nối SQL đã bật EnableRetryOnFailure.
             error = await _context.Database.CreateExecutionStrategy().ExecuteAsync(async () =>
             {
+                _context.ChangeTracker.Clear();
                 // Giữ ổn định các khoản thanh toán đã đọc đến khi commit.
                 await using var transaction = await _context.Database.BeginTransactionAsync(
                     IsolationLevel.Serializable, cancellationToken);
@@ -630,11 +745,10 @@ public class DeliveryOrdersController : Controller
                     return "Đơn không còn ở bước phù hợp. Hãy tải lại chi tiết đơn để kiểm tra.";
 
                 if (toStatus == "SHIPPING"
-    && await _context.Set<OrderCancellationRequest>()
-        .AnyAsync(
-            request => request.Order.Code == code
-                && request.Status == "PENDING",
-            cancellationToken))
+                    && await _context.Set<OrderCancellationRequest>().AnyAsync(
+                        request => request.Order.Code == code
+                            && request.Status == "PENDING",
+                        cancellationToken))
                 {
                     return "Khách đang yêu cầu hủy đơn. Hãy xử lý yêu cầu trước khi bắt đầu giao.";
                 }
@@ -685,6 +799,12 @@ public class DeliveryOrdersController : Controller
 
                     if (updatedPayments != 1)
                         return "Khoản thu vừa thay đổi. Hãy tải lại chi tiết đơn để kiểm tra.";
+
+                    var invoiceError = await DeliveryInvoiceService.IssueAsync(
+                        _context, paymentToCollect.OrderId, userId, now, cancellationToken);
+
+                    if (invoiceError is not null)
+                        return invoiceError;
                 }
 
                 await transaction.CommitAsync(cancellationToken);
@@ -695,6 +815,11 @@ public class DeliveryOrdersController : Controller
         catch (SqlException exception) when (exception.Number == 1205)
         {
             error = "Đơn đang được xử lý đồng thời. Hãy tải lại chi tiết rồi thử lại.";
+        }
+        catch (DbUpdateException exception)
+            when (exception.InnerException is SqlException { Number: 2601 or 2627 or 1205 })
+        {
+            error = "Đơn đang được xử lý. Hãy tải lại chi tiết để kiểm tra thanh toán và hóa đơn.";
         }
 
         TempData[error is null ? "DeliverySuccess" : "DeliveryError"] =

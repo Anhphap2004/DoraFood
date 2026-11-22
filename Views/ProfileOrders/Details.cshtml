@@ -152,7 +152,12 @@ new { id = Model.Order.Id })
                                     @Model.Order.Total.ToString("N0", culture) ₫
                                 </strong>
                             </div>
-
+                            @if (ViewData["DeliveryInvoiceUrl"] is string invoiceUrl)
+                            {
+                                <a class="btn btn-outline-primary btn-sm" href="@invoiceUrl">
+                                    Xem hóa đơn
+                                </a>
+                            }
                             @if (Model.Order.Status == "CANCELLED")
                             {
                                 <p class="small text-muted mt-2 mb-0">

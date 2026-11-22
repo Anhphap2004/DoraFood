@@ -47,6 +47,32 @@
            href="@Url.Action("Index", "DeliveryOrders", new { area = "Admin", page = Model.ReturnPage })">
             <i class="bi bi-arrow-left me-1" aria-hidden="true"></i> Về danh sách
         </a>
+        @if (ViewData["HasDeliveryInvoice"] is true)
+        {
+            <a class="btn btn-outline-primary btn-sm"
+               asp-area="Admin"
+               asp-controller="DeliveryOrders"
+               asp-action="Invoice"
+               asp-route-code="@Model.Code"
+               asp-route-page="@Model.ReturnPage">
+                Xem hóa đơn
+            </a>
+        }
+        else if (Model.Status == "COMPLETED" && Model.ReceivedAmount > 0m)
+        {
+            <form asp-area="Admin"
+                  asp-controller="DeliveryOrders"
+                  asp-action="CreateInvoice"
+                  asp-antiforgery="true"
+                  method="post"
+                  class="d-inline">
+                <input type="hidden" name="code" value="@Model.Code" />
+                <input type="hidden" name="page" value="@Model.ReturnPage" />
+                <button class="btn btn-outline-primary btn-sm" type="submit">
+                    Tạo hóa đơn
+                </button>
+            </form>
+        }
         <span class="dv-status @statusClass"><span></span>@statusLabel</span>
     </div>
 

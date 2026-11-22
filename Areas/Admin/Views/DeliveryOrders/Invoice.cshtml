@@ -1,0 +1,109 @@
+@using System
+@using System.Globalization
+@using System.Linq
+@model DoraFood.Models.Invoice
+
+@{
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Hóa đơn giao hàng";
+
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+    var backUrl = ViewData["BackUrl"] as string;
+    var issuedAt = Model.IssuedAtUtc?.AddHours(7);
+    var lines = Model.InvoiceLines.OrderBy(line => line.LineNumber);
+    var grandTotal = Model.GrandTotal
+        ?? (Model.Subtotal - Model.DiscountAmount + Model.TaxAmount);
+
+    string Money(decimal amount) => $"{amount.ToString("N0", culture)} ₫";
+}
+
+<div class="mx-auto pb-4" style="max-width: 1080px">
+    @if (!string.IsNullOrEmpty(backUrl))
+    {
+        <a class="btn btn-outline-secondary btn-sm mb-3" href="@backUrl">
+            <i class="bi bi-arrow-left me-1" aria-hidden="true"></i>
+            Về chi tiết đơn giao hàng
+        </a>
+    }
+
+    <article class="card card-outline card-danger shadow-sm">
+        <header class="card-header d-flex flex-wrap align-items-center justify-content-between gap-2">
+            <div>
+                <div class="small text-body-secondary">Mã hóa đơn</div>
+                <h2 class="h5 mb-0 text-break">@Model.Number</h2>
+            </div>
+            <span class="badge text-bg-success">Đã lập hóa đơn</span>
+        </header>
+
+        <div class="card-body">
+            <dl class="row gy-3 mb-4">
+                <div class="col-md-4">
+                    <dt class="small text-body-secondary">Mã đơn giao hàng</dt>
+                    <dd class="mb-0 text-break">@Model.Order.Code</dd>
+                </div>
+                <div class="col-md-4">
+                    <dt class="small text-body-secondary">Người nhận</dt>
+                    <dd class="mb-0 text-break">@(Model.CustomerName ?? "—")</dd>
+                </div>
+                <div class="col-md-4">
+                    <dt class="small text-body-secondary">Thời điểm lập · Giờ Việt Nam</dt>
+                    <dd class="mb-0">@(issuedAt?.ToString("dd/MM/yyyy HH:mm", culture) ?? "—")</dd>
+                </div>
+                <div class="col-12">
+                    <dt class="small text-body-secondary">Địa chỉ giao hàng</dt>
+                    <dd class="mb-0 text-break">@(Model.CustomerAddress ?? "—")</dd>
+                </div>
+            </dl>
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <caption class="visually-hidden">Chi tiết hóa đơn @Model.Number</caption>
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">Mặt hàng</th>
+                            <th scope="col" class="text-nowrap text-end">Số lượng</th>
+                            <th scope="col" class="text-nowrap text-end">Đơn giá</th>
+                            <th scope="col" class="text-nowrap text-end">Tiền trước giảm</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var line in lines)
+                        {
+                            var lineSubtotal = line.LineSubtotal
+                                ?? decimal.Round(line.Quantity * line.UnitPrice, 2, MidpointRounding.AwayFromZero);
+
+                            <tr>
+                                <th scope="row" class="fw-normal text-break">@line.Description</th>
+                                <td class="text-end">@line.Quantity.ToString("0.###", culture)</td>
+                                <td class="text-nowrap text-end">@Money(line.UnitPrice)</td>
+                                <td class="text-nowrap text-end">@Money(lineSubtotal)</td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+
+            <dl class="row gy-2 ms-auto mt-3 mb-0" style="max-width: 420px">
+                <dt class="col-6 fw-normal">Tạm tính</dt>
+                <dd class="col-6 text-end mb-0">@Money(Model.Subtotal)</dd>
+
+                @if (Model.DiscountAmount > 0m)
+                {
+                    <dt class="col-6 fw-normal">Giảm giá</dt>
+                    <dd class="col-6 text-end mb-0">−@Money(Model.DiscountAmount)</dd>
+                }
+
+                @if (Model.TaxAmount > 0m)
+                {
+                    <dt class="col-6 fw-normal">Thuế</dt>
+                    <dd class="col-6 text-end mb-0">@Money(Model.TaxAmount)</dd>
+                }
+
+                <dt class="col-6 border-top pt-2">Tổng hóa đơn</dt>
+                <dd class="col-6 border-top pt-2 text-end mb-0 fw-bold text-danger">
+                    @Money(grandTotal)
+                </dd>
+            </dl>
+        </div>
+    </article>
+</div>
