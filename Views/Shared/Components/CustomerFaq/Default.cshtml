@@ -1,0 +1,39 @@
+﻿@model System.Collections.Generic.IReadOnlyList<DoraFood.Models.Entities.FaqItem>
+
+@{
+    var menuPageUrl = ViewData["MenuPageUrl"] as string
+        ?? Url.Content("~/thuc-don");
+}
+
+<section class="df-faq-section" id="df-faq" aria-labelledby="dfFaqTitle">
+    <div class="container df-faq-layout">
+        <div class="df-faq-intro">
+            <span class="df-premium-label">ĐIỀU BẠN MUỐN BIẾT</span>
+
+            <h2 id="dfFaqTitle">
+                Trước cuộc hẹn,<br><span>mình cùng làm rõ.</span>
+            </h2>
+
+            <p>Một vài thông tin để bạn dễ khám phá thực đơn và chuẩn bị bữa ăn.</p>
+
+            <a href="@menuPageUrl" class="df-premium-text-link">
+                Khám phá thực đơn <span aria-hidden="true">↗</span>
+            </a>
+        </div>
+
+        <div class="df-faq-list">
+            @for (var index = 0; index < Model.Count; index++)
+            {
+                var item = Model[index];
+
+                <details open="@(index == 0 ? "open" : null)">
+                    <summary>
+                        @item.Question <span aria-hidden="true">+</span>
+                    </summary>
+
+                    <div style="white-space: pre-line">@item.Answer</div>
+                </details>
+            }
+        </div>
+    </div>
+</section>

@@ -1,0 +1,69 @@
+﻿@model System.Collections.Generic.IReadOnlyList<DoraFood.Models.Entities.FaqItem>
+
+@{
+    ViewData["Title"] = "Câu hỏi thường gặp";
+}
+
+<div class="tp-page">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <h2 class="h5 mb-0">Danh sách câu hỏi</h2>
+
+        <a class="btn btn-primary"
+           href="@Url.Action("Create", "Faq", new { area = "Admin" })">
+            Thêm câu hỏi
+        </a>
+    </div>
+
+    @if (TempData["FaqSuccess"] is string success)
+    {
+        <div class="alert alert-success" role="status">@success</div>
+    }
+
+    <div class="card tp-card">
+        @if (Model.Count == 0)
+        {
+            <div class="card-body">Chưa có câu hỏi nào.</div>
+        }
+        else
+        {
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead>
+                        <tr>
+                            <th scope="col">Thứ tự</th>
+                            <th scope="col">Câu hỏi</th>
+                            <th scope="col">Trạng thái</th>
+                            <th scope="col" class="text-end">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var item in Model)
+                        {
+                            <tr>
+                                <td>@item.SortOrder</td>
+                                <th scope="row" class="fw-normal text-break">@item.Question</th>
+                                <td class="text-nowrap">
+                                    @if (item.IsActive)
+                                    {
+                                        <span class="badge bg-success">Đang hiện</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge bg-secondary">Đã ẩn</span>
+                                    }
+                                </td>
+                                <td class="text-end">
+                                    <a class="btn btn-outline-primary btn-sm"
+                                       href="@Url.Action("Edit", "Faq", new { area = "Admin", id = item.Id })"
+                                       aria-label="Sửa câu hỏi @item.Question">
+                                        Sửa
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

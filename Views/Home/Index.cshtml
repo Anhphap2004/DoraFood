@@ -303,17 +303,7 @@
             </div>
         </div>
     </section>
-    <section class="df-faq-section" id="df-faq" aria-labelledby="dfFaqTitle">
-        <div class="container df-faq-layout">
-            <div class="df-faq-intro"><span class="df-premium-label">ĐIỀU BẠN MUỐN BIẾT</span><h2 id="dfFaqTitle">Trước cuộc hẹn,<br><span>mình cùng làm rõ.</span></h2><p>Một vài thông tin để bạn dễ khám phá thực đơn và chuẩn bị bữa ăn.</p><a href="@menuPageUrl" class="df-premium-text-link">Khám phá thực đơn <span aria-hidden="true">↗</span></a></div>
-            <div class="df-faq-list">
-                <details open><summary>Làm sao để tìm món phù hợp?<span aria-hidden="true">+</span></summary><div>Vào trang Thực đơn, chọn danh mục hoặc nhập tên món. Bạn có thể sắp xếp theo món nổi bật, tên món hoặc giá để dễ so sánh.</div></details>
-                <details><summary>Giá món ăn được hiển thị như thế nào?<span aria-hidden="true">+</span></summary><div>Giá được hiển thị theo từng khẩu phần và đơn vị phục vụ trong thẻ món ăn. Hãy xem đúng khẩu phần bạn muốn chọn trước khi quyết định.</div></details>
-                <details><summary>Tôi cần chuẩn bị gì khi đặt bàn?<span aria-hidden="true">+</span></summary><div>Chuẩn bị tên, số điện thoại, ngày giờ dự kiến và số khách. Ghi thêm những mong muốn riêng, sau đó kiểm tra trạng thái xác nhận của yêu cầu.</div></details>
-                <details><summary>Nếu có dị ứng hoặc món cần kiêng thì sao?<span aria-hidden="true">+</span></summary><div>Xem thông tin lưu ý trên món nếu có, đồng thời trao đổi trực tiếp với nhân viên về nguyên liệu cần tránh trước khi gọi món.</div></details>
-            </div>
-        </div>
-    </section>
+   @await Component.InvokeAsync("CustomerFaq", new { menuPageUrl })
 
 </div>
 

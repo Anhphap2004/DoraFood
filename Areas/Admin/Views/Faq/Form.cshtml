@@ -1,0 +1,65 @@
+﻿@model DoraFood.Areas.Admin.ViewModels.FaqInput
+
+@{
+    var editing = Model.Id > 0;
+    ViewData["Title"] = editing ? "Sửa câu hỏi" : "Thêm câu hỏi";
+
+    var formUrl = editing
+        ? Url.Action("Edit", "Faq", new { area = "Admin", id = Model.Id })
+        : Url.Action("Create", "Faq", new { area = "Admin" });
+}
+
+<div class="tp-page">
+    @if (TempData["FaqError"] is string error)
+    {
+        <div class="alert alert-warning" role="alert">@error</div>
+    }
+
+    <div class="card tp-card">
+        <form action="@formUrl" method="post">
+            @Html.AntiForgeryToken()
+
+            @if (editing)
+            {
+                <input asp-for="Version" type="hidden" />
+            }
+
+            <div class="card-body">
+                <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+                <div class="mb-3">
+                    <label asp-for="Question" class="form-label"></label>
+                    <input asp-for="Question" maxlength="250" class="form-control" />
+                    <span asp-validation-for="Question" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3">
+                    <label asp-for="Answer" class="form-label"></label>
+                    <textarea asp-for="Answer" rows="5" maxlength="2000"
+                              class="form-control"></textarea>
+                    <span asp-validation-for="Answer" class="text-danger"></span>
+                </div>
+
+                <div class="mb-3" style="max-width: 180px">
+                    <label asp-for="SortOrder" class="form-label"></label>
+                    <input asp-for="SortOrder" type="number" min="0" class="form-control" />
+                    <div class="form-text">Số nhỏ hơn hiển thị trước.</div>
+                    <span asp-validation-for="SortOrder" class="text-danger"></span>
+                </div>
+
+                <div class="form-check">
+                    <input asp-for="IsActive" class="form-check-input" />
+                    <label asp-for="IsActive" class="form-check-label"></label>
+                </div>
+            </div>
+
+            <div class="card-footer d-flex gap-2">
+                <button type="submit" class="btn btn-primary">Lưu câu hỏi</button>
+                <a class="btn btn-outline-secondary"
+                   href="@Url.Action("Index", "Faq", new { area = "Admin" })">
+                    Về danh sách
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
