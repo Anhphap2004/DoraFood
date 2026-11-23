@@ -18,6 +18,7 @@
             @for (var i = 0; i < Model.Count; i++)
             {
                 var card = Model[i];
+                var detailsUrl = Url.RouteUrl("DoraFoodServiceDetails", new { slug = card.Slug });
                 <article class="df-service-card" data-tet-reveal>
                     <img class="df-tet-service-photo"
                          src="@card.PhotoUrl" alt="" width="640" height="440" loading="lazy">
@@ -32,6 +33,14 @@
                     @if (card.BasePrice > 0)
                     {
                         <p><strong>Từ @card.BasePrice.ToString("N0", culture) ₫</strong></p>
+                    }
+                    @if (!string.IsNullOrEmpty(detailsUrl))
+                    {
+                        <div class="mb-2">
+                            <a class="df-text-link" href="@detailsUrl" aria-label="Xem chi tiết @card.Name">
+                                Xem chi tiết <span aria-hidden="true">→</span>
+                            </a>
+                        </div>
                     }
                     <a class="df-text-link" href="#df-booking" data-occasion="@card.Occasion">
                         Lên lịch cuộc hẹn <span aria-hidden="true">↗</span>

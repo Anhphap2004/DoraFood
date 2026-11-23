@@ -18,7 +18,7 @@ public sealed class HomeServicesViewComponent : ViewComponent
         _context = context;
     }
 
-    public async Task<IViewComponentResult> InvokeAsync()
+    public async Task<IViewComponentResult> InvokeAsync(string[]? photos = null)
     {
         var services = await _context.Services
             .AsNoTracking()
@@ -29,8 +29,8 @@ public sealed class HomeServicesViewComponent : ViewComponent
                 service.Name,
                 service.Slug,
                 service.DescriptionHtml,
-                service.BasePrice,
-                service.ImageUrl
+                service.ImageUrl,
+                service.BasePrice
             })
             .ToListAsync(HttpContext.RequestAborted);
 
@@ -39,7 +39,7 @@ public sealed class HomeServicesViewComponent : ViewComponent
             return Content(string.Empty);
         }
 
-        var fallbackPhoto = Url.Content("~/assets/images/p1.jpg");
+        var fallbackPhoto = Url.Content("~/assets/images/p1.jpg")!;
         var cards = new List<ServiceCard>(services.Count);
         foreach (var service in services)
         {
@@ -51,16 +51,18 @@ public sealed class HomeServicesViewComponent : ViewComponent
                 "gan-ket-dong-nghiep" => (3, "fa-building", "Doanh nghiệp"),
                 _ => (-1, "fa-concierge-bell", (string?)null)
             };
-            var imageUrl = service.ImageUrl?.Trim();
-
-            var photo = !string.IsNullOrWhiteSpace(imageUrl) && Url.IsLocalUrl(imageUrl)
-                ? Url.Content(imageUrl)
-                : Url.Content("~/assets/images/p1.jpg");
+            var imagePath = service.ImageUrl?.Trim();
+            var photo = Url.IsLocalUrl(imagePath)
+                ? Url.Content(imagePath)
+                : photos is not null && photoIndex >= 0 && photoIndex < photos.Length
+                    ? photos[photoIndex]
+                    : fallbackPhoto;
 
             // Mô tả trên thẻ chỉ cần văn bản để giữ kích thước thẻ đồng đều.
             var description = Regex.Replace(service.DescriptionHtml ?? string.Empty, "<[^<>]*>", " ");
             description = Regex.Replace(WebUtility.HtmlDecode(description), @"\s+", " ").Trim();
-            cards.Add(new ServiceCard(service.Name, description, service.BasePrice, photo, icon, occasion));
+            cards.Add(new ServiceCard(service.Name, description, service.BasePrice,
+                photo ?? fallbackPhoto, icon, occasion) { Slug = service.Slug });
         }
 
         return View(cards);
@@ -72,5 +74,8 @@ public sealed class HomeServicesViewComponent : ViewComponent
         decimal BasePrice,
         string PhotoUrl,
         string Icon,
-        string? Occasion);
+        string? Occasion)
+    {
+        public string Slug { get; init; } = string.Empty;
+    }
 }
