@@ -1,0 +1,44 @@
+@using System.Globalization
+@model DoraFood.ViewModels.StaffCheck
+
+@{
+    Layout = "_StaffLayout";
+    ViewData["Title"] = "Phiếu kiểm đồ";
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+}
+
+<div class="staff-actions staff-no-print">
+    <a class="staff-button staff-button--light" href="@Url.RouteUrl("DoraFoodStaffDesk")">Về bàn phục vụ</a>
+    <button class="staff-button" type="button" data-staff-print>In phiếu</button>
+</div>
+
+<article class="staff-card staff-print-sheet">
+    <h1>Phiếu kiểm đồ</h1>
+    <p>DoraFood · Bàn @string.Join(", ", Model.Tables) · @Model.Code</p>
+    @if (Model.Lines.Count == 0)
+    {
+        <p>Chưa có món trong đơn.</p>
+    }
+    else
+    {
+        <table class="staff-document-table">
+            <thead><tr><th scope="col">Món hoặc dịch vụ</th><th scope="col">SL</th></tr></thead>
+            <tbody>
+                @foreach (var line in Model.Lines)
+                {
+                    <tr>
+                        <th scope="row">
+                            @line.Name
+                            @if (!string.IsNullOrWhiteSpace(line.Note))
+                            {
+                                <small class="staff-line-note">@line.Note</small>
+                            }
+                        </th>
+                        <td>@line.Quantity.ToString("0.###", culture)</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    <p>Phiếu đối chiếu món trước thanh toán.</p>
+</article>

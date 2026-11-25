@@ -25,7 +25,9 @@ public partial class BookingManagementController
         Guid OperationId,
         DateTime ExpiresAtUtc,
         string? VoucherCode,
-        string Fingerprint);
+        string Fingerprint,
+        // Các mã xác nhận cũ cấp cho luồng phục vụ phải bị từ chối.
+        bool StaffCheckout = false);
 
     private IDataProtector TableCashProtector =>
         HttpContext.RequestServices
@@ -231,6 +233,7 @@ public partial class BookingManagementController
             confirmationToken);
 
         if (confirmation == null
+            || confirmation.StaffCheckout
             || confirmation.OrderId != orderId
             || confirmation.ActorId != actorId
             || confirmation.OperationId == Guid.Empty)
@@ -243,6 +246,10 @@ public partial class BookingManagementController
                 "DoraFoodTableCheckout",
                 new { orderId });
         }
+
+        IActionResult AfterCheckout() => RedirectToRoute(
+            ViewData["CashierOnly"] is true ? "DoraFoodTableInvoice" : "DoraFoodTableOrderDetails",
+            new { orderId });
 
         var cancellationToken = HttpContext.RequestAborted;
 
@@ -284,9 +291,7 @@ public partial class BookingManagementController
                     TempData["TableOrderSuccess"] =
                         "Đơn này đã được xác nhận thanh toán.";
 
-                    return RedirectToRoute(
-                        "DoraFoodTableOrderDetails",
-                        new { orderId });
+                    return AfterCheckout();
                 }
 
                 if (confirmation.ExpiresAtUtc <= DateTime.UtcNow)
@@ -661,27 +666,30 @@ public partial class BookingManagementController
                 var customerId = order.CustomerId
                     ?? order.Reservation?.CustomerId;
 
-                var totalText = model.TotalAmount.ToString(
-                    "N0",
-                    System.Globalization.CultureInfo.GetCultureInfo("vi-VN"));
+                if (customerId.HasValue)
+                {
+                    var totalText = model.TotalAmount.ToString(
+                        "N0",
+                        CultureInfo.GetCultureInfo("vi-VN"));
 
-                _notifications.Add(
-    customerId,
-    "Thanh toán tại bàn thành công",
-    $"Đơn {order.Code} đã được thanh toán đầy đủ. " +
-    $"Tổng hóa đơn: {totalText} ₫. " +
-    $"Số hóa đơn: {invoice.Number}. " +
-    "DoraFood cảm ơn quý khách!",
-    order.ReservationId.HasValue
-        ? Url.RouteUrl(
-            "DoraFoodMyBookingInvoice",
-            new
-            {
-                area = "",
-                id = order.ReservationId.Value,
-                orderId = order.Id
-            }) ?? "/dat-ban/cua-toi"
-        : "/dat-ban/cua-toi");
+                    _notifications.Add(
+                        customerId.Value,
+                        "Thanh toán tại bàn thành công",
+                        $"Đơn {order.Code} đã được thanh toán đầy đủ. " +
+                        $"Tổng hóa đơn: {totalText} ₫. " +
+                        $"Số hóa đơn: {invoice.Number}. " +
+                        "DoraFood cảm ơn quý khách!",
+                        order.ReservationId.HasValue
+                            ? Url.RouteUrl(
+                                "DoraFoodMyBookingInvoice",
+                                new
+                                {
+                                    area = "",
+                                    id = order.ReservationId.Value,
+                                    orderId = order.Id
+                                }) ?? "/dat-ban/cua-toi"
+                            : "/dat-ban/cua-toi");
+                }
 
                 // Xuất hóa đơn và lưu thông báo trong cùng giao dịch.
                 await _context.SaveChangesAsync(
@@ -695,9 +703,7 @@ public partial class BookingManagementController
                         : "Đơn đã được thanh toán đủ trước đó. " +
                           "Đã hoàn tất đơn và giải phóng bàn.";
 
-                return RedirectToRoute(
-                    "DoraFoodTableOrderDetails",
-                    new { orderId });
+                return AfterCheckout();
             },
             () => RedirectToRoute(
                 "DoraFoodTableCheckout",

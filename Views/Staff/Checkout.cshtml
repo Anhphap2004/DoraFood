@@ -1,0 +1,66 @@
+@using System.Globalization
+@model DoraFood.Areas.Admin.ViewModels.TableCheckoutViewModel
+
+@{
+    Layout = "~/Views/Staff/_StaffLayout.cshtml";
+    ViewData["Title"] = "Thanh toán tại bàn";
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+    string Money(decimal value) => $"{value.ToString("#,0.##", culture)} ₫";
+}
+
+<a class="staff-back" href="@Url.RouteUrl("DoraFoodStaffOrder", new { id = Model.OrderId })">← Về đơn tại bàn</a>
+<div class="staff-heading">
+    <h1>Thanh toán tại bàn</h1>
+    <p>Đơn @Model.OrderCode</p>
+</div>
+
+@if (TempData["TableOrderError"] is string error)
+{
+    <p class="staff-notice staff-notice--error" role="alert">@error</p>
+}
+@if (ViewData["TableCheckoutBlockReason"] is string block)
+{
+    <p class="staff-notice staff-notice--error" role="alert">@block</p>
+}
+
+<div class="staff-order">
+    <section class="staff-card">
+        <h2>Chi tiết tính tiền</h2>
+        <ul class="staff-lines">
+            @foreach (var line in Model.Lines)
+            {
+                <li>
+                    <strong>@line.Name</strong>
+                    <span>@line.Quantity.ToString("0.###", culture) × @Money(line.UnitPrice)</span>
+                    <span class="staff-muted">@Money(line.LineTotal)</span>
+                </li>
+            }
+        </ul>
+    </section>
+
+    <section class="staff-card">
+        <h2>Số tiền thanh toán</h2>
+        <dl class="staff-totals">
+            <div><dt>Tiền món và dịch vụ</dt><dd>@Money(Model.Subtotal)</dd></div>
+            <div><dt>Giảm giá</dt><dd>@Money(Model.DiscountAmount)</dd></div>
+            <div><dt>Tổng hóa đơn</dt><dd>@Money(Model.TotalAmount)</dd></div>
+            <div><dt>Đã nhận</dt><dd>@Money(Model.ReceivedAmount)</dd></div>
+            @if (Model.RefundedAmount > 0)
+            {
+                <div><dt>Đã hoàn</dt><dd>@Money(Model.RefundedAmount)</dd></div>
+            }
+            <div class="staff-total"><dt>Còn phải thu</dt><dd>@Money(Model.AmountToCollect)</dd></div>
+        </dl>
+
+        @if (Model.CanCheckout && !string.IsNullOrWhiteSpace(Model.ConfirmationToken))
+        {
+            <form method="post" action="@Url.RouteUrl("DoraFoodConfirmTableCash", new { orderId = Model.OrderId })">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="confirmationToken" value="@Model.ConfirmationToken" />
+                <button type="submit" class="staff-button">
+                    @(Model.AmountToCollect > 0 ? "Xác nhận đã thu tiền mặt" : "Xác nhận đã thanh toán đủ")
+                </button>
+            </form>
+        }
+    </section>
+</div>

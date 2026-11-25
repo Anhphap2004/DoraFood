@@ -1,0 +1,85 @@
+@using System.Globalization
+@using DoraFood.Areas.Admin.Controllers
+@model InvoiceHistoryController.InvoicePage
+
+@{
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Lịch sử hóa đơn";
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+}
+
+<form class="d-flex flex-wrap gap-2 mb-3" method="get" action="@Url.RouteUrl("DoraFoodInvoiceHistory")">
+    <div>
+        <label for="invoice-keyword" class="form-label">Mã hóa đơn hoặc mã đơn</label>
+        <input class="form-control" id="invoice-keyword" name="keyword" value="@Model.Keyword" maxlength="100" />
+    </div>
+    <div>
+        <label for="invoice-type" class="form-label">Loại đơn</label>
+        <select class="form-select" id="invoice-type" name="type">
+            <option value="">Tất cả</option>
+            <option value="DINE_IN" selected="@(Model.Type == "DINE_IN")">Tại bàn</option>
+            <option value="DELIVERY" selected="@(Model.Type == "DELIVERY")">Giao hàng</option>
+            <option value="TAKEAWAY" selected="@(Model.Type == "TAKEAWAY")">Mang đi</option>
+        </select>
+    </div>
+    <button class="btn btn-primary align-self-end" type="submit">Tìm hóa đơn</button>
+</form>
+
+<section class="card">
+    <div class="card-header">@Model.Count hóa đơn</div>
+    @if (Model.Items.Count == 0)
+    {
+        <p class="card-body mb-0">Không có hóa đơn phù hợp.</p>
+    }
+    else
+    {
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th scope="col">Hóa đơn</th><th scope="col">Đơn / loại</th>
+                        <th scope="col">Thời điểm lập</th><th scope="col">Người lập</th>
+                        <th scope="col" class="text-end">Tổng tiền</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var row in Model.Items)
+                    {
+                        <tr>
+                            <th scope="row">
+                                <a href="@Url.RouteUrl("DoraFoodInvoiceHistoryDetails", new { id = row.Id })">@row.Number</a>
+                                @if (row.Status == "VOID")
+                                {
+                                    <span class="badge text-bg-secondary">Đã hủy</span>
+                                }
+                            </th>
+                            <td>@row.OrderCode <small class="d-block">@InvoiceHistoryController.OrderTypeName(row.Type)</small></td>
+                            <td class="text-nowrap">@(row.IssuedAtUtc?.AddHours(7).ToString("dd/MM/yyyy HH:mm", culture))</td>
+                            <td>@row.IssuedBy</td>
+                            <td class="text-end text-nowrap">@row.Total.ToString("#,0.##", culture) ₫</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    }
+
+    @if (Model.Pages > 1)
+    {
+        <nav class="card-footer d-flex align-items-center gap-2" aria-label="Trang lịch sử hóa đơn">
+            @if (Model.Page > 1)
+            {
+                <a class="btn btn-outline-secondary btn-sm" href="@Url.RouteUrl("DoraFoodInvoiceHistory", new {
+                    keyword = Model.Keyword, type = Model.Type, page = Model.Page - 1
+                })">Trang trước</a>
+            }
+            <span>Trang @Model.Page / @Model.Pages</span>
+            @if (Model.Page < Model.Pages)
+            {
+                <a class="btn btn-outline-secondary btn-sm" href="@Url.RouteUrl("DoraFoodInvoiceHistory", new {
+                    keyword = Model.Keyword, type = Model.Type, page = Model.Page + 1
+                })">Trang sau</a>
+            }
+        </nav>
+    }
+</section>

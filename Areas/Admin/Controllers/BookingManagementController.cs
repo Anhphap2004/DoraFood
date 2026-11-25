@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Security.Claims;
@@ -15,7 +15,7 @@ using Microsoft.Extensions.Logging;
 namespace DoraFood.Controllers
 {
     [Area("Admin")]
-    [Authorize(Roles = "ADMIN,MANAGER")]
+    [Authorize(Roles = "ADMIN,MANAGER,CASHIER,WAITER")]
     public partial class BookingManagementController : Controller
     {
         private readonly DoraFoodContext _context;
@@ -65,9 +65,10 @@ namespace DoraFood.Controllers
                     u.IsActive,
                     u.SecurityStamp,
 
-                    CanManage = u.Roles.Any(r =>
-                        r.Code == "ADMIN"
-                        || r.Code == "MANAGER")
+                    IsAdmin = u.Roles.Any(r => r.Code == "ADMIN"),
+                    IsManager = u.Roles.Any(r => r.Code == "MANAGER"),
+                    IsCashier = u.Roles.Any(r => r.Code == "CASHIER"),
+                    IsWaiter = u.Roles.Any(r => r.Code == "WAITER"),
                 })
                 .FirstOrDefaultAsync(
                     HttpContext.RequestAborted);
@@ -80,12 +81,32 @@ namespace DoraFood.Controllers
                 return;
             }
 
-            if (!account.CanManage)
+            var admin = account.IsAdmin && User.IsInRole("ADMIN");
+            var manager = account.IsManager && User.IsInRole("MANAGER");
+            var cashier = account.IsCashier && User.IsInRole("CASHIER");
+            var canCollect = manager || cashier;
+            var waiter = account.IsWaiter && User.IsInRole("WAITER");
+            var action = context.ActionDescriptor
+                as Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor;
+
+            var allowed = action?.MethodInfo.Name switch
+            {
+                nameof(TableCheckout) or nameof(ConfirmTableCash) => canCollect,
+                nameof(TableInvoice) => admin || canCollect,
+                nameof(OpenTableOrder) => admin || canCollect || waiter,
+                _ => admin || manager
+            };
+
+            if (!allowed)
             {
                 context.Result = Forbid();
                 return;
             }
 
+            ViewData["CanCollectTablePayments"] = canCollect;
+            ViewData["CashierOnly"] = cashier && !admin && !manager;
+            ViewData["CanServeTables"] = waiter || canCollect;
+            ViewData["WaiterOnly"] = waiter && !admin && !canCollect;
             await next();
         }
 
@@ -326,6 +347,12 @@ namespace DoraFood.Controllers
                 .ThenBy(t => t.Id)
                 .ToListAsync(cancellationToken);
 
+            var visibleTableIds = tables.Select(table => table.Id).ToArray();
+            var occupiedTableIds = (await _context.Set<OrderTable>()
+                .AsNoTracking()
+                .Where(link => link.ReleasedAtUtc == null && visibleTableIds.Contains(link.TableId))
+                .Select(link => link.TableId).ToListAsync(cancellationToken)).ToHashSet();
+
             var model = new TableMapViewModel
             {
                 ServiceDate = selectedDate,
@@ -343,7 +370,8 @@ namespace DoraFood.Controllers
                     AreaName = t.Area.Name,
                     Capacity = t.Capacity,
                     IsActive = t.IsActive && t.Area.IsActive,
-                    IsOccupiedNow = t.Reservations.Any(r => r.Status == "SEATED"),
+                    IsOccupiedNow = occupiedTableIds.Contains(t.Id)
+                        || t.Reservations.Any(r => r.Status == "SEATED"),
                     HasScheduleConflict = t.Reservations.Any(r =>
                         (r.Status == "PENDING" || r.Status == "CONFIRMED" || r.Status == "SEATED")
                         && r.StartsAtUtc >= sessionStartUtc
@@ -370,18 +398,18 @@ namespace DoraFood.Controllers
             }
 
             var cancellationToken = HttpContext.RequestAborted;
-
-            // Lấy thông tin đặt bàn và các bàn đã phân.
+            // Lấy thông tin đặt bàn, các bàn đã phân, đơn gọi món và dịch vụ.
             var reservation = await _context.Set<Reservation>()
-     .AsNoTracking()
-     .Include(r => r.Tables)
-         .ThenInclude(t => t.Area)
-     .Include(r => r.Orders)
-         .ThenInclude(order => order.Invoice)
-     .AsSplitQuery().Include(r => r.ReservationServices)
-     .FirstOrDefaultAsync(
-         r => r.Id == id,
-         cancellationToken);
+                .AsNoTracking()
+                .Include(r => r.Tables)
+                    .ThenInclude(table => table.Area)
+                .Include(r => r.Orders)
+                    .ThenInclude(order => order.Invoice)
+                .Include(r => r.Orders)
+                    .ThenInclude(order => order.OrderItems)
+                .Include(r => r.ReservationServices)
+                .AsSplitQuery()
+                .FirstOrDefaultAsync(r => r.Id == id, cancellationToken);
 
             if (reservation == null)
             {
@@ -1495,11 +1523,13 @@ namespace DoraFood.Controllers
         }
 
         [HttpPost(
-    "/quan-ly/dat-ban/{id:long}/mo-don",
-    Name = "DoraFoodOpenTableOrder")]
+            "/quan-ly/dat-ban/{id:long}/mo-don",
+            Name = "DoraFoodOpenTableOrder")]
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> OpenTableOrder(
-    [FromRoute] long id)
+            [FromRoute] long id,
+            [FromForm] bool fromServiceDesk = false,
+            [FromForm] bool fromStaffDesk = false)
         {
             if (!ModelState.IsValid || id <= 0)
             {
@@ -1515,15 +1545,38 @@ namespace DoraFood.Controllers
             }
 
             var cancellationToken = HttpContext.RequestAborted;
+            var canCollect = ViewData["CanCollectTablePayments"] is true;
+            var staffDesk = fromStaffDesk || ViewData["WaiterOnly"] is true;
+            var adminDesk = !staffDesk && (fromServiceDesk || ViewData["CashierOnly"] is true);
+            var fromBoard = staffDesk || adminDesk;
+
+            if ((staffDesk && ViewData["CanServeTables"] is not true)
+                || (adminDesk && !canCollect))
+            {
+                return Forbid();
+            }
+
+            IActionResult BackToSource()
+            {
+                if (staffDesk)
+                {
+                    return RedirectToRoute("DoraFoodStaffDesk");
+                }
+
+                return adminDesk
+                    ? RedirectToRoute("DoraFoodAdminTableService")
+                    : RedirectToRoute("DoraFoodManageBookingDetails", new { id });
+            }
 
             IActionResult Back(string message)
             {
                 TempData["BookingManagementError"] = message;
-
-                return RedirectToRoute(
-                    "DoraFoodManageBookingDetails",
-                    new { id });
+                return BackToSource();
             }
+
+            IActionResult OpenOrder(long orderId) => fromBoard
+                ? RedirectToRoute("DoraFoodStaffOrder", new { id = orderId })
+                : RedirectToRoute("DoraFoodTableOrderDetails", new { orderId });
 
             return await RunBookingTransactionAsync(
                 async () =>
@@ -1547,6 +1600,11 @@ namespace DoraFood.Controllers
 
                     var isSeated =
                         reservation.Status == "SEATED";
+
+                    if (fromBoard && !isSeated)
+                    {
+                        return Back("Hãy nhận khách ở mục Đặt bàn trước khi mở đơn.");
+                    }
 
                     if (!isPreorder && !isSeated)
                     {
@@ -1604,23 +1662,6 @@ namespace DoraFood.Controllers
 
                     var order = orders.SingleOrDefault();
 
-                    // Đã có đơn đặt trước thì tiếp tục dùng đơn đó.
-                    if (order != null && isPreorder)
-                    {
-                        if (order.ClosedAtUtc.HasValue
-                            || order.OrderTables.Any(
-                                link => link.ReleasedAtUtc == null))
-                        {
-                            return Back(
-                                "Đơn đặt trước có dữ liệu bàn hoặc " +
-                                "thời điểm đóng chưa hợp lệ.");
-                        }
-
-                        return RedirectToRoute(
-                            "DoraFoodTableOrderDetails",
-                            new { orderId = order.Id });
-                    }
-
                     var tableIds = reservation.Tables
                         .Select(table => table.Id)
                         .ToArray();
@@ -1644,6 +1685,21 @@ namespace DoraFood.Controllers
                             "Các bàn đã phân chưa đủ sức chứa.");
                     }
 
+                    // Đã có đơn đặt trước thì tiếp tục dùng đơn đó.
+                    if (order != null && isPreorder)
+                    {
+                        if (order.ClosedAtUtc.HasValue
+                            || order.OrderTables.Any(
+                                link => link.ReleasedAtUtc == null))
+                        {
+                            return Back(
+                                "Đơn đặt trước có dữ liệu bàn hoặc " +
+                                "thời điểm đóng chưa hợp lệ.");
+                        }
+
+                        return OpenOrder(order.Id);
+                    }
+
                     if (order != null)
                     {
                         if (order.ClosedAtUtc.HasValue)
@@ -1665,9 +1721,7 @@ namespace DoraFood.Controllers
                                     "Anh kiểm tra lại trước khi tiếp tục.");
                             }
 
-                            return RedirectToRoute(
-                                "DoraFoodTableOrderDetails",
-                                new { orderId = order.Id });
+                            return OpenOrder(order.Id);
                         }
                     }
 
@@ -1728,13 +1782,9 @@ namespace DoraFood.Controllers
                         ? "Đã mở đơn món đặt trước cho lượt đặt bàn."
                         : "Đã mở đơn gọi món và gắn bàn đang phục vụ.";
 
-                    return RedirectToRoute(
-                        "DoraFoodTableOrderDetails",
-                        new { orderId = order.Id });
+                    return OpenOrder(order.Id);
                 },
-                () => RedirectToRoute(
-                    "DoraFoodManageBookingDetails",
-                    new { id }),
+                BackToSource,
                 "BookingManagementError");
         }
 
@@ -1767,20 +1817,24 @@ namespace DoraFood.Controllers
 
             // Món đặt trước chưa được thanh toán tại bàn.
             ViewData["CanPayTableOrder"] =
-                canAddItems
+                ViewData["CanCollectTablePayments"] is true
+                && canAddItems
                 && order.Reservation?.Status == "SEATED";
-
-            ViewData["CanAddTableOrderItems"] = canAddItems;
 
             if (canAddItems)
             {
-                ViewData["AvailableDishVariants"] = await _context.Set<DishVariant>()
+                ViewData["TableDishOptions"] = await _context.Set<DishVariant>()
                     .AsNoTracking()
-                    .Include(variant => variant.Dish)
-                    .Where(variant => variant.IsAvailable && variant.Dish.IsActive)
+                    .Where(variant => variant.IsAvailable && variant.Dish.IsActive && variant.Price >= 0)
                     .OrderBy(variant => variant.Dish.Name)
                     .ThenBy(variant => variant.Name)
                     .ThenBy(variant => variant.Id)
+                    .Select(variant => new DoraFood.ViewModels.StaffDishOption(
+                        variant.Id, variant.Dish.Name + " · " + variant.Name, variant.Price,
+                        _context.Set<DishImage>().Where(image => image.DishId == variant.DishId)
+                            .OrderByDescending(image => image.IsPrimary)
+                            .ThenBy(image => image.SortOrder).ThenBy(image => image.Id)
+                            .Select(image => image.MediaFile.Url).FirstOrDefault()))
                     .ToListAsync(HttpContext.RequestAborted);
             }
             var orderEntityKey = order.Id.ToString(
@@ -1794,7 +1848,8 @@ namespace DoraFood.Controllers
                     log.EntityName == "Order"
                     && log.EntityKey == orderEntityKey
                     && (
-                        log.Action == "TABLE_ORDER_ITEM_UPDATED"
+                        log.Action == "TABLE_ORDER_ITEMS_ADDED"
+                        || log.Action == "TABLE_ORDER_ITEM_UPDATED"
                         || log.Action == "TABLE_ORDER_ITEM_CANCELLED"))
                 .OrderByDescending(log => log.CreatedAtUtc)
                 .ThenByDescending(log => log.Id)

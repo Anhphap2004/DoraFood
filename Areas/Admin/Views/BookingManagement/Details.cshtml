@@ -11,7 +11,6 @@
     var arrivalDeadlineUtc = reservation.StartsAtUtc.AddMinutes(30);
     var arrivalExpired = waitingForArrival && DateTime.UtcNow >= arrivalDeadlineUtc;
     var canEdit = waitingForArrival && !arrivalExpired;
-    var canOpenOrder = isConfirmed || isSeated;
     var routeValues = new { id = reservation.Id };
 
     var statusText = reservation.Status switch
@@ -177,7 +176,7 @@
                 </div>
             </div>
 
-            @if (canEdit || isSeated || canOpenOrder)
+            @if (canEdit || isSeated)
             {
                 <div class="d-flex flex-wrap align-items-center gap-2">
                     @if (canEdit)
@@ -194,16 +193,7 @@
                         </a>
                     }
 
-                    @if (canOpenOrder)
-                    {
-                        <form action="@Url.RouteUrl("DoraFoodOpenTableOrder", routeValues)"
-                              method="post" class="m-0">
-                            @Html.AntiForgeryToken()
-                            <button type="submit" class="btn @(isSeated ? "df-primary" : "df-outline")">
-                                @(isConfirmed ? "Lập / xem món đặt trước" : "Mở đơn gọi món")
-                            </button>
-                        </form>
-                    }
+                  
                 </div>
             }
         </div>
@@ -332,6 +322,47 @@
                 }
             </ul>
         </section>
+    }
+    @if (reservation.Status == "CONFIRMED")
+    {
+        var preorderItems = reservation.Orders
+            .Where(order => order.OrderType == "DINE_IN"
+                && (order.Status == "OPEN" || order.Status == "IN_PROGRESS"))
+            .SelectMany(order => order.OrderItems)
+            .Where(item => item.Status != "CANCELLED")
+            .OrderBy(item => item.Id)
+            .ToList();
+
+        if (preorderItems.Count > 0)
+        {
+            <section class="card mb-3" aria-labelledby="preorder-title">
+                <div class="card-body">
+                    <h2 id="preorder-title" class="h5">Món đã đặt trước</h2>
+                    <ul class="list-group list-group-flush">
+                        @foreach (var item in preorderItems)
+                        {
+                            <li class="list-group-item d-flex justify-content-between gap-3 px-0">
+                                <span>@item.NameSnapshot</span>
+                                <span>× @item.Quantity.ToString("0.###")</span>
+                            </li>
+                        }
+                    </ul>
+                </div>
+            </section>
+        }
+    }
+    @if (reservation.Status == "CONFIRMED"
+    && reservation.Tables.Count > 0
+    && DateTime.UtcNow < reservation.StartsAtUtc.AddMinutes(30))
+    {
+        <form method="post"
+              action="@Url.RouteUrl("DoraFoodOpenTableOrder", new { id = reservation.Id })"
+              class="mb-3">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="btn btn-outline-primary">
+                Đặt món trước
+            </button>
+        </form>
     }
 
     <section class="df-card mb-3" aria-labelledby="booking-history-title">

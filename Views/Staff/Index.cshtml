@@ -1,0 +1,94 @@
+@using System
+@using System.Linq
+@model System.Collections.Generic.IReadOnlyList<DoraFood.ViewModels.StaffTableRow>
+
+@{
+    var isAdmin = ViewData["AdminTableBoard"] is true;
+    Layout = isAdmin ? "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml" : "_StaffLayout";
+    ViewData["Title"] = "Phục vụ bàn";
+}
+
+@if (isAdmin)
+{
+    <link rel="stylesheet" href="@Url.Content("~/assets/css/dorafood-staff.css")" />
+}
+
+<div class="staff-table-board">
+    @if (TempData["BookingManagementError"] is string bookingError)
+    {
+        <p class="staff-notice staff-notice--error" role="alert">@bookingError</p>
+    }
+
+    <div class="staff-heading">
+        @if (!isAdmin)
+        {
+            <h1>Phục vụ bàn</h1>
+        }
+        <div class="staff-table-legend" aria-label="Trạng thái bàn">
+            <span class="staff-table-status status-open">Đã mở · Chưa gọi món</span>
+            <span class="staff-table-status status-ordered">Đã gọi món</span>
+            <span class="staff-table-status status-held">Đang giữ bàn</span>
+            <span class="staff-table-status status-held">Đã đặt bàn có món</span>
+            <span class="staff-table-status status-free">Bàn trống</span>
+        </div>
+    </div>
+
+    @if (Model.Count == 0)
+    {
+        <p class="staff-card">Chưa có bàn đang hoạt động.</p>
+    }
+
+    @foreach (var area in Model.GroupBy(table => table.AreaName))
+    {
+        <section class="staff-area">
+            <h2>@area.Key</h2>
+            <div class="staff-grid">
+                @foreach (var table in area)
+                {
+                    <article class="staff-card staff-table-card status-@table.StatusClass">
+                        <h3>@table.Code</h3>
+                        <p class="staff-muted">@table.Capacity chỗ</p>
+                        <p><span class="staff-table-status status-@table.StatusClass">@table.StatusLabel</span></p>
+
+                        @if (table.OrderId is null && table.SeatedReservationId is null
+                            && table.PreorderAtUtc is DateTime preorderAt)
+                        {
+                            <p class="staff-muted">Giờ hẹn @preorderAt.AddHours(7).ToString("HH:mm · dd/MM")</p>
+                        }
+
+                        @if (table.OrderId is long orderId)
+                        {
+                            <a class="staff-button"
+                               href="@Url.RouteUrl("DoraFoodStaffOrder", new { id = orderId })"
+                               aria-label="Xem đơn bàn @table.Code">Xem đơn</a>
+                        }
+                        else if (table.SeatedReservationId is long reservationId)
+                        {
+                            <form method="post"
+                                  action="@Url.RouteUrl("DoraFoodOpenTableOrder", new { id = reservationId })">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="@(isAdmin ? "fromServiceDesk" : "fromStaffDesk")" value="true" />
+                                <button type="submit" class="staff-button">Mở đơn gọi món</button>
+                            </form>
+                        }
+                        else if (!table.IsHeld)
+                        {
+                            <details class="staff-walk-in">
+                                <summary class="staff-button staff-button--light">Mở bàn trực tiếp</summary>
+                                <form class="staff-form" method="post"
+                                      action="@Url.RouteUrl("DoraFoodStaffWalkIn", new { tableId = table.Id })">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="operationId" value="@Guid.NewGuid()" />
+                                    <label for="guests-@table.Id">Số khách</label>
+                                    <input id="guests-@table.Id" type="number" name="partySize" value="1"
+                                           min="1" max="@table.Capacity" required />
+                                    <button type="submit" class="staff-button">Xác nhận mở bàn</button>
+                                </form>
+                            </details>
+                        }
+                    </article>
+                }
+            </div>
+        </section>
+    }
+</div>

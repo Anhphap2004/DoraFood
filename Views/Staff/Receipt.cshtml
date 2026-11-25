@@ -1,0 +1,63 @@
+@using System.Globalization
+@using System.Linq
+@model DoraFood.Models.Invoice
+
+@{
+    Layout = "_StaffLayout";
+    ViewData["Title"] = "Hóa đơn " + Model.Number;
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+    string Money(decimal value) => $"{value.ToString("#,0.##", culture)} ₫";
+    var printVersion = ViewData["PrintVersion"] is true;
+}
+
+<div class="staff-actions staff-no-print">
+    <a class="staff-button staff-button--light" href="@Url.RouteUrl("DoraFoodStaffDesk")">Về bàn phục vụ</a>
+    @if (printVersion)
+    {
+        <button class="staff-button" type="button" data-staff-print>In hóa đơn</button>
+    }
+    else
+    {
+        <form method="post"
+              action="@Url.RouteUrl("DoraFoodStaffPrintReceipt", new { orderId = Model.OrderId })">
+            @Html.AntiForgeryToken()
+            <button class="staff-button" type="submit">Mở bản in hóa đơn</button>
+        </form>
+    }
+</div>
+
+@if (TempData["TableOrderSuccess"] is string success)
+{
+    <p class="staff-notice staff-no-print" role="status">@success</p>
+}
+
+<article class="staff-card staff-print-sheet">
+    <h1>Hóa đơn tại bàn</h1>
+    <p>DoraFood · @Model.Number</p>
+    <p>Đơn @Model.Order.Code · Lập bởi @Model.IssuedByNavigation.UserName</p>
+    <p>@(Model.IssuedAtUtc?.AddHours(7).ToString("dd/MM/yyyy HH:mm", culture))</p>
+    <table class="staff-document-table">
+        <thead>
+            <tr><th scope="col">Món hoặc dịch vụ</th><th scope="col">SL</th><th scope="col">Tiền dòng</th></tr>
+        </thead>
+        <tbody>
+            @foreach (var line in Model.InvoiceLines.OrderBy(item => item.LineNumber))
+            {
+                <tr>
+                    <th scope="row">@line.Description</th>
+                    <td>@line.Quantity.ToString("0.###", culture)</td>
+                    <td>@Money(line.LineSubtotal ?? (line.Quantity * line.UnitPrice))</td>
+                </tr>
+            }
+        </tbody>
+    </table>
+    <dl class="staff-totals">
+        <div><dt>Tạm tính</dt><dd>@Money(Model.Subtotal)</dd></div>
+        <div><dt>Giảm giá</dt><dd>@Money(Model.DiscountAmount)</dd></div>
+        @if (Model.TaxAmount > 0)
+        {
+            <div><dt>Thuế</dt><dd>@Money(Model.TaxAmount)</dd></div>
+        }
+        <div class="staff-total"><dt>Tổng hóa đơn</dt><dd>@Money(Model.GrandTotal ?? (Model.Subtotal - Model.DiscountAmount + Model.TaxAmount))</dd></div>
+    </dl>
+</article>

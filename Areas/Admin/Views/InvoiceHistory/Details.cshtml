@@ -1,0 +1,443 @@
+@using System
+@using System.Globalization
+@using System.Linq
+@using DoraFood.Areas.Admin.Controllers
+@model InvoiceHistoryController.InvoiceDetails
+
+@{
+    Layout = null;
+    var invoice = Model.Invoice;
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+    var tables = string.Join(", ", invoice.Order.OrderTables.Select(link => link.Table.Code)
+        .Distinct().OrderBy(code => code));
+    var total = invoice.GrandTotal ?? (invoice.Subtotal - invoice.DiscountAmount + invoice.TaxAmount);
+    var received = Model.Deposit + Model.Settlement - Model.Refunded;
+    var due = Math.Max(0m, total - received);
+    var isVoid = invoice.Status == "VOID";
+    var paid = !isVoid && due == 0m;
+    string Money(decimal value) => $"{value.ToString("#,0.##", culture)} ₫";
+}
+
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Hóa đơn @invoice.Number · DoraFood</title>
+    <style>
+        :root {
+            font-family: system-ui, sans-serif;
+            color: #202125;
+            background: #f2f3f5;
+        }
+
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-size: 14px;
+            line-height: 1.48;
+        }
+
+        main {
+            width: min(100% - 24px, 720px);
+            margin: 18px auto 32px;
+        }
+
+        .toolbar {
+            display: flex;
+            gap: 8px;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+
+        .action {
+            display: inline-block;
+            border: 1px solid #d7d9df;
+            border-radius: 7px;
+            background: #fff;
+            color: #24242a;
+            padding: 8px 13px;
+            font: inherit;
+            font-weight: 650;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .action-print {
+            background: #922b3b;
+            border-color: #922b3b;
+            color: #fff;
+        }
+
+        .action:focus-visible, summary:focus-visible {
+            outline: 2px solid #922b3b;
+            outline-offset: 3px;
+        }
+
+        .paper {
+            padding: 30px;
+            background: #fff;
+            border: 1px solid #dde0e5;
+            border-radius: 12px;
+            box-shadow: 0 10px 28px rgb(25 28 40 / 6%);
+            overflow-wrap: anywhere;
+        }
+
+        .invoice-head {
+            text-align: center;
+            padding-bottom: 18px;
+            border-bottom: 1px solid #a32b3e;
+        }
+
+        .brand {
+            margin: 0;
+            font-size: 30px;
+            font-weight: 800;
+            color: #922b3b;
+        }
+
+        .tagline {
+            margin: 3px 0 16px;
+            color: #4e5056;
+            font-size: 11px;
+            letter-spacing: .17em;
+        }
+
+        h1 {
+            margin: 0;
+            font-size: 18px;
+        }
+
+        .number {
+            margin: 4px 0 9px;
+        }
+
+        .status {
+            display: inline-block;
+            margin: 0;
+            border: 1px solid #ead2b1;
+            border-radius: 99px;
+            padding: 4px 10px;
+            color: #754514;
+            background: #fff6e6;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .status-paid {
+            color: #205b3b;
+            background: #eef8f0;
+            border-color: #b9ddc6;
+        }
+
+        .status-void {
+            color: #802530;
+            background: #fff1f1;
+            border-color: #e9b9bf;
+        }
+
+        .meta {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px 22px;
+            margin: 20px 0 18px;
+        }
+
+            .meta dt, caption {
+                color: #53565c;
+                font-size: 12px;
+                font-weight: 400;
+            }
+
+            .meta dd {
+                margin: 2px 0 0;
+                font-weight: 650;
+            }
+
+        .meta-wide {
+            grid-column: 1 / -1;
+        }
+
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            font-size: 13px;
+        }
+
+        caption {
+            text-align: left;
+            margin-bottom: 7px;
+        }
+
+        th, td {
+            text-align: right;
+            padding: 9px 7px;
+            border-bottom: 1px solid #dfe1e5;
+            vertical-align: top;
+        }
+
+            th:first-child, td:first-child {
+                text-align: left;
+            }
+
+        thead {
+            background: #f2f3f5;
+        }
+
+        tbody th {
+            font-weight: 550;
+        }
+
+        tbody small {
+            display: block;
+            color: #53565c;
+            font-weight: 400;
+        }
+
+        .amount {
+            white-space: nowrap;
+        }
+
+        .totals {
+            width: min(100%, 325px);
+            margin: 14px 0 0 auto;
+        }
+
+            .totals div {
+                display: flex;
+                justify-content: space-between;
+                align-items: baseline;
+                gap: 12px;
+                padding: 3px 0;
+            }
+
+            .totals dd {
+                margin: 0;
+                text-align: right;
+                font-variant-numeric: tabular-nums;
+            }
+
+        .grand {
+            margin-top: 8px;
+            border-top: 1px solid #3b3b41;
+            font-weight: 750;
+        }
+
+            .grand dt, .grand dd {
+                padding-top: 7px;
+            }
+
+        .payments {
+            margin-top: 16px;
+            padding-top: 4px;
+            border-top: 1px dashed #a9acb2;
+        }
+
+        .note {
+            margin: 8px 0 0;
+            color: #53565c;
+            font-size: 11px;
+        }
+
+        .thanks {
+            text-align: center;
+            border-top: 1px dashed #a9acb2;
+            margin-top: 22px;
+            padding-top: 14px;
+        }
+
+            .thanks p {
+                margin: 2px 0;
+            }
+
+        .history {
+            margin-top: 14px;
+            padding: 12px 16px;
+            background: #fff;
+            border: 1px solid #dde0e5;
+            border-radius: 9px;
+        }
+
+            .history summary {
+                cursor: pointer;
+                font-weight: 650;
+            }
+
+            .history ul {
+                padding-left: 20px;
+            }
+
+            .history li + li {
+                margin-top: 8px;
+            }
+
+        @@media (max-width: 480px) {
+            main {
+                margin-top: 10px;
+            }
+
+            .paper {
+                padding: 14px 10px;
+            }
+
+            .meta {
+                gap: 10px;
+            }
+
+            th, td {
+                padding: 7px 3px;
+                font-size: 11px;
+            }
+        }
+
+        @@page {
+            margin: 12mm;
+        }
+
+        @@media print {
+            :root {
+                background: #fff;
+                color: #000;
+            }
+
+            main {
+                width: auto;
+                margin: 0;
+            }
+
+            .screen-only {
+                display: none !important;
+            }
+
+            .paper {
+                border: 0;
+                padding: 0;
+                border-radius: 0;
+                box-shadow: none;
+            }
+
+            thead {
+                display: table-header-group;
+            }
+
+            tr, .totals, .thanks {
+                break-inside: avoid;
+            }
+        }
+    </style>
+</head>
+<body>
+    <main>
+        <nav class="toolbar screen-only" aria-label="Thao tác hóa đơn">
+            <a class="action" href="@Url.RouteUrl("DoraFoodInvoiceHistory")">← Lịch sử hóa đơn</a>
+            <button class="action action-print" type="button" id="print-invoice">In hóa đơn</button>
+        </nav>
+
+        <article class="paper" aria-labelledby="invoice-title">
+            <header class="invoice-head">
+                <p class="brand">DoraFood</p>
+                <p class="tagline">TINH HOA ẨM THỰC</p>
+                <h1 id="invoice-title">HÓA ĐƠN THANH TOÁN</h1>
+                <p class="number">Số <strong>@invoice.Number</strong></p>
+                <p class="status @(isVoid ? "status-void" : paid ? "status-paid" : "")">
+                    @(isVoid ? "ĐÃ HỦY" : paid ? "ĐÃ THANH TOÁN ĐỦ" : "CÒN PHẢI THANH TOÁN")
+                </p>
+            </header>
+
+            <dl class="meta">
+                <div><dt>Ngày xuất hóa đơn</dt><dd>@(invoice.IssuedAtUtc?.AddHours(7).ToString("dd/MM/yyyy HH:mm", culture))</dd></div>
+                <div><dt>Nhân viên xuất hóa đơn</dt><dd>@invoice.IssuedByNavigation.UserName</dd></div>
+                <div><dt>Khách hàng</dt><dd>@(string.IsNullOrWhiteSpace(invoice.CustomerName) ? "Khách lẻ" : invoice.CustomerName)</dd></div>
+                @if (invoice.Order.OrderType == "DINE_IN")
+                {
+                    <div><dt>Bàn phục vụ</dt><dd>@(string.IsNullOrEmpty(tables) ? "—" : tables)</dd></div>
+                }
+                else
+                {
+                    <div><dt>Hình thức</dt><dd>@InvoiceHistoryController.OrderTypeName(invoice.Order.OrderType)</dd></div>
+                }
+                <div class="meta-wide"><dt>Mã đơn hàng</dt><dd>@invoice.Order.Code</dd></div>
+            </dl>
+
+            <table>
+                <caption>Chi tiết món ăn và dịch vụ</caption>
+                <thead>
+                    <tr><th scope="col">Nội dung</th><th scope="col">SL</th><th scope="col">Đơn giá</th><th scope="col">Tiền trước giảm</th></tr>
+                </thead>
+                <tbody>
+                    @foreach (var line in invoice.InvoiceLines.OrderBy(item => item.LineNumber))
+                    {
+                        var subtotal = line.LineSubtotal
+                            ?? decimal.Round(line.Quantity * line.UnitPrice, 2, MidpointRounding.AwayFromZero);
+                        <tr>
+                            <th scope="row">
+                                @line.Description
+                                @if (!string.IsNullOrWhiteSpace(line.Unit))
+                                {
+                                    <small>Đơn vị @line.Unit</small>
+                                }
+                            </th>
+                            <td>@line.Quantity.ToString("0.###", culture)</td>
+                            <td class="amount">@Money(line.UnitPrice)</td>
+                            <td class="amount">@Money(subtotal)</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+
+            <dl class="totals">
+                <div><dt>Tiền món và dịch vụ</dt><dd>@Money(invoice.Subtotal)</dd></div>
+                <div><dt>Giảm giá</dt><dd>@Money(-invoice.DiscountAmount)</dd></div>
+                <div><dt>Thuế</dt><dd>@Money(invoice.TaxAmount)</dd></div>
+                <div class="grand"><dt>TỔNG THANH TOÁN</dt><dd>@Money(total)</dd></div>
+            </dl>
+
+            <section class="payments" aria-label="Đối chiếu thanh toán">
+                <dl class="totals">
+                    <div><dt>Tiền cọc đã thu</dt><dd>@Money(Model.Deposit)</dd></div>
+                    <div><dt>Tiền thanh toán đã thu</dt><dd>@Money(Model.Settlement)</dd></div>
+                    @if (Model.Refunded > 0m)
+                    {
+                        <div><dt>Đã hoàn tiền</dt><dd>@Money(Model.Refunded)</dd></div>
+                    }
+                    <div><dt>Thực nhận sau hoàn tiền</dt><dd><strong>@Money(received)</strong></dd></div>
+                    @if (!isVoid)
+                    {
+                        <div><dt>Còn phải thanh toán</dt><dd><strong>@Money(due)</strong></dd></div>
+                    }
+                </dl>
+                <p class="note">Các khoản thu và hoàn tiền được tính đến thời điểm xuất hóa đơn.</p>
+            </section>
+
+            <footer class="thanks">
+                <p><strong>Cảm ơn quý khách đã dùng bữa tại DoraFood!</strong></p>
+                <p>Hẹn gặp lại quý khách.</p>
+            </footer>
+        </article>
+
+        @if (Model.Operations.Count > 0)
+        {
+            <details class="history screen-only">
+                <summary>Thao tác gần đây trên đơn</summary>
+                <ul>
+                    @foreach (var entry in Model.Operations)
+                    {
+                        <li>
+                            <strong>@entry.Actor</strong>
+                            · @entry.AtUtc.AddHours(7).ToString("dd/MM/yyyy HH:mm", culture)
+                            <div>@entry.Summary</div>
+                        </li>
+                    }
+                </ul>
+            </details>
+        }
+    </main>
+    <script>
+        document.getElementById("print-invoice").addEventListener("click", () => window.print());
+    </script>
+</body>
+</html>

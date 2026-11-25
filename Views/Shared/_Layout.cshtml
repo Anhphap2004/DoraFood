@@ -165,6 +165,13 @@
     </a>
 }
 
+            @if (User.IsInRole("WAITER"))
+{
+    <a href="@Url.RouteUrl("DoraFoodStaffDesk")" class="dropdown-item">
+        <i class="fas fa-concierge-bell" aria-hidden="true"></i>
+        Phục vụ
+    </a>
+}              
                             <div class="dropdown-divider"></div>
                             <form action="@Url.Action("Logout", "Account")" method="post">@Html.AntiForgeryToken()<button type="submit" class="dropdown-item df-logout"><i class="fas fa-sign-out-alt" aria-hidden="true"></i> Đăng xuất</button></form>
                         </div>

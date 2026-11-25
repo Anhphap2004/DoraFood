@@ -1,0 +1,164 @@
+@using System
+@using System.Globalization
+@model DoraFood.ViewModels.StaffOrderDetails
+
+@{
+    Layout = "_StaffLayout";
+    ViewData["Title"] = "Đơn tại bàn";
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+    var canCollect = ViewData["CanCollectTablePayments"] is true;
+    var boardRoute = canCollect ? "DoraFoodAdminTableService" : "DoraFoodStaffDesk";
+    string Money(decimal value) => $"{value.ToString("#,0.##", culture)} ₫";
+}
+
+<a class="staff-back" href="@Url.RouteUrl(boardRoute)">← Về bàn phục vụ</a>
+<div class="staff-heading staff-heading--row">
+    <div>
+        <h1>Bàn @string.Join(", ", Model.Tables)</h1>
+        <p>Đơn @Model.Code</p>
+    </div>
+    <div class="staff-actions">
+        <form method="post" action="@Url.RouteUrl("DoraFoodStaffPrintCheck", new { id = Model.Id })">
+            @Html.AntiForgeryToken()
+            <button type="submit" class="staff-button staff-button--light">Phiếu kiểm đồ</button>
+        </form>
+        @if (Model.CanCloseEmpty)
+        {
+            <form method="post" action="@Url.RouteUrl("DoraFoodStaffCloseEmpty", new { id = Model.Id })">
+                @Html.AntiForgeryToken()
+                <button type="submit" class="staff-button staff-button--light">Giải phóng bàn</button>
+            </form>
+        }
+
+        @if (canCollect)
+        {
+            <a class="staff-button" href="@Url.RouteUrl("DoraFoodTableCheckout", new { orderId = Model.Id })">
+                Thanh toán
+            </a>
+        }
+    </div>
+</div>
+
+<div class="staff-workspace">
+    <section class="staff-card">
+        <h2>Món đã gọi</h2>
+        @if (Model.Lines.Count == 0)
+        {
+            <p class="staff-muted">Đơn không còn món đang phục vụ.</p>
+        }
+        <ul class="staff-lines">
+            @foreach (var line in Model.Lines)
+            {
+                <li>
+                    <div class="staff-line-title">
+                        @if (Url.IsLocalUrl(line.ImageUrl))
+                        {
+                            <img src="@Url.Content(line.ImageUrl)" alt="" width="44" height="44" loading="lazy" />
+                        }
+                        <strong>@line.Name</strong>
+                    </div>
+                    <span class="staff-muted">@line.Quantity.ToString("0.###", culture) × @Money(line.UnitPrice)</span>
+                    @if (line.AddedAtUtc is DateTime addedAt)
+                    {
+                        <small class="staff-muted">Thêm lúc @addedAt.AddHours(7).ToString("HH:mm:ss · dd/MM/yyyy", culture)</small>
+                    }
+                    @if (!string.IsNullOrWhiteSpace(line.Note))
+                    {
+                        <span class="staff-line-note">@line.Note</span>
+                    }
+                    @if (line.Status != "CANCELLED")
+                    {
+                        <details>
+                            <summary class="staff-back">Hủy món</summary>
+                            <form class="staff-form" method="post"
+                                  action="@Url.RouteUrl("DoraFoodStaffCancelDish", new { id = Model.Id, lineId = line.Id })">
+                                @Html.AntiForgeryToken()
+                                <button type="submit" class="staff-button staff-button--light">Xác nhận hủy</button>
+                            </form>
+                        </details>
+                    }
+                </li>
+            }
+        </ul>
+
+        @if (Model.Operations.Count > 0)
+        {
+            <details class="staff-audit">
+                <summary>Lịch sử thao tác</summary>
+                <ul class="staff-lines">
+                    @foreach (var entry in Model.Operations)
+                    {
+                        <li>
+                            <strong>@entry.Actor</strong>
+                            <span>@entry.Summary</span>
+                            <small class="staff-muted">@entry.AtUtc.AddHours(7).ToString("dd/MM HH:mm", culture)</small>
+                        </li>
+                    }
+                </ul>
+            </details>
+        }
+    </section>
+
+    <section>
+        <h2>Thêm món</h2>
+        @if (Model.DishOptions.Count == 0)
+        {
+            <p class="staff-muted">Hiện chưa có món đang bán.</p>
+        }
+        else
+        {
+            <div class="staff-form staff-dish-search" hidden data-dish-search-box>
+                <label for="dish-search">Tìm món</label>
+                <input id="dish-search" type="search" data-dish-search placeholder="Nhập tên món hoặc phần" />
+            </div>
+            <p class="staff-muted" hidden data-dish-empty>Không tìm thấy món phù hợp.</p>
+
+            <div class="staff-dishes">
+                @foreach (var dish in Model.DishOptions)
+                {
+                    var photo = dish.ImageUrl?.Trim();
+                    <article class="staff-card staff-dish" data-dish-name="@dish.Name">
+                        <div class="staff-dish-photo">
+                            @if (Url.IsLocalUrl(photo))
+                            {
+                                <img src="@Url.Content(photo)" alt="" width="420" height="270" loading="lazy" />
+                            }
+                            else
+                            {
+                                <span>Chưa có ảnh món</span>
+                            }
+                        </div>
+
+                        <div class="staff-dish-body">
+                            <h3>@dish.Name</h3>
+                            <p class="staff-dish-price">@Money(dish.Price)</p>
+
+                            <form class="staff-form" method="post"
+                                  action="@Url.RouteUrl("DoraFoodStaffAddDish", new { id = Model.Id })">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="variantId" value="@dish.Id" />
+                                <input type="hidden" name="operationId" value="@Guid.NewGuid()" />
+
+                                <label for="qty-@dish.Id">Số lượng</label>
+                                <div class="staff-stepper" data-quantity>
+                                    <button type="button" class="staff-button staff-button--light" hidden
+                                            data-step="-1" aria-label="Giảm số lượng @dish.Name">−</button>
+                                    <input id="qty-@dish.Id" name="quantity" type="number"
+                                           min="1" max="999" value="1" required />
+                                    <button type="button" class="staff-button staff-button--light" hidden
+                                            data-step="1" aria-label="Tăng số lượng @dish.Name">+</button>
+                                </div>
+
+                                <label for="note-@dish.Id">Ghi chú</label>
+                                <textarea id="note-@dish.Id" name="note" rows="2" maxlength="500"
+                                          placeholder="Ví dụ: ít cay"></textarea>
+
+                                <button type="submit" class="staff-button">Thêm vào đơn</button>
+                            </form>
+                        </div>
+                    </article>
+                }
+            </div>
+        }
+    </section>
+</div>

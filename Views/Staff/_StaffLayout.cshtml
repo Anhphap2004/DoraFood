@@ -1,0 +1,46 @@
+@{
+    Layout = null;
+    var title = ViewData["Title"] as string ?? "Phục vụ tại bàn";
+}
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@title · DoraFood</title>
+    <link rel="stylesheet" href="@Url.Content("~/assets/css/dorafood-staff.css")" />
+</head>
+<body class="staff">
+    <header class="staff-header">
+        <div class="staff-wrap staff-header__inner">
+            <a class="staff-brand" href="@Url.RouteUrl("DoraFoodStaffDesk")">DoraFood <span>Phục vụ</span></a>
+            <nav class="staff-nav" aria-label="Điều hướng">
+                @if (!string.IsNullOrWhiteSpace(User.Identity?.Name))
+                {
+                    <span class="staff-actor">@User.Identity.Name</span>
+                }
+                <a class="staff-button staff-button--outline" href="@Url.Action("Index", "Home", new { area = "" })">Trang chính</a>
+                <form action="@Url.RouteUrl("DoraFoodStaffLogout")" method="post">
+                    @Html.AntiForgeryToken()
+                    <button type="submit" class="staff-button staff-button--outline">Đăng xuất</button>
+                </form>
+            </nav>
+        </div>
+    </header>
+
+    <main class="staff-wrap staff-main">
+        @if (TempData["StaffSuccess"] is string success)
+        {
+            <p class="staff-notice" role="status">@success</p>
+        }
+
+        @if (TempData["StaffError"] is string error)
+        {
+            <p class="staff-notice staff-notice--error" role="alert">@error</p>
+        }
+
+        @RenderBody()
+    </main>
+    <script src="@Url.Content("~/assets/js/dorafood-staff.js")" defer></script>
+</body>
+</html>

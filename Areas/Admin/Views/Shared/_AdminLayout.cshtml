@@ -98,7 +98,7 @@
                     <div class="dt-header-caption"><strong>DoraFood <span>Workspace</span></strong><small>Chăm từng bữa ăn · Trọn từng trải nghiệm</small></div>
                 </div>
                 <ul class="navbar-nav ms-auto align-items-center gap-1">
-                    @await Html.PartialAsync("_AdminChatBell")
+                    @await Html.PartialAsync("~/Areas/Admin/Views/Shared/_AdminChatBell.cshtml")
                     <li class="nav-item d-none d-md-block"><a href="@customerUrl" class="nav-link dt-store-link"><i class="bi bi-box-arrow-up-right me-1" aria-hidden="true"></i>Trang khách hàng</a></li>
                     <li class="nav-item"><button type="button" id="dt-motion-toggle" class="btn dt-icon-btn" aria-label="Tạm dừng hiệu ứng trang trí" aria-pressed="true" title="Bật hoặc tắt hiệu ứng"><i class="bi bi-stars" aria-hidden="true"></i></button></li>
                     <li class="nav-item dropdown">
@@ -200,6 +200,20 @@
                 <nav aria-label="Menu quản trị">
                     <ul class="nav sidebar-menu flex-column" id="navigation">
                         <li class="nav-header">VẬN HÀNH NHÀ HÀNG</li>
+                        @if (User.IsInRole("MANAGER") || User.IsInRole("CASHIER"))
+                        {
+                            var onTableBoard = ViewContext.RouteData.Values["controller"]?.ToString() == "Staff"
+                                && ViewContext.RouteData.Values["action"]?.ToString() == "AdminBoard";
+
+                            <li class="nav-item">
+                                <a class="nav-link @(onTableBoard ? "active" : "")"
+                                   href="@Url.RouteUrl("DoraFoodAdminTableService")"
+                                   aria-current="@(onTableBoard ? "page" : null)">
+                                    <i class="nav-icon bi bi-grid-3x3-gap" aria-hidden="true"></i>
+                                    <p>Phục vụ bàn</p>
+                                </a>
+                            </li>
+                        }
                         @foreach (var item in operations)
                         {
                             <li class="nav-item"><a href="@(item.Controller == "BookingManagement" ? bookingUrl : Url.Action("Index", item.Controller, new { area = "Admin" }))" class="nav-link @Active(item.Controller)" aria-current="@(Active(item.Controller) == "active" ? "page" : null)"><i class="nav-icon bi @item.Icon" aria-hidden="true"></i><p>@item.Label</p></a></li>
@@ -223,7 +237,13 @@
                         @if (User.IsInRole("ADMIN") || User.IsInRole("MANAGER"))
                         {
                             <li class="nav-header">KIỂM SOÁT & THỐNG KÊ</li>
-
+                            <li class="nav-item">
+                                <a class="nav-link @Active("InvoiceHistory")"
+                                   href="@Url.RouteUrl("DoraFoodInvoiceHistory")">
+                                    <i class="nav-icon bi bi-receipt" aria-hidden="true"></i>
+                                    <p>Lịch sử hóa đơn</p>
+                                </a>
+                            </li>
                             <li class="nav-item">
                                 <a asp-area="Admin"
                                    asp-controller="Vouchers"
@@ -276,6 +296,13 @@
                         {
                             <li class="nav-item"><a asp-area="Admin" asp-controller="AdminAccounts" asp-action="Index" class="nav-link @Active("AdminAccounts")"><i class="nav-icon bi bi-people" aria-hidden="true"></i><p>Tài khoản & vai trò</p></a></li>
                         }
+                        <li class="nav-item">
+                            <a class="nav-link @Active("StaffAccounts")"
+                               href="@Url.RouteUrl("DoraFoodCreateStaff")">
+                                <i class="nav-icon bi bi-person-plus" aria-hidden="true"></i>
+                                <p>Tạo tài khoản phục vụ</p>
+                            </a>
+                        </li>
                     </ul>
                 </nav>
                 <div class="dt-sidebar-note"><span class="dt-note-icon"><i class="bi bi-heart" aria-hidden="true"></i></span><strong>Một mùa sum vầy</strong><p>Từ gian bếp ấm đến những bàn ăn đầy niềm vui.</p><a href="@customerUrl">Ghé trang nhà hàng <i class="bi bi-arrow-up-right" aria-hidden="true"></i></a></div>

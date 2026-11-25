@@ -1,0 +1,52 @@
+@model DoraFood.Areas.Admin.Controllers.StaffAccountsController.StaffAccountInput
+
+@{
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Tạo tài khoản phục vụ";
+}
+
+<div class="card shadow-sm" style="max-width: 640px">
+    <div class="card-body">
+        @if (TempData["StaffSuccess"] is string success)
+        {
+            <p class="alert alert-success" role="status">@success</p>
+        }
+
+        <form action="@Url.RouteUrl("DoraFoodCreateStaff")" method="post">
+            @Html.AntiForgeryToken()
+            <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+
+            <div class="mb-3">
+                <label asp-for="UserName" class="form-label"></label>
+                <input asp-for="UserName" class="form-control" autocomplete="off" />
+                <span asp-validation-for="UserName" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Email" class="form-label"></label>
+                <input asp-for="Email" class="form-control" autocomplete="off" />
+                <span asp-validation-for="Email" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="Password" class="form-label"></label>
+                <input asp-for="Password" class="form-control" autocomplete="new-password" />
+                <span asp-validation-for="Password" class="text-danger"></span>
+            </div>
+
+            <div class="mb-3">
+                <label asp-for="ConfirmPassword" class="form-label"></label>
+                <input asp-for="ConfirmPassword" class="form-control" autocomplete="new-password" />
+                <span asp-validation-for="ConfirmPassword" class="text-danger"></span>
+            </div>
+
+            <div class="d-flex flex-wrap gap-2">
+                <button class="btn btn-primary" type="submit">Tạo tài khoản phục vụ</button>
+                <a class="btn btn-outline-secondary"
+                   href="@Url.Action("Index", "AdminAccounts", new { area = "Admin" })">
+                    Về danh sách tài khoản
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
