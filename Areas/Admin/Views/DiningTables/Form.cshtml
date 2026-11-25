@@ -1,0 +1,93 @@
+@using System.Linq
+@model DoraFood.Areas.Admin.ViewModels.DiningTableAdminForm
+
+@{
+    var editing = Model.TableId.HasValue;
+    ViewData["Title"] = editing ? "Sửa bàn" : "Thêm bàn";
+    var areas = Model.Areas.Where(area => area.IsActive || (editing && area.Id == Model.Input.AreaId)).ToList();
+    var backAreaId = Model.Areas.Any(area => area.Id == Model.Input.AreaId) ? Model.Input.AreaId : null;
+    var backUrl = Url.Action("Index", "DiningTables", new { area = "Admin", areaId = backAreaId });
+    var formUrl = Url.Action(editing ? "Edit" : "Create", "DiningTables", new { area = "Admin", id = Model.TableId });
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/admin/css/dorafood-dining-form.css" asp-append-version="true" />
+}
+
+<div class="df-table-editor">
+    <a class="df-table-editor__back" href="@backUrl">
+        <i class="bi bi-arrow-left" aria-hidden="true"></i> Danh sách bàn
+    </a>
+
+    @if (areas.Count == 0)
+    {
+        <p class="alert alert-warning mt-3">Hiện chưa có khu vực đang hoạt động.</p>
+    }
+    else
+    {
+        <div class="df-table-editor__panel">
+            <form method="post" action="@formUrl" class="df-table-editor__form" asp-antiforgery="false">
+                @Html.AntiForgeryToken()
+                <h2>Thông tin bàn</h2>
+                <div asp-validation-summary="ModelOnly" class="df-table-editor__errors text-danger" role="alert"></div>
+
+                <div>
+                    <label asp-for="Input.AreaId" class="form-label"></label>
+                    <select asp-for="Input.AreaId" class="form-select" required>
+                        <option value="">Chọn khu vực</option>
+                        @foreach (var area in areas)
+                        {
+                            <option value="@area.Id">@area.Name (@area.Code)@(area.IsActive ? "" : " · Đã ngừng")</option>
+                        }
+                    </select>
+                    <span asp-validation-for="Input.AreaId" class="text-danger"></span>
+                </div>
+
+                <div class="df-table-editor__fields">
+                    <div>
+                        <label asp-for="Input.Code" class="form-label"></label>
+                        <input asp-for="Input.Code" class="form-control" required maxlength="30" placeholder="VD: A01" />
+                        <span asp-validation-for="Input.Code" class="text-danger"></span>
+                    </div>
+                    <div>
+                        <label asp-for="Input.Capacity" class="form-label"></label>
+                        <div class="input-group">
+                            <input asp-for="Input.Capacity" class="form-control" required type="number" min="1" max="32767" />
+                            <span class="input-group-text">chỗ</span>
+                        </div>
+                        <span asp-validation-for="Input.Capacity" class="text-danger"></span>
+                    </div>
+                </div>
+
+                <div>
+                    <label asp-for="Input.Note" class="form-label"></label>
+                    <textarea asp-for="Input.Note" class="form-control" rows="3" maxlength="500"
+                              placeholder="VD: Gần cửa sổ"></textarea>
+                    <span asp-validation-for="Input.Note" class="text-danger"></span>
+                </div>
+
+                @if (editing)
+                {
+                    <div class="df-table-editor__status form-check form-switch">
+                        <input asp-for="Input.IsActive" class="form-check-input" role="switch" />
+                        <label asp-for="Input.IsActive" class="form-check-label"></label>
+                    </div>
+                }
+
+                <div class="df-table-editor__actions">
+                    <button type="submit" class="btn df-table-editor__save">
+                        <i class="bi @(editing ? "bi-check-lg" : "bi-plus-lg")" aria-hidden="true"></i>
+                        @(editing ? "Lưu thay đổi" : "Thêm bàn")
+                    </button>
+                    <a class="btn df-table-editor__cancel" href="@backUrl">Hủy</a>
+                </div>
+            </form>
+
+            <figure class="df-table-editor__photo">
+                <img src="@Url.Content("~/admin/images/dorafood-dining-table.webp")"
+                     alt="Bàn gỗ với bộ chén đĩa và bình hoa mai" width="720" height="480" decoding="async" />
+                <figcaption>Ảnh minh họa</figcaption>
+            </figure>
+        </div>
+    }
+</div>

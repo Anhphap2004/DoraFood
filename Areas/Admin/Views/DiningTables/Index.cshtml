@@ -1,0 +1,137 @@
+@using System.Linq
+@model DoraFood.Areas.Admin.ViewModels.DiningTableAdminIndex
+
+@{
+    ViewData["Title"] = "Quản lý bàn";
+    var hasActiveArea = Model.Areas.Any(area => area.IsActive);
+    var tablePhoto = Url.Content("~/admin/images/dorafood-dining-table.webp");
+    var servingCount = Model.Tables.Count(table => table.HasOpenOrder);
+    var bookingCount = Model.Tables.Count(table => !table.HasOpenOrder && table.HasCurrentBooking);
+    var availableCount = Model.Tables.Count(table => !table.InUse && table.IsActive && table.AreaIsActive);
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/admin/css/dorafood-dining-cards.css" asp-append-version="true" />
+}
+
+<div class="df-table-board">
+    <header class="df-table-overview" aria-label="Tổng quan danh sách bàn">
+        <div class="df-table-overview__metrics">
+            <div><strong>@Model.Tables.Count</strong><span>Tổng số bàn</span></div>
+            <div><strong>@availableCount</strong><span>Đang trống</span></div>
+            <div><strong>@servingCount</strong><span>Đang phục vụ</span></div>
+            <div><strong>@bookingCount</strong><span>Có lịch đặt</span></div>
+        </div>
+        @if (hasActiveArea)
+        {
+            <a class="df-table-add"
+               href="@Url.Action("Create", "DiningTables", new { area = "Admin", areaId = Model.AreaId })">
+                <i class="bi bi-plus-lg" aria-hidden="true"></i> Thêm bàn
+            </a>
+        }
+    </header>
+
+    @if (TempData["DiningTableSuccess"] is string success)
+    {
+        <p class="alert alert-success" role="status">@success</p>
+    }
+    @if (TempData["DiningTableError"] is string error)
+    {
+        <p class="alert alert-danger" role="alert">@error</p>
+    }
+
+    <form class="df-table-filter" method="get"
+          action="@Url.Action("Index", "DiningTables", new { area = "Admin" })">
+        <div>
+            <label for="df-dining-area" class="form-label">Khu vực</label>
+            <select name="areaId" id="df-dining-area" class="form-select">
+                <option value="">Tất cả khu vực</option>
+                @foreach (var area in Model.Areas)
+                {
+                    <option value="@area.Id" selected="@(area.Id == Model.AreaId ? "selected" : null)">
+                        @area.Name (@area.Code)@(area.IsActive ? "" : " · Đã ngừng")
+                    </option>
+                }
+            </select>
+        </div>
+        <button class="btn btn-outline-secondary" type="submit">
+            <i class="bi bi-funnel" aria-hidden="true"></i> Lọc
+        </button>
+    </form>
+
+    @if (!hasActiveArea)
+    {
+        <p class="alert alert-warning">Cần có khu vực đang hoạt động để thêm bàn.</p>
+    }
+
+    @if (Model.Tables.Count == 0)
+    {
+        <p class="df-table-empty">Chưa có bàn trong khu vực được chọn.</p>
+    }
+
+    @foreach (var areaGroup in Model.Tables.GroupBy(table => new { table.AreaId, table.AreaName }))
+    {
+        <section class="df-table-area" aria-labelledby="df-area-@areaGroup.Key.AreaId">
+            <header class="df-table-area__heading">
+                <h2 id="df-area-@areaGroup.Key.AreaId">
+                    <i class="bi bi-grid" aria-hidden="true"></i> @areaGroup.Key.AreaName
+                </h2>
+                <span>@areaGroup.Count() bàn</span>
+            </header>
+
+            <div class="df-table-grid">
+                @foreach (var table in areaGroup)
+                {
+                    var (status, tone) = (table.HasOpenOrder, table.HasCurrentBooking, table.IsActive, table.AreaIsActive) switch
+                    {
+                        (true, _, _, _) => ("Đang phục vụ", "serving"),
+                        (_, true, _, _) => ("Có lịch đặt", "booked"),
+                        (_, _, false, _) => ("Ngừng sử dụng", "offline"),
+                        (_, _, _, false) => ("Khu vực đã ngừng", "offline"),
+                        _ => ("Đang trống", "available")
+                    };
+                    var actionLabel = table.HasHistory ? "Ngừng sử dụng" : "Xóa";
+                    var confirmMessage = table.HasHistory
+                        ? $"Ngừng sử dụng bàn {table.Code}?"
+                        : $"Xóa bàn {table.Code}?";
+
+                    <article class="df-table-card df-table-card--@tone" aria-labelledby="df-table-@table.Id">
+                        <div class="df-table-card__photo">
+                            <img src="@tablePhoto" alt="" width="720" height="480" loading="lazy" decoding="async" />
+                            <span class="df-table-card__status">@status</span>
+                        </div>
+                        <div class="df-table-card__body">
+                            <div class="df-table-card__identity">
+                                <h3 id="df-table-@table.Id">@table.Code</h3>
+                                <span><i class="bi bi-people" aria-hidden="true"></i> @table.Capacity chỗ</span>
+                            </div>
+                            @if (!string.IsNullOrWhiteSpace(table.Note))
+                            {
+                                <p class="df-table-card__note">@table.Note</p>
+                            }
+                        </div>
+                        <div class="df-table-card__actions">
+                            <a class="df-table-edit"
+                               href="@Url.Action("Edit", "DiningTables", new { area = "Admin", id = table.Id })"
+                               aria-label="Sửa bàn @table.Code">
+                                <i class="bi bi-pencil-square" aria-hidden="true"></i> Sửa
+                            </a>
+                            @if (!table.InUse && (!table.HasHistory || table.IsActive))
+                            {
+                                <form method="post"
+                                      action="@Url.Action("Delete", "DiningTables", new { area = "Admin", id = table.Id })"
+                                      data-confirm="@confirmMessage" onsubmit="return confirm(this.dataset.confirm);">
+                                    @Html.AntiForgeryToken()
+                                    <input type="hidden" name="returnAreaId" value="@Model.AreaId" />
+                                    <button type="submit" class="df-table-delete" aria-label="@actionLabel bàn @table.Code">
+                                        @actionLabel
+                                    </button>
+                                </form>
+                            }
+                        </div>
+                    </article>
+                }
+            </div>
+        </section>
+    }
+</div>

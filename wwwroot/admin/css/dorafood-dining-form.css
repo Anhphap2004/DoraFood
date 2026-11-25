@@ -1,0 +1,111 @@
+.df-table-editor {
+    --editor-ink: #35262b;
+    --editor-line: #e9dce1;
+    --editor-surface: #fff;
+    --editor-accent: #822941;
+    --editor-soft: #fff1f2;
+    color: var(--editor-ink);
+    margin-inline: auto;
+    max-width: 66rem;
+}
+[data-bs-theme="dark"] .df-table-editor {
+    --editor-ink: #f5ecf0;
+    --editor-line: #514049;
+    --editor-surface: #312730;
+    --editor-accent: #ffbbc9;
+    --editor-soft: #512d3b;
+}
+.df-table-editor__back {
+    align-items: center;
+    color: var(--editor-accent);
+    display: inline-flex;
+    gap: .4rem;
+    margin-bottom: .85rem;
+    text-decoration: none;
+}
+.df-table-editor__back:hover { color: var(--editor-accent); text-decoration: underline; }
+.df-table-editor__panel {
+    animation: df-table-form-enter .35s ease-out both;
+    background: var(--editor-surface);
+    border: 1px solid var(--editor-line);
+    border-radius: 1rem;
+    box-shadow: 0 8px 24px rgb(57 33 47 / .08);
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
+    overflow: hidden;
+}
+.df-table-editor__form {
+    display: grid;
+    gap: .95rem;
+    min-width: 0;
+    padding: clamp(1rem, 3vw, 1.8rem);
+}
+.df-table-editor__form h2 { font-size: 1.28rem; margin: 0 0 .15rem; }
+.df-table-editor__form .form-label { font-weight: 600; margin-bottom: .3rem; }
+.df-table-editor__form .validation-summary-valid { display: none; }
+.df-table-editor__errors.validation-summary-errors {
+    background: var(--editor-soft);
+    border: 1px solid var(--editor-line);
+    border-radius: .55rem;
+    padding: .65rem .85rem;
+}
+.df-table-editor__errors ul { margin: 0; padding-inline-start: 1.1rem; }
+.df-table-editor__fields { display: grid; gap: .8rem; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.df-table-editor__status {
+    background: var(--editor-soft);
+    border: 1px solid var(--editor-line);
+    border-radius: .6rem;
+    margin: 0;
+    padding-block: .6rem;
+    padding-inline-start: 3rem;
+}
+.df-table-editor__actions { border-top: 1px solid var(--editor-line); display: flex; flex-wrap: wrap; gap: .55rem; padding-top: 1rem; }
+.df-table-editor .df-table-editor__save { background: #822941; color: #fff; transition: background-color .2s, transform .2s; }
+.df-table-editor .df-table-editor__save:hover { background: #672037; color: #fff; transform: translateY(-2px); }
+.df-table-editor .df-table-editor__cancel { border: 1px solid var(--editor-line); color: var(--editor-ink); }
+.df-table-editor .df-table-editor__cancel:hover { background: var(--editor-soft); }
+.df-table-editor :is(a, button, input, select, textarea):focus-visible { outline: 2px solid var(--editor-accent); outline-offset: 2px; }
+.df-table-editor__photo {
+    background: #614333;
+    margin: 0;
+    min-height: 16rem;
+    overflow: hidden;
+    position: relative;
+}
+.df-table-editor__photo img {
+    height: 100%;
+    inset: 0;
+    object-fit: cover;
+    position: absolute;
+    transition: transform .4s ease;
+    width: 100%;
+}
+.df-table-editor__photo figcaption {
+    background: rgb(44 26 33 / .88);
+    border-radius: 2rem;
+    bottom: .85rem;
+    color: #fff;
+    font-size: .8rem;
+    left: .85rem;
+    padding: .3rem .58rem;
+    position: absolute;
+}
+@media (hover: hover) {
+    .df-table-editor__photo:hover img { transform: scale(1.055); }
+}
+@keyframes df-table-form-enter {
+    from { opacity: 0; transform: translateY(9px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@media (max-width: 720px) {
+    .df-table-editor__panel { grid-template-columns: minmax(0, 1fr); }
+    .df-table-editor__photo { aspect-ratio: 2 / 1; min-height: 0; }
+}
+@media (max-width: 380px) {
+    .df-table-editor__fields { grid-template-columns: minmax(0, 1fr); }
+}
+@media (prefers-reduced-motion: reduce) {
+    .df-table-editor__panel { animation: none; }
+    .df-table-editor button, .df-table-editor__photo img { transition: none; }
+    .df-table-editor .df-table-editor__save:hover, .df-table-editor__photo:hover img { transform: none; }
+}

@@ -3,6 +3,11 @@
     var pageTitle = ViewData["Title"] as string ?? "Quản trị nhà hàng";
     var currentArea = ViewContext.RouteData.Values["area"]?.ToString();
     var currentController = ViewContext.RouteData.Values["controller"]?.ToString();
+    var currentAction = ViewContext.RouteData.Values["action"]?.ToString();
+    var canManage = User.IsInRole("ADMIN") || User.IsInRole("MANAGER");
+    var canServeTables = User.IsInRole("MANAGER") || User.IsInRole("CASHIER");
+    var onTableBoard = string.Equals(currentController, "Staff", StringComparison.OrdinalIgnoreCase)
+        && string.Equals(currentAction, "AdminBoard", StringComparison.OrdinalIgnoreCase);
     var inAdmin = string.Equals(currentArea, "Admin", StringComparison.OrdinalIgnoreCase);
     var customerUrl = Url.Action("Index", "Home", new { area = "" });
     var dashboardUrl = Url.Action("Index", "Dashboard", new { area = "Admin" });
@@ -14,24 +19,24 @@
         StringComparison.OrdinalIgnoreCase) ? "active" : "";
     var operations = new[]
     {
-        (Label: "Tổng quan", Controller: "Dashboard", Icon: "bi-grid-1x2"),
-        (Label: "Đơn giao hàng", Controller: "DeliveryOrders", Icon: "bi-truck"),
-        (Label: "Đặt bàn", Controller: "BookingManagement", Icon: "bi-calendar-check"),
-        (Label: "Món ăn", Controller: "Dishes", Icon: "bi-egg-fried"),
-        (Label: "Danh mục món ăn", Controller: "DishCategories", Icon: "bi-collection")
+        (Label: "Tổng quan", Url: dashboardUrl, Icon: "bi-grid-1x2", Active: Active("Dashboard") == "active", Visible: true),
+        (Label: "Đơn giao hàng", Url: Url.Action("Index", "DeliveryOrders", new { area = "Admin" }), Icon: "bi-truck", Active: Active("DeliveryOrders") == "active", Visible: true),
+        (Label: "Đặt bàn", Url: bookingUrl, Icon: "bi-calendar-check", Active: Active("BookingManagement") == "active", Visible: true),
+        (Label: "Quản lý bàn", Url: Url.Action("Index", "DiningTables", new { area = "Admin" }), Icon: "bi-grid-3x3-gap", Active: Active("DiningTables") == "active", Visible: canManage),
+        (Label: "Phục vụ bàn", Url: Url.RouteUrl("DoraFoodAdminTableService"), Icon: "bi-person-workspace", Active: onTableBoard, Visible: canServeTables),
+        (Label: "Món ăn", Url: Url.Action("Index", "Dishes", new { area = "Admin" }), Icon: "bi-egg-fried", Active: Active("Dishes") == "active", Visible: true),
+        (Label: "Danh mục món ăn", Url: Url.Action("Index", "DishCategories", new { area = "Admin" }), Icon: "bi-collection", Active: Active("DishCategories") == "active", Visible: true),
+        (Label: "Dịch vụ", Url: Url.Action("Index", "Services", new { area = "Admin" }), Icon: "bi-briefcase", Active: Active("Services") == "active", Visible: canManage)
     };
     var contentLinks = new[]
- {
-    (Label: "Bài viết", Controller: "Posts", Action: "Index", Icon: "bi-journal-richtext"),
-    (Label: "Giới thiệu", Controller: "AboutPage", Action: "Edit", Icon: "bi-info-circle"),
-    (Label: "Liên hệ", Controller: "Contacts", Action: "Index", Icon: "bi-envelope"),
-
-    // Hộp thư trò chuyện với khách hàng.
-    (Label: "Tin nhắn khách hàng", Controller: "Chat", Action: "Index", Icon: "bi-chat-dots"),
-
-    (Label: "Mục điều hướng", Controller: "NavigationItems", Action: "Index", Icon: "bi-signpost-split")     ,
+    {
+        (Label: "Bài viết", Controller: "Posts", Action: "Index", Icon: "bi-journal-richtext"),
+        (Label: "Giới thiệu", Controller: "AboutPage", Action: "Edit", Icon: "bi-info-circle"),
+        (Label: "Liên hệ", Controller: "Contacts", Action: "Index", Icon: "bi-envelope"),
+        (Label: "Tin nhắn khách hàng", Controller: "Chat", Action: "Index", Icon: "bi-chat-dots"),
+        (Label: "Mục điều hướng", Controller: "NavigationItems", Action: "Index", Icon: "bi-signpost-split"),
         (Label: "Câu hỏi thường gặp", Controller: "Faq", Action: "Index", Icon: "bi-question-circle")
-};
+    };
 }
 <!doctype html>
 <html lang="vi">
@@ -41,52 +46,13 @@
     <meta name="theme-color" content="#8f232d" />
     <meta name="color-scheme" content="light dark" />
     <title>@pageTitle · DoraFood Admin</title>
-    <script>
-        (() => {
-            'use strict';
-            const root = document.documentElement;
-
-            // Applications with their own theming opt out of AdminLTE's color mode
-            // entirely, here as well as in the bundle.
-            if (root.getAttribute('data-lte-color-mode') === 'off') {
-                return;
-            }
-
-            const STORAGE_KEY = 'lte-theme';
-            let stored = null;
-            try {
-                stored = localStorage.getItem(STORAGE_KEY);
-            } catch {
-                // localStorage may be unavailable (private mode, sandboxed iframe).
-            }
-            // Mirror the precedence in color-mode.ts: the visitor's stored choice
-            // wins, then a theme this page declared itself, then the OS preference.
-            const authored = root.getAttribute('data-bs-theme');
-            let resolved = 'light';
-            if (stored === 'dark' || stored === 'light') {
-                resolved = stored;
-            } else if (authored === 'dark' || authored === 'light') {
-                resolved = authored;
-            } else if (globalThis.matchMedia('(prefers-color-scheme: dark)').matches) {
-                resolved = 'dark';
-            }
-            root.setAttribute('data-bs-theme', resolved);
-            root.style.colorScheme = resolved;
-            // Flag values computed here, so the bundle does not mistake them for a
-            // theme the page declared and stop following the OS preference.
-            if (resolved !== authored) {
-                root.setAttribute('data-lte-theme-resolved', '');
-            }
-        })();
-    </script>
-
-
+    <script src="~/admin/js/dora-admin-theme.js" asp-append-version="true"></script>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@@fontsource/source-sans-3@5.3.0/index.css" crossorigin="anonymous" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/overlayscrollbars@2.16.0/styles/overlayscrollbars.min.css" crossorigin="anonymous" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.1/font/bootstrap-icons.min.css" crossorigin="anonymous" />
     <link rel="stylesheet" href="@Url.Content("~/admin/dist/css/adminlte.css")" />
-    @await RenderSectionAsync("Styles", required: false)
     <link rel="stylesheet" href="~/admin/css/dora-admin-tet.css" asp-append-version="true" />
+    @await RenderSectionAsync("Styles", required: false)
 </head>
 <body class="layout-fixed sidebar-expand-lg bg-body-tertiary dora-admin-tet">
     <a href="#main-content" class="dt-skip">Đến nội dung chính</a>
@@ -148,46 +114,42 @@
                         </ul>
                     </li>
 
-                   <li class="nav-item dropdown">
-    <button type="button"
-            id="adminAccountDropdown"
-            class="dt-user btn dropdown-toggle"
-            data-bs-toggle="dropdown"
-            aria-expanded="false"
-            aria-label="Menu tài khoản">
-        <span class="dt-avatar" aria-hidden="true">@initials</span>
-
-        <span class="d-none d-sm-block text-start">
-            <strong>@userName</strong>
-            <small>Không gian quản trị</small>
-        </span>
-    </button>
-   <ul class="dropdown-menu dropdown-menu-end"
-    aria-labelledby="adminAccountDropdown">
-    <li>
-        <a href="@customerUrl" class="dropdown-item">
-            <i class="bi bi-house-door me-2" aria-hidden="true"></i>
-            Về trang khách hàng
-        </a>
-    </li>
-
-    <li><hr class="dropdown-divider" /></li>
-
-    <li>
-        <form asp-area=""
-              asp-controller="Account"
-              asp-action="Logout"
-              asp-antiforgery="true"
-              method="post"
-              class="m-0">
-            <button type="submit" class="dropdown-item text-danger">
-                <i class="bi bi-box-arrow-right me-2" aria-hidden="true"></i>
-                Đăng xuất
-            </button>
-        </form>
-    </li>
-</ul>
-</li>
+                    <li class="nav-item dropdown">
+                        <button type="button"
+                                id="adminAccountDropdown"
+                                class="dt-user btn dropdown-toggle"
+                                data-bs-toggle="dropdown"
+                                aria-expanded="false"
+                                aria-label="Menu tài khoản">
+                            <span class="dt-avatar" aria-hidden="true">@initials</span>
+                            <span class="d-none d-sm-block text-start">
+                                <strong>@userName</strong>
+                                <small>Không gian quản trị</small>
+                            </span>
+                        </button>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminAccountDropdown">
+                            <li>
+                                <a href="@customerUrl" class="dropdown-item">
+                                    <i class="bi bi-house-door me-2" aria-hidden="true"></i>
+                                    Về trang khách hàng
+                                </a>
+                            </li>
+                            <li><hr class="dropdown-divider" /></li>
+                            <li>
+                                <form asp-area=""
+                                      asp-controller="Account"
+                                      asp-action="Logout"
+                                      asp-antiforgery="true"
+                                      method="post"
+                                      class="m-0">
+                                    <button type="submit" class="dropdown-item text-danger">
+                                        <i class="bi bi-box-arrow-right me-2" aria-hidden="true"></i>
+                                        Đăng xuất
+                                    </button>
+                                </form>
+                            </li>
+                        </ul>
+                    </li>
                 </ul>
             </div>
         </nav>
@@ -200,32 +162,19 @@
                 <nav aria-label="Menu quản trị">
                     <ul class="nav sidebar-menu flex-column" id="navigation">
                         <li class="nav-header">VẬN HÀNH NHÀ HÀNG</li>
-                        @if (User.IsInRole("MANAGER") || User.IsInRole("CASHIER"))
-                        {
-                            var onTableBoard = ViewContext.RouteData.Values["controller"]?.ToString() == "Staff"
-                                && ViewContext.RouteData.Values["action"]?.ToString() == "AdminBoard";
-
-                            <li class="nav-item">
-                                <a class="nav-link @(onTableBoard ? "active" : "")"
-                                   href="@Url.RouteUrl("DoraFoodAdminTableService")"
-                                   aria-current="@(onTableBoard ? "page" : null)">
-                                    <i class="nav-icon bi bi-grid-3x3-gap" aria-hidden="true"></i>
-                                    <p>Phục vụ bàn</p>
-                                </a>
-                            </li>
-                        }
                         @foreach (var item in operations)
                         {
-                            <li class="nav-item"><a href="@(item.Controller == "BookingManagement" ? bookingUrl : Url.Action("Index", item.Controller, new { area = "Admin" }))" class="nav-link @Active(item.Controller)" aria-current="@(Active(item.Controller) == "active" ? "page" : null)"><i class="nav-icon bi @item.Icon" aria-hidden="true"></i><p>@item.Label</p></a></li>
-                        }
-                        @if (User.IsInRole("ADMIN") || User.IsInRole("MANAGER"))
-                        {
+                            if (!item.Visible || string.IsNullOrEmpty(item.Url))
+                            {
+                                continue;
+                            }
+
                             <li class="nav-item">
-                                <a href="@Url.Action("Index", "Services", new { area = "Admin" })"
-                                   class="nav-link @Active("Services")"
-                                   aria-current="@(Active("Services") == "active" ? "page" : null)">
-                                    <i class="nav-icon bi bi-briefcase" aria-hidden="true"></i>
-                                    <p>Dịch vụ</p>
+                                <a href="@item.Url"
+                                   class="nav-link @(item.Active ? "active" : "")"
+                                   aria-current="@(item.Active ? "page" : null)">
+                                    <i class="nav-icon bi @item.Icon" aria-hidden="true"></i>
+                                    <p>@item.Label</p>
                                 </a>
                             </li>
                         }
@@ -234,7 +183,7 @@
                         {
                             <li class="nav-item"><a href="@Url.Action(item.Action, item.Controller, new { area = "Admin" })" class="nav-link @Active(item.Controller)" aria-current="@(Active(item.Controller) == "active" ? "page" : null)"><i class="nav-icon bi @item.Icon" aria-hidden="true"></i><p>@item.Label</p></a></li>
                         }
-                        @if (User.IsInRole("ADMIN") || User.IsInRole("MANAGER"))
+                        @if (canManage)
                         {
                             <li class="nav-header">KIỂM SOÁT & THỐNG KÊ</li>
                             <li class="nav-item">

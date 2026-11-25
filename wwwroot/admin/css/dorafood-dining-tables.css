@@ -1,0 +1,56 @@
+.df-dining-admin {
+    --df-dining-accent: #7b223a;
+    --df-dining-line: #e9dcd4;
+    --df-dining-muted: #665653;
+    max-width: 80rem;
+    margin: 0 auto;
+    color: #302125;
+}
+.df-dining-admin--form { max-width: 46rem; }
+.df-dining-admin__header, .df-dining-admin__filter {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: end;
+    gap: .75rem;
+    margin-bottom: 1.15rem;
+}
+.df-dining-admin__header { justify-content: space-between; padding: .75rem 0; border-bottom: 1px solid var(--df-dining-line); }
+.df-dining-admin__header h1 { font-size: clamp(1.55rem, 3vw, 2.3rem); margin: 0; }
+.df-dining-admin__header p { margin: .35rem 0 0; color: var(--df-dining-muted); }
+.df-dining-admin__back { color: var(--df-dining-accent); }
+.df-dining-admin__filter label { display: block; margin-bottom: .3rem; font-weight: 600; }
+.df-dining-admin__filter select { min-width: min(14rem, 100%); }
+.df-dining-admin__muted { color: var(--df-dining-muted); align-self: end; padding: .45rem 0; }
+
+.df-dining-admin__empty, .df-dining-admin__editor, .df-dining-admin__group {
+    background: #fff;
+    border: 1px solid var(--df-dining-line);
+    border-radius: .8rem;
+}
+.df-dining-admin__empty, .df-dining-admin__editor { padding: 1rem; }
+.df-dining-admin__editor { display: grid; gap: 1rem; }
+.df-dining-admin__editor button { justify-self: start; }
+.df-dining-admin__fields { display: grid; grid-template-columns: 1fr 1fr; gap: .8rem; }
+.df-dining-admin__group { overflow: hidden; margin-bottom: 1rem; }
+.df-dining-admin__group h2 {
+    margin: 0;
+    padding: .85rem 1rem;
+    background: #faf4ee;
+    font-size: 1.1rem;
+}
+.df-dining-admin__group h2 small { margin-left: .4rem; color: var(--df-dining-muted); font-weight: 400; }
+.df-dining-admin__group .table { min-width: 38rem; }
+.df-dining-admin__group :is(th, td) { padding: .65rem 1rem; }
+.df-dining-admin__note { white-space: pre-wrap; overflow-wrap: anywhere; }
+.df-dining-admin__actions { display: flex; align-items: center; flex-wrap: wrap; gap: .4rem; }
+.df-dining-admin__actions form { margin: 0; }
+.df-dining-state { display: inline-block; padding: .2rem .55rem; border-radius: 1rem; background: #f1eded; color: #514446; font-size: .84rem; }
+.df-dining-state--active { background: #e7f3e9; color: #245a37; }
+.df-dining-state--busy { background: #fff0d4; color: #754517; }
+.df-dining-admin .df-dining-admin__primary { background: var(--df-dining-accent); border-color: var(--df-dining-accent); color: #fff; }
+.df-dining-admin .df-dining-admin__primary:hover { background: #5e172c; color: #fff; }
+.df-dining-admin :is(a, button):focus-visible { outline: 2px solid var(--df-dining-accent); outline-offset: 2px; }
+
+@media (max-width: 480px) {
+    .df-dining-admin__fields { grid-template-columns: 1fr; }
+}
