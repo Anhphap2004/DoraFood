@@ -1,341 +1,175 @@
-﻿@using System.Linq
+@using System
+@using System.Globalization
+@using System.Linq
 @model DoraFood.Controllers.BookingManagementController.EditBookingViewModel
 
 @{
     var reservation = Model.Reservation;
+    ViewData["Title"] = $"Điều chỉnh đặt bàn {reservation.Code}";
     var requiresTables = reservation.Status == "CONFIRMED";
-    var originalIds = reservation.Tables.Select(table => table.Id).ToHashSet();
-    var originalCodes = reservation.Tables.OrderBy(table => table.Code).Select(table => table.Code);
+    var minimumArrival = DateTime.UtcNow.AddHours(7).ToString("yyyy-MM-ddTHH:mm", CultureInfo.InvariantCulture);
+    var today = DateTime.UtcNow.AddHours(7).Date;
+    var todayValue = today.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture);
+    var occupiedTableIds = ViewData["OccupiedDiningTableIds"] as System.Collections.Generic.List<long>;
     var detailsUrl = Url.RouteUrl("DoraFoodManageBookingDetails", new { id = Model.Id });
-    var editUrl = Url.RouteUrl("DoraFoodEditBooking", new { id = Model.Id });
-    ViewData["Title"] = "Điều chỉnh đặt bàn";
 }
 
-<style>
-    .df-booking-edit {
-        --edit-paper: #fffaf4;
-        --edit-ink: #38221d;
-        --edit-muted: #6d5149;
-        --edit-wine: #783434;
-        --edit-peach: #eaa77c;
-        --edit-line: #e4cbb9;
-        color: var(--edit-ink);
-    }
-
-        .df-booking-edit .df-edit-link {
-            color: var(--edit-wine);
-        }
-
-        .df-booking-edit .df-edit-muted {
-            color: var(--edit-muted);
-        }
-
-        .df-booking-edit .df-edit-layout {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 1rem;
-            align-items: flex-start;
-        }
-
-        .df-booking-edit .df-edit-context {
-            flex: 1 1 18rem;
-            min-width: 0;
-        }
-
-        .df-booking-edit .df-edit-assignment {
-            flex: 2 1 28rem;
-            min-width: 0;
-        }
-
-        .df-booking-edit .df-edit-card {
-            padding: 1rem;
-            border: 1px solid var(--edit-line);
-            border-radius: .9rem;
-            background: var(--edit-paper);
-        }
-
-        .df-booking-edit .df-edit-guest {
-            border-top: 3px solid var(--edit-peach);
-        }
-
-        .df-booking-edit .df-edit-note {
-            white-space: pre-wrap;
-            overflow-wrap: anywhere;
-        }
-
-        .df-booking-edit .df-edit-area {
-            min-width: 0;
-            margin-top: .9rem;
-            padding: .65rem .75rem .75rem;
-            border: 0;
-            border-radius: .75rem;
-            background: var(--edit-peach);
-        }
-
-            .df-booking-edit .df-edit-area legend {
-                float: none;
-                width: auto;
-                margin: 0;
-                padding: 0 .35rem;
-                border-radius: .25rem;
-                background: var(--edit-peach);
-                font-size: .9rem;
-                font-weight: 700;
-            }
-
-        .df-booking-edit .df-edit-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(min(100%, 10rem), 1fr));
-            gap: .6rem;
-        }
-
-        .df-booking-edit .df-edit-table {
-            display: flex;
-            align-items: center;
-            gap: .55rem;
-            min-height: 4rem;
-            padding: .55rem .65rem;
-            border: 2px solid transparent;
-            border-radius: .6rem;
-            background: var(--edit-wine);
-            color: var(--edit-paper);
-            overflow-wrap: anywhere;
-            cursor: pointer;
-        }
-
-            .df-booking-edit .df-edit-table input {
-                flex-shrink: 0;
-                accent-color: #ffe29e;
-            }
-
-            .df-booking-edit .df-edit-table:has(input:checked) {
-                border-color: #ffe29e;
-                box-shadow: 0 0 0 2px #6e451f;
-            }
-
-            .df-booking-edit .df-edit-table:focus-within {
-                outline: 2px solid var(--edit-ink);
-                outline-offset: 3px;
-            }
-
-        .df-booking-edit .df-edit-current-badge {
-            display: inline-block;
-            padding: .1rem .35rem;
-            border-radius: .3rem;
-            background: #f4e6d2;
-            color: #573725;
-        }
-
-        .df-booking-edit .df-edit-comparison {
-            margin-top: 1rem;
-            padding: .75rem;
-            border-radius: .65rem;
-            background: #f6ede4;
-        }
-
-        .df-booking-edit .df-edit-submit {
-            background: var(--edit-wine);
-            color: var(--edit-paper);
-        }
-
-            .df-booking-edit .df-edit-submit:hover {
-                background: #612828;
-                color: var(--edit-paper);
-            }
-
-            .df-booking-edit .df-edit-submit:disabled {
-                background: #e9d9cf;
-                color: #654b41;
-                opacity: 1;
-            }
-</style>
-
-<div class="df-booking-edit container-fluid py-4">
-    <header class="mb-3">
-        <a href="@detailsUrl" class="df-edit-link small">← Chi tiết đặt bàn</a>
-        <h1 class="h3 fw-bold mt-2 mb-0">Điều chỉnh đặt bàn</h1>
-    </header>
+<div class="container py-5">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3 mb-4">
+        <div>
+            <h1 class="h3 fw-bold mb-2" style="font-family: 'Segoe UI', Arial, sans-serif;">Điều chỉnh đặt bàn</h1>
+            <p class="text-muted text-break mb-0">Mã yêu cầu: @reservation.Code</p>
+        </div>
+        <a href="@detailsUrl" class="btn btn-outline-secondary rounded-pill px-4">Về chi tiết</a>
+    </div>
 
     @if (TempData["BookingManagementError"] is string error)
     {
         <div class="alert alert-danger" role="alert">@error</div>
     }
 
-    <form id="booking-edit-form" action="@editUrl" method="post"
-          data-requires-tables="@(requiresTables ? "true" : "false")">
+    <div class="card border-0 shadow-sm mb-4">
+        <div class="card-body p-4">
+            <h2 class="h5 mb-3">Thông tin khách hàng</h2>
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <div class="text-muted small">Khách hàng</div>
+                    <div class="fw-semibold text-break">@reservation.GuestName</div>
+                </div>
+                <div class="col-md-6">
+                    <div class="text-muted small">Số điện thoại</div>
+                    <div class="fw-semibold text-break">@reservation.GuestPhone</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form action="@Url.RouteUrl("DoraFoodEditBooking", new { id = Model.Id })" method="post">
         @Html.AntiForgeryToken()
         <input asp-for="Version" type="hidden" />
-        <div asp-validation-summary="All" class="text-danger" role="alert"></div>
+        <div asp-validation-summary="All" class="text-danger mb-3" role="alert"></div>
 
-        <div class="df-edit-layout">
-            <div class="df-edit-context">
-                <section class="df-edit-card df-edit-guest mb-3" aria-labelledby="edit-guest-title">
-                    <h2 id="edit-guest-title" class="small df-edit-muted mb-1">Khách đặt</h2>
-                    <strong class="fs-5 d-block text-break">@reservation.GuestName</strong>
-                    <span class="df-edit-muted">@reservation.GuestPhone</span>
-                    <div class="border-top mt-2 pt-2">
-                        <span class="df-edit-muted small d-block">Mã đặt bàn</span>
-                        <code class="df-edit-link text-break">@reservation.Code</code>
-                    </div>
-                    @if (!string.IsNullOrWhiteSpace(reservation.Note))
-                    {
-                        <div class="border-top mt-2 pt-2">
-                            <strong class="df-edit-muted small">Ghi chú của khách</strong>
-                            <p class="df-edit-note mb-0">@reservation.Note</p>
-                        </div>
-                    }
-                </section>
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+                <h2 class="h5 mb-3">Giờ đến và số khách</h2>
+                <p class="text-muted small">
+                    Chọn ngày và giờ đến ở tương lai, theo giờ Việt Nam:
+                    10:00–trước 14:00 hoặc 16:00–trước 22:00.
+                    Không cần nhập giờ kết thúc dùng bữa.
+                </p>
 
-                <section class="df-edit-card" aria-labelledby="edit-time-title">
-                    <h2 id="edit-time-title" class="h5 fw-bold mb-3">Giờ đến và số khách</h2>
-
-                    <div class="mb-3">
-                        <label asp-for="StartsAtLocal" class="form-label fw-semibold">Giờ đến dự kiến</label>
-                        <input asp-for="StartsAtLocal" asp-format="{0:yyyy-MM-ddTHH:mm}"
-                               type="datetime-local" class="form-control" step="60" required />
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label asp-for="StartsAtLocal" class="form-label">Giờ đến dự kiến</label>
+                        <input asp-for="StartsAtLocal"
+                               asp-format="{0:yyyy-MM-ddTHH:mm}"
+                               type="datetime-local"
+                               class="form-control"
+                               min="@minimumArrival"
+                               step="60"
+                               required />
                         <span asp-validation-for="StartsAtLocal" class="text-danger small"></span>
-                        <p id="edit-session" class="small df-edit-muted mt-2 mb-0">
-                            Giờ Việt Nam · 10:00–14:00 hoặc 16:00–22:00
-                        </p>
-                        <p id="edit-deadline" class="small df-edit-muted mb-0">Giữ bàn đến 30 phút sau giờ hẹn.</p>
                     </div>
+                    <div class="col-md-6">
+                        <label asp-for="PartySize" class="form-label">Số khách</label>
+                        <input asp-for="PartySize" type="number" min="1" max="32767" step="1" class="form-control" required />
+                        <span asp-validation-for="PartySize" class="text-danger small"></span>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="edit-session-preview" class="form-label">Buổi phục vụ</label>
+                        <output id="edit-session-preview" for="StartsAtLocal" class="d-block border rounded-3 bg-light p-3">Tự xác định theo giờ đến</output>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="edit-deadline-preview" class="form-label">Hạn khách đến dự kiến</label>
+                        <output id="edit-deadline-preview" for="StartsAtLocal" class="d-block border rounded-3 bg-light p-3" aria-live="polite">Giờ đến + 30 phút</output>
+                    </div>
+                </div>
 
-                    <label asp-for="PartySize" class="form-label fw-semibold">Số khách</label>
-                    <input asp-for="PartySize" type="number" min="1" max="32767" step="1"
-                           class="form-control" required />
-                    <span asp-validation-for="PartySize" class="text-danger small"></span>
-                </section>
+                <div class="alert alert-light border small mt-3 mb-0">
+                    Thay đổi giờ đến sẽ tính lại hạn giữ bàn.
+                    Yêu cầu đang chờ hoặc đã xác nhận sẽ bị hủy nếu quá hạn mà chưa nhận khách.
+                    Có thể chọn hôm nay hoặc những ngày sau trong khung nhận khách của nhà hàng.
+                </div>
             </div>
+        </div>
 
-            <div class="df-edit-assignment">
-                <section class="df-edit-card mb-3" aria-labelledby="edit-tables-title">
-                    <h2 id="edit-tables-title" class="h5 fw-bold mb-1">Chuyển hoặc gộp bàn</h2>
-                    <p class="small df-edit-muted mb-2">
-                        Để chuyển bàn, bỏ chọn bàn cũ rồi chọn bàn mới. Để gộp bàn, giữ bàn cũ và chọn thêm bàn.
-                        Hệ thống kiểm tra lịch theo giờ đến và buổi phục vụ khi lưu.
-                    </p>
-                    <span asp-validation-for="TableIds" class="text-danger small d-block"></span>
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+                <h2 class="h5 mb-3">Chọn lại bàn</h2>
+                @if (requiresTables)
+                {
+                    <p class="text-muted small">Yêu cầu đã xác nhận phải có ít nhất một bàn và đủ chỗ cho số khách.</p>
+                }
+                else
+                {
+                    <p class="text-muted small">Yêu cầu đang chờ có thể chưa chọn bàn. Nếu chọn, các bàn phải đủ chỗ. Lưu điều chỉnh vẫn giữ trạng thái chờ xác nhận.</p>
+                }
+                <div class="alert alert-light border small">
+                    Hệ thống kiểm tra bàn theo đúng ngày và buổi đã chọn khi lưu.
+                    Khi nhận khách, bàn phải trống và lượt khách trước đã hoàn tất.
+                    Danh sách bên dưới chỉ gồm bàn và khu vực đang hoạt động.
+                </div>
+                <span asp-validation-for="TableIds" class="text-danger d-block mb-3"></span>
 
-                    @if (Model.Tables.Count == 0)
+                @if (Model.Tables.Count == 0)
+                {
+                    <p class="text-muted mb-0">Chưa có bàn đang hoạt động.</p>
+                }
+                else
+                {
+                    @foreach (var area in Model.Tables.GroupBy(t => t.AreaId))
                     {
-                        <p class="small df-edit-muted mb-0">Chưa có bàn đang hoạt động.</p>
-                    }
-
-                    @foreach (var area in Model.Tables.GroupBy(table => table.AreaId))
-                    {
-                        <fieldset class="df-edit-area">
-                            <legend>@area.First().Area.Name</legend>
-                            <div class="df-edit-grid">
+                        <fieldset class="mb-4">
+                            <legend class="h6 mb-3">@area.First().Area.Name</legend>
+                            <div class="row g-3">
                                 @foreach (var table in area)
                                 {
-                                    <label class="df-edit-table">
-                                        <input type="checkbox" name="TableIds" value="@table.Id"
-                                               checked="@Model.TableIds.Contains(table.Id)"
-                                               data-code="@table.Code" data-capacity="@table.Capacity" />
-                                        <span>
-                                            <strong class="d-block">@table.Code</strong>
-                                            <small>@table.Capacity chỗ</small>
-                                            @if (originalIds.Contains(table.Id))
-                                            {
-                                                <small class="df-edit-current-badge">Bàn hiện tại</small>
-                                            }
-                                        </span>
-                                    </label>
+                                    var isSelected = Model.TableIds.Contains(table.Id);
+                                    var occupied = occupiedTableIds?.Contains(table.Id) == true;
+                                    var blocked = occupied && Model.StartsAtLocal?.Date == today;
+                                    <div class="col-sm-6 col-lg-4">
+                                        <div class="border rounded-3 p-3 h-100">
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input"
+                                                       id="edit-table-@table.Id" name="TableIds"
+                                                       value="@table.Id" checked="@(isSelected && !blocked)" disabled="@blocked"
+                                                       data-occupied-today="@(occupied ? todayValue : null)" />
+                                                <label class="form-check-label w-100" for="edit-table-@table.Id">
+                                                    <span class="fw-semibold">@table.Code</span>
+                                                    <span class="text-muted small d-block">@table.Capacity chỗ ngồi</span>
+                                                    @if (occupied)
+                                                    {
+                                                        <small class="text-danger" data-occupied-label hidden="@(!blocked)">Bàn chưa trống hôm nay</small>
+                                                    }
+                                                </label>
+                                            </div>
+                                        </div>
+                                    </div>
                                 }
                             </div>
                         </fieldset>
                     }
-
-                    <div class="df-edit-comparison small">
-                        <dl class="row g-2 mb-0">
-                            <div class="col-sm-6">
-                                <dt class="df-edit-muted">Bàn hiện tại</dt>
-                                <dd class="mb-0 text-break">
-                                    @(originalIds.Count == 0 ? "Chưa phân bàn" : string.Join(", ", originalCodes))
-                                </dd>
-                            </div>
-                            <div class="col-sm-6">
-                                <dt class="df-edit-muted">Bàn sẽ lưu</dt>
-                                <dd id="edit-selected-tables" class="mb-0 text-break">Theo ô đã chọn</dd>
-                            </div>
-                        </dl>
-                        <p id="edit-capacity" class="fw-semibold mb-0 mt-2" role="status"></p>
-                    </div>
-                </section>
-
-                <section class="df-edit-card">
-                    <label asp-for="Reason" class="form-label fw-semibold">Lý do điều chỉnh</label>
-                    <textarea asp-for="Reason" class="form-control" rows="2" maxlength="300" required></textarea>
-                    <span asp-validation-for="Reason" class="text-danger small"></span>
-
-                    <div class="d-flex flex-wrap justify-content-end gap-2 mt-3">
-                        <a href="@detailsUrl" class="btn btn-outline-secondary">Quay lại</a>
-                        <button type="submit" class="btn df-edit-submit">Lưu điều chỉnh</button>
-                    </div>
-                </section>
+                }
             </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4">
+                <label asp-for="Reason" class="form-label fw-semibold">Lý do điều chỉnh</label>
+                <textarea asp-for="Reason" class="form-control" rows="3" maxlength="300" required
+                          placeholder="Ví dụ: Khách đổi giờ đến và tăng số người..."></textarea>
+                <span asp-validation-for="Reason" class="text-danger small"></span>
+                <div class="form-text">Bắt buộc nhập, tối đa 300 ký tự. Lý do được lưu trong lịch sử thao tác.</div>
+            </div>
+        </div>
+
+        <div class="d-flex flex-wrap justify-content-end gap-3">
+            <a href="@detailsUrl" class="btn btn-outline-secondary rounded-pill px-4">Quay lại</a>
+            <button type="submit" class="btn btn-primary rounded-pill px-4">Lưu điều chỉnh</button>
         </div>
     </form>
 </div>
 
-<script>
-    (() => {
-        const form = document.getElementById('booking-edit-form');
-        const arrival = document.getElementById('StartsAtLocal');
-        const partySize = document.getElementById('PartySize');
-        const submit = form.querySelector('button[type="submit"]');
-        const tables = [...form.querySelectorAll('input[name="TableIds"]')];
-        const selectedTables = document.getElementById('edit-selected-tables');
-        const capacityStatus = document.getElementById('edit-capacity');
-        const session = document.getElementById('edit-session');
-        const deadline = document.getElementById('edit-deadline');
-        const requiresTables = form.dataset.requiresTables === 'true';
-
-        function updateTables() {
-            const selected = tables.filter(table => table.checked);
-            const seats = selected.reduce((sum, table) => sum + Number(table.dataset.capacity), 0);
-            const guests = partySize.valueAsNumber;
-            const hasValidGuestCount = Number.isInteger(guests) && guests > 0 && guests <= 32767;
-            selectedTables.textContent = selected.map(table => table.dataset.code).join(', ')
-                || 'Chưa chọn bàn';
-
-            if (selected.length === 0) {
-                capacityStatus.textContent = requiresTables ? 'Cần chọn ít nhất một bàn.' : '';
-                submit.disabled = requiresTables;
-                return;
-            }
-
-            const missing = hasValidGuestCount ? Math.max(0, guests - seats) : 0;
-            capacityStatus.textContent = !hasValidGuestCount
-                ? 'Nhập số khách để kiểm tra sức chứa.'
-                : `${seats}/${guests} chỗ · ${missing ? `Thiếu ${missing} chỗ` : 'Đủ chỗ'}`;
-            submit.disabled = missing > 0 || selected.length > 200;
-            if (selected.length > 200) capacityStatus.textContent = 'Chỉ được chọn tối đa 200 bàn.';
-        }
-
-        function updateArrival() {
-            const time = arrival.value.slice(11, 16);
-            const lunch = time >= '10:00' && time < '14:00';
-            const dinner = time >= '16:00' && time < '22:00';
-
-            if (!lunch && !dinner) {
-                session.textContent = time ? 'Ngoài giờ phục vụ' : 'Chọn giờ đến theo giờ Việt Nam.';
-                deadline.textContent = 'Giữ bàn đến 30 phút sau giờ hẹn.';
-                return;
-            }
-
-            session.textContent = lunch ? 'Buổi trưa · 10:00–14:00' : 'Buổi tối · 16:00–22:00';
-            const holdUntil = new Date(Date.parse(arrival.value + 'Z') + 30 * 60 * 1000);
-            deadline.textContent = 'Giữ bàn đến ' + holdUntil.toISOString().slice(11, 16);
-        }
-
-        function update() {
-            updateTables();
-            updateArrival();
-        }
-
-        form.addEventListener('input', update);
-        window.addEventListener('pageshow', update);
-        update();
-    })();
-</script>
+@section Scripts {
+    <script src="~/admin/js/dorafood-booking-edit-day.js" asp-append-version="true" defer></script>
+}

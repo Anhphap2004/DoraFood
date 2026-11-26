@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DoraFood.Controllers;
 
-public partial class BookingManagementController
+public partial class TablePaymentsController
 {
     [HttpGet(
         "/quan-ly/don-goi-mon/{orderId:long}/hoa-don",

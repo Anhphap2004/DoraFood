@@ -62,10 +62,13 @@
             margin-bottom: 18px;
         }
 
-        .toolbar-actions {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
+        .payment-success {
+            margin: 0 0 18px;
+            padding: 10px 14px;
+            border: 1px solid #b9d8c6;
+            border-radius: 8px;
+            background: #edf7f0;
+            color: #24553a;
         }
 
         .button {
@@ -335,7 +338,8 @@
                 margin: 0;
             }
 
-            .toolbar {
+            .toolbar,
+            .payment-success {
                 display: none;
             }
 
@@ -390,28 +394,33 @@
 <body>
     <main class="page">
 
-        <!-- Thanh thao tác không xuất hiện khi in -->
         <div class="toolbar">
-            <a href="@Url.RouteUrl(
-                         "DoraFoodTableOrderDetails",
-                         new { orderId = invoice.OrderId })"
-               class="button">
-                ← Về đơn gọi món
-            </a>
-            <a href="@Url.RouteUrl(
-                       "DoraFoodManageBookings")"
-               class="button">
-                ← Về Trang Chủ Bàn
-            </a>
+            @if (User.IsInRole("MANAGER") || User.IsInRole("CASHIER"))
+            {
+                <a href="@Url.RouteUrl("DoraFoodAdminTablePayments")"
+                   class="button">
+                    ← Về danh sách thanh toán
+                </a>
+            }
+            else
+            {
+                <a href="@Url.Action("Index", "Dashboard", new { area = "Admin" })"
+                   class="button">
+                    ← Về tổng quan quản trị
+                </a>
+            }
 
-            <div class="toolbar-actions">
-                <button type="button"
-                        class="button button-primary"
-                        onclick="window.print()">
-                    In hóa đơn
-                </button>
-            </div>
+            <button type="button"
+                    class="button button-primary"
+                    onclick="window.print()">
+                In hóa đơn
+            </button>
         </div>
+
+        @if (TempData["TableOrderSuccess"] is string successMessage)
+        {
+            <p class="payment-success" role="status">@successMessage</p>
+        }
 
         <article class="invoice" aria-labelledby="invoice-title">
 

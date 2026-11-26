@@ -1,0 +1,77 @@
+@addTagHelper Microsoft.AspNetCore.Mvc.TagHelpers.LinkTagHelper, Microsoft.AspNetCore.Mvc.TagHelpers
+@using System.Globalization
+@model DoraFood.ViewModels.StaffPreorderDetails
+
+@{
+    Layout = Model.AdminBoard ? "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml" : "_StaffLayout";
+    ViewData["Title"] = $"Món đặt trước · {Model.TableCode}";
+    var boardRoute = Model.AdminBoard ? "DoraFoodAdminTableService" : "DoraFoodStaffDesk";
+    var culture = CultureInfo.GetCultureInfo("vi-VN");
+}
+
+@section Styles {
+    <link rel="stylesheet" href="~/assets/css/dorafood-service-dishes.css" asp-append-version="true" />
+}
+
+<section class="staff-preorder">
+    <a class="staff-preorder__back" href="@Url.RouteUrl(boardRoute)">← Về phục vụ bàn</a>
+    <header class="staff-preorder__header">
+        <div>
+            <h1>Bàn @Model.TableCode</h1>
+            <p>@Model.StartsAtUtc.AddHours(7).ToString("HH:mm · dd/MM/yyyy", culture) · @Model.PartySize khách</p>
+        </div>
+        @if (Model.Dishes.Count > 0)
+        {
+            <span class="staff-preorder__status">Đã đặt món</span>
+        }
+    </header>
+    <p class="staff-preorder__reference">Lượt đặt @Model.BookingCode · Bàn @string.Join(", ", Model.TableCodes)</p>
+
+    @if (TempData["BookingManagementError"] is string error)
+    {
+        <p class="staff-preorder__warning" role="alert">@error</p>
+    }
+
+    <h2>Món đặt trước</h2>
+    @if (Model.Dishes.Count == 0)
+    {
+        <p>Lượt đặt này không còn món đặt trước.</p>
+    }
+    else
+    {
+        <ul class="staff-preorder__dishes">
+            @foreach (var dish in Model.Dishes)
+            {
+                <li>
+                    <div>
+                        <strong>@dish.Name</strong>
+                        <small>Đặt lúc @dish.AddedAtUtc.AddHours(7).ToString("HH:mm · dd/MM", culture)</small>
+                        @if (!string.IsNullOrWhiteSpace(dish.Note))
+                        {
+                            <small>Ghi chú: @dish.Note</small>
+                        }
+                    </div>
+                    <span>× @dish.Quantity.ToString("0.###", culture)</span>
+                </li>
+            }
+        </ul>
+
+        @if (Model.HasOccupiedTable)
+        {
+            <p class="staff-preorder__warning" role="status">Có bàn đang phục vụ khách khác. Giải phóng bàn đó trước khi nhận lượt đặt này.</p>
+        }
+        else
+        {
+            <form method="post" action="@Url.RouteUrl("DoraFoodSeatPreorder", new { id = Model.BookingId })">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="tableId" value="@Model.TableId" />
+                <input type="hidden" name="version" value="@Model.Version" />
+                @if (Model.AdminBoard)
+                {
+                    <input type="hidden" name="adminBoard" value="true" />
+                }
+                <button type="submit" class="staff-preorder__button">Lên món bàn đặt</button>
+            </form>
+        }
+    }
+</section>

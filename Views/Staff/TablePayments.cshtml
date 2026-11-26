@@ -1,0 +1,57 @@
+﻿@using System.Linq
+@model System.Collections.Generic.IReadOnlyList<DoraFood.Models.Order>
+
+@{
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
+    ViewData["Title"] = "Thanh toán tại bàn";
+}
+
+<div class="container-fluid pb-4">
+    <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-3">
+        <h1 class="h4 mb-0">Thanh toán tại bàn</h1>
+        <span class="badge rounded-pill text-bg-light">@Model.Count đơn đang mở</span>
+    </div>
+
+    @if (Model.Count == 0)
+    {
+        <div class="alert alert-light border mb-0" role="status">
+            Hiện chưa có đơn tại bàn đang mở.
+        </div>
+    }
+    else
+    {
+        <div class="card shadow-sm">
+            <div class="table-responsive">
+                <table class="table align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th scope="col">Bàn</th>
+                            <th scope="col">Mã đơn</th>
+                            <th scope="col" class="text-end">Thao tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var order in Model)
+                        {
+                            var tableNames = order.OrderTables
+                                .Select(link => link.Table.Code)
+                                .Distinct()
+                                .OrderBy(code => code);
+
+                            <tr>
+                                <th scope="row">@string.Join(", ", tableNames)</th>
+                                <td class="text-break">@order.Code</td>
+                                <td class="text-end">
+                                    <a class="btn btn-outline-primary btn-sm text-nowrap"
+                                       href="@Url.RouteUrl("DoraFoodTableCheckout", new { orderId = order.Id })">
+                                        Thanh toán
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    }
+</div>

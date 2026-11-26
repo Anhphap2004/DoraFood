@@ -30,6 +30,10 @@ public sealed partial class StaffController : Controller
     private readonly DoraFoodContext _db;
     private readonly ILogger<StaffController> _logger;
 
+    private bool IsAdminTableBoard => ViewData["AdminTableBoard"] is true;
+    private string TableBoardRoute => IsAdminTableBoard ? "DoraFoodAdminTableService" : "DoraFoodStaffDesk";
+    private string TableOrderRoute => IsAdminTableBoard ? "DoraFoodAdminTableOrder" : "DoraFoodStaffOrder";
+
     public StaffController(DoraFoodContext db, ILogger<StaffController> logger)
     {
         _db = db;
@@ -64,7 +68,7 @@ public sealed partial class StaffController : Controller
 
         var action = context.ActionDescriptor
             as Microsoft.AspNetCore.Mvc.Controllers.ControllerActionDescriptor;
-        var isAdminBoard = action?.MethodInfo.Name == nameof(AdminBoard);
+        var isAdminBoard = action?.MethodInfo.Name is nameof(AdminBoard) or nameof(AdminOrder);
         if (account is null || (!account.CanCollect && (!account.CanServe || isAdminBoard)))
         {
             context.Result = Forbid();
@@ -73,6 +77,9 @@ public sealed partial class StaffController : Controller
 
         _actorId = userId;
         ViewData["CanCollectTablePayments"] = account.CanCollect;
+        // Các form dùng chung chuyển ngữ cảnh từ URL. Quyền quản trị vẫn do tài khoản quyết định.
+        var fromAdminBoard = bool.TryParse(Request.Query["adminBoard"].ToString(), out var requested) && requested;
+        ViewData["AdminTableBoard"] = account.CanCollect && (isAdminBoard || fromAdminBoard);
         await next();
     }
 
@@ -84,14 +91,13 @@ public sealed partial class StaffController : Controller
     [Authorize(Roles = "MANAGER,CASHIER")]
     public async Task<IActionResult> AdminBoard(CancellationToken cancellationToken)
     {
-        ViewData["AdminTableBoard"] = true;
         return View("Index", await LoadTablesAsync(cancellationToken));
     }
 
     private async Task<IReadOnlyList<StaffTableRow>> LoadTablesAsync(CancellationToken cancellationToken)
     {
         var now = DateTime.UtcNow;
-        var arrivalCutoff = now.AddMinutes(-30);
+        var heldReservations = HeldReservationsForServiceDay(now);
         var tables = await _db.Set<DiningTable>().AsNoTracking()
             .Where(table => table.IsActive && table.Area.IsActive)
             .OrderBy(table => table.Area.Name).ThenBy(table => table.Code).ThenBy(table => table.Id)
@@ -101,21 +107,8 @@ public sealed partial class StaffController : Controller
                 table.Code,
                 AreaName = table.Area.Name,
                 table.Capacity,
-                PreorderAtUtc = table.Reservations
-                    .Where(reservation => reservation.Status == "CONFIRMED"
-                        && reservation.StartsAtUtc > arrivalCutoff
-                        && reservation.EndsAtUtc > now
-                        && reservation.Orders.Any(order =>
-                            order.OrderType == "DINE_IN"
-                            && (order.Status == "OPEN" || order.Status == "IN_PROGRESS")
-                            && order.ClosedAtUtc == null
-                            && order.OrderItems.Any(item => item.Status != "CANCELLED")))
-                    .OrderBy(reservation => reservation.StartsAtUtc)
-                    .Select(reservation => (DateTime?)reservation.StartsAtUtc)
-                    .FirstOrDefault(),
-                HasReservation = table.Reservations.Any(reservation => reservation.Status == "SEATED"
-                    || (reservation.Status == "CONFIRMED"
-                        && reservation.StartsAtUtc <= now && reservation.EndsAtUtc > now)),
+                HasReservation = table.Reservations.Any(reservation => reservation.Status == "SEATED")
+                    || heldReservations.Any(reservation => reservation.Tables.Any(assigned => assigned.Id == table.Id)),
                 SeatedReservationId = table.Reservations
                     .Where(reservation => reservation.Status == "SEATED")
                     .OrderBy(reservation => reservation.Id)
@@ -138,15 +131,44 @@ public sealed partial class StaffController : Controller
             })
             .ToDictionaryAsync(link => link.TableId, cancellationToken);
 
+        var upcomingOrders = await (
+            from booking in heldReservations
+            from table in booking.Tables
+            from order in booking.Orders
+            where order.OrderType == "DINE_IN" && order.ClosedAtUtc == null
+                && (order.Status == "OPEN" || order.Status == "IN_PROGRESS")
+                && order.Invoice == null
+                && order.OrderItems.Any(line => line.Status != "CANCELLED")
+            select new { TableId = table.Id, BookingId = booking.Id, booking.StartsAtUtc })
+            .ToListAsync(cancellationToken);
+
+        var upcomingByTable = upcomingOrders
+            .Distinct()
+            .OrderBy(booking => booking.StartsAtUtc).ThenBy(booking => booking.BookingId)
+            .ToLookup(booking => booking.TableId,
+                booking => new StaffUpcomingBooking(booking.BookingId, booking.StartsAtUtc));
+
         return tables.Select(table =>
         {
             links.TryGetValue(table.Id, out var link);
+            var orderId = link is { IsOpen: true } ? (long?)link.OrderId : null;
             return new StaffTableRow(table.Id, table.Code, table.AreaName, table.Capacity,
                 table.HasReservation || link is not null,
                 link is null ? table.SeatedReservationId : null,
-                link is { IsOpen: true } ? link.OrderId : null,
-                link is { IsOpen: true, HasItems: true }, table.PreorderAtUtc);
+                orderId, link is { IsOpen: true, HasItems: true })
+            {
+                UpcomingBookings = upcomingByTable[table.Id].ToList()
+            };
         }).ToList();
+    }
+
+    private IQueryable<Reservation> HeldReservationsForServiceDay(DateTime now)
+    {
+        var dayEndUtc = now.AddHours(7).Date.AddDays(1).AddHours(-7);
+        var arrivalCutoff = now.AddMinutes(-30);
+        return _db.Set<Reservation>().AsNoTracking().Where(booking =>
+            booking.Status == "CONFIRMED" && booking.StartsAtUtc > arrivalCutoff
+            && booking.StartsAtUtc < dayEndUtc && booking.EndsAtUtc > now);
     }
 
     [HttpPost("dang-xuat", Name = "DoraFoodStaffLogout")]
@@ -155,6 +177,32 @@ public sealed partial class StaffController : Controller
         await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
         return LocalRedirect(Url.Content("~/"));
     }
+
+
+    [HttpGet("/admin/thanh-toan-tai-ban", Name = "DoraFoodAdminTablePayments")]
+    [Authorize(Roles = "MANAGER,CASHIER")]
+    public async Task<IActionResult> AdminTablePayments(
+    CancellationToken cancellationToken)
+    {
+        if (ViewData["CanCollectTablePayments"] is not true)
+        {
+            return Forbid();
+        }
+
+        var orders = await OpenTableOrders()
+            .Include(order => order.OrderTables
+                .Where(link => link.ReleasedAtUtc == null))
+                .ThenInclude(link => link.Table)
+            .OrderByDescending(order => order.Id)
+            .ToListAsync(cancellationToken);
+
+        return View("TablePayments", orders);
+    }
+
+    [HttpGet("/admin/phuc-vu-ban/don/{id:long}", Name = "DoraFoodAdminTableOrder")]
+    [Authorize(Roles = "MANAGER,CASHIER")]
+    public Task<IActionResult> AdminOrder([FromRoute] long id, CancellationToken cancellationToken) =>
+        Details(id, cancellationToken);
 
     [HttpGet("don/{id:long}", Name = "DoraFoodStaffOrder")]
     public async Task<IActionResult> Details(
@@ -195,7 +243,7 @@ public sealed partial class StaffController : Controller
         var orderedPhotos = photos.GroupBy(image => image.DishId)
             .ToDictionary(group => group.Key, group => group.First().Url);
 
-        return View(new StaffOrderDetails(
+        return View("Details", new StaffOrderDetails(
             order.Id, order.Code,
             order.OrderTables.Select(link => link.Table.Code).OrderBy(code => code).ToList(),
             order.OrderItems.OrderBy(item => item.Id)
@@ -218,7 +266,7 @@ public sealed partial class StaffController : Controller
             || quantity is < 1 or > 999 || note?.Length > 500)
         {
             TempData["StaffError"] = "Chọn món, nhập số lượng từ 1 đến 999 và ghi chú tối đa 500 ký tự.";
-            return RedirectToRoute("DoraFoodStaffOrder", new { id });
+            return RedirectToRoute(TableOrderRoute, new { id });
         }
 
         var actorId = _actorId;
@@ -291,7 +339,7 @@ public sealed partial class StaffController : Controller
             if (outcome == "closed")
             {
                 TempData["StaffError"] = "Đơn đã đóng hoặc bàn không còn phục vụ.";
-                return RedirectToRoute("DoraFoodStaffDesk");
+                return RedirectToRoute(TableBoardRoute);
             }
 
             if (outcome == "unavailable")
@@ -309,7 +357,7 @@ public sealed partial class StaffController : Controller
             TempData["StaffError"] = "Chưa xác nhận được thao tác. Kiểm tra danh sách món trước khi thử lại.";
         }
 
-        return RedirectToRoute("DoraFoodStaffOrder", new { id });
+        return RedirectToRoute(TableOrderRoute, new { id });
     }
 
     private IQueryable<Order> OpenTableOrders() =>

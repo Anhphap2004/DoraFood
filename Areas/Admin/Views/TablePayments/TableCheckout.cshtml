@@ -2,6 +2,7 @@
 @model DoraFood.Areas.Admin.ViewModels.TableCheckoutViewModel
 
 @{
+    Layout = "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml";
     ViewData["Title"] = $"Thanh toán đơn {Model.OrderCode}";
 
     var culture = CultureInfo.GetCultureInfo("vi-VN");
@@ -42,9 +43,9 @@
         </div>
 
        
-        <a href="@Url.RouteUrl("DoraFoodAdminTableService")"
+        <a href="@Url.RouteUrl("DoraFoodAdminTablePayments")"
            class="btn btn-outline-secondary">
-            ← Về phục vụ bàn
+            ← Về danh sách thanh toán
         </a>
     </div>
 

@@ -17,13 +17,22 @@
     var initials = string.IsNullOrWhiteSpace(userName) ? "D" : userName.Trim().Substring(0, 1).ToUpperInvariant();
     string Active(string controller) => inAdmin && string.Equals(currentController, controller,
         StringComparison.OrdinalIgnoreCase) ? "active" : "";
+    var onTablePayments =
+     Active("TablePayments") == "active"
+     || (string.Equals(currentController, "Staff", StringComparison.OrdinalIgnoreCase)
+         && currentAction == "AdminTablePayments");
     var operations = new[]
     {
         (Label: "Tổng quan", Url: dashboardUrl, Icon: "bi-grid-1x2", Active: Active("Dashboard") == "active", Visible: true),
         (Label: "Đơn giao hàng", Url: Url.Action("Index", "DeliveryOrders", new { area = "Admin" }), Icon: "bi-truck", Active: Active("DeliveryOrders") == "active", Visible: true),
-        (Label: "Đặt bàn", Url: bookingUrl, Icon: "bi-calendar-check", Active: Active("BookingManagement") == "active", Visible: true),
+        (Label: "Đặt bàn", Url: bookingUrl, Icon: "bi-calendar-check", Active: Active("BookingManagement") == "active" && !onTablePayments, Visible: true),
         (Label: "Quản lý bàn", Url: Url.Action("Index", "DiningTables", new { area = "Admin" }), Icon: "bi-grid-3x3-gap", Active: Active("DiningTables") == "active", Visible: canManage),
         (Label: "Phục vụ bàn", Url: Url.RouteUrl("DoraFoodAdminTableService"), Icon: "bi-person-workspace", Active: onTableBoard, Visible: canServeTables),
+        (Label: "Thanh toán tại bàn",
+ Url: Url.RouteUrl("DoraFoodAdminTablePayments"),
+ Icon: "bi-cash-coin",
+ Active: onTablePayments,
+ Visible: canServeTables),
         (Label: "Món ăn", Url: Url.Action("Index", "Dishes", new { area = "Admin" }), Icon: "bi-egg-fried", Active: Active("Dishes") == "active", Visible: true),
         (Label: "Danh mục món ăn", Url: Url.Action("Index", "DishCategories", new { area = "Admin" }), Icon: "bi-collection", Active: Active("DishCategories") == "active", Visible: true),
         (Label: "Dịch vụ", Url: Url.Action("Index", "Services", new { area = "Admin" }), Icon: "bi-briefcase", Active: Active("Services") == "active", Visible: canManage)

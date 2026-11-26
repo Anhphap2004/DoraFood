@@ -1,22 +1,32 @@
+@addTagHelper Microsoft.AspNetCore.Mvc.TagHelpers.LinkTagHelper, Microsoft.AspNetCore.Mvc.TagHelpers
 @using System
 @using System.Linq
 @model System.Collections.Generic.IReadOnlyList<DoraFood.ViewModels.StaffTableRow>
 
 @{
     var isAdmin = ViewData["AdminTableBoard"] is true;
+    var orderRoute = isAdmin ? "DoraFoodAdminTableOrder" : "DoraFoodStaffOrder";
     Layout = isAdmin ? "~/Areas/Admin/Views/Shared/_AdminLayout.cshtml" : "_StaffLayout";
     ViewData["Title"] = "Phục vụ bàn";
 }
 
-@if (isAdmin)
-{
-    <link rel="stylesheet" href="@Url.Content("~/assets/css/dorafood-staff.css")" />
+@section Styles {
+    <link rel="stylesheet" href="~/assets/css/dorafood-service-dishes.css" asp-append-version="true" />
 }
 
 <div class="staff-table-board">
     @if (TempData["BookingManagementError"] is string bookingError)
     {
         <p class="staff-notice staff-notice--error" role="alert">@bookingError</p>
+    }
+
+    @if (isAdmin && TempData["StaffError"] is string staffError)
+    {
+        <p class="staff-notice staff-notice--error" role="alert">@staffError</p>
+    }
+    @if (isAdmin && TempData["StaffSuccess"] is string staffSuccess)
+    {
+        <p class="staff-notice" role="status">@staffSuccess</p>
     }
 
     <div class="staff-heading">
@@ -28,7 +38,7 @@
             <span class="staff-table-status status-open">Đã mở · Chưa gọi món</span>
             <span class="staff-table-status status-ordered">Đã gọi món</span>
             <span class="staff-table-status status-held">Đang giữ bàn</span>
-            <span class="staff-table-status status-held">Đã đặt bàn có món</span>
+            <span class="staff-table-status status-held">Đã đặt món</span>
             <span class="staff-table-status status-free">Bàn trống</span>
         </div>
     </div>
@@ -50,16 +60,26 @@
                         <p class="staff-muted">@table.Capacity chỗ</p>
                         <p><span class="staff-table-status status-@table.StatusClass">@table.StatusLabel</span></p>
 
-                        @if (table.OrderId is null && table.SeatedReservationId is null
-                            && table.PreorderAtUtc is DateTime preorderAt)
+                        @foreach (var booking in table.UpcomingBookings)
                         {
-                            <p class="staff-muted">Giờ hẹn @preorderAt.AddHours(7).ToString("HH:mm · dd/MM")</p>
+                            <div class="staff-booking-link">
+                                @if (table.OrderId.HasValue || table.SeatedReservationId.HasValue)
+                                {
+                                    <span class="staff-table-status status-held">Đã đặt món</span>
+                                }
+                                <small>@booking.StartsAtUtc.AddHours(7).ToString("HH:mm · dd/MM")</small>
+                                <a class="staff-button staff-button--light"
+                                   href="@Url.RouteUrl("DoraFoodStaffPreorderDetails", new { tableId = table.Id, bookingId = booking.Id, adminBoard = isAdmin ? "true" : null })"
+                                   aria-label="Xem chi tiết bàn @table.Code, lượt đặt lúc @(booking.StartsAtUtc.AddHours(7).ToString("HH:mm"))">
+                                    Xem chi tiết bàn
+                                </a>
+                            </div>
                         }
 
                         @if (table.OrderId is long orderId)
                         {
                             <a class="staff-button"
-                               href="@Url.RouteUrl("DoraFoodStaffOrder", new { id = orderId })"
+                               href="@Url.RouteUrl(orderRoute, new { id = orderId })"
                                aria-label="Xem đơn bàn @table.Code">Xem đơn</a>
                         }
                         else if (table.SeatedReservationId is long reservationId)
@@ -76,7 +96,7 @@
                             <details class="staff-walk-in">
                                 <summary class="staff-button staff-button--light">Mở bàn trực tiếp</summary>
                                 <form class="staff-form" method="post"
-                                      action="@Url.RouteUrl("DoraFoodStaffWalkIn", new { tableId = table.Id })">
+                                      action="@Url.RouteUrl("DoraFoodStaffWalkIn", new { tableId = table.Id, adminBoard = isAdmin ? "true" : null })">
                                     @Html.AntiForgeryToken()
                                     <input type="hidden" name="operationId" value="@Guid.NewGuid()" />
                                     <label for="guests-@table.Id">Số khách</label>

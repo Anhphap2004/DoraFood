@@ -1,0 +1,80 @@
+.df-reservation-days {
+    --booking-ink: #30201c;
+    --booking-muted: #6c5147;
+    --booking-line: #e5c4ac;
+    --booking-panel: #fcf8f2;
+    --booking-accent: #763231;
+    color: var(--booking-ink);
+    padding-bottom: 1rem;
+}
+
+.df-reservation-heading,
+.df-reservation-date {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: .65rem 1rem;
+}
+
+.df-reservation-heading { margin-bottom: 1rem; }
+.df-reservation-heading h1 { margin: 0; font-size: clamp(1.4rem, 3vw, 1.85rem); font-weight: 600; }
+.df-reservation-count { border-radius: 999px; background: #f6e7da; color: #783e2d; padding: .28rem .65rem; font-size: .82rem; }
+
+.df-reservation-date,
+.df-reservation-filter,
+.df-reservation-empty,
+.df-reservation-results {
+    border: 1px solid var(--booking-line);
+    border-radius: .85rem;
+    background: var(--booking-panel);
+}
+.df-reservation-date, .df-reservation-filter { padding: .85rem 1rem; margin-bottom: .85rem; }
+.df-reservation-date h2 { margin: 0 0 .2rem; font-size: 1.1rem; font-weight: 600; }
+.df-reservation-date p { margin: 0 0 .45rem; color: var(--booking-muted); font-size: .92rem; text-transform: capitalize; }
+.df-reservation-date__links, .df-reservation-statuses { display: flex; gap: .4rem; flex-wrap: wrap; }
+.df-reservation-date__form { flex: 0 1 19rem; }
+.df-reservation-days .form-label { display: block; margin-bottom: .3rem; color: var(--booking-muted); font-size: .87rem; font-weight: 600; }
+.df-reservation-days :is(.form-control, .form-select) { border-color: var(--booking-line); min-height: 2.3rem; }
+.df-reservation-days .btn-primary {
+    --bs-btn-bg: var(--booking-accent);
+    --bs-btn-border-color: var(--booking-accent);
+    --bs-btn-hover-bg: #5b2324;
+    --bs-btn-hover-border-color: #5b2324;
+}
+.df-reservation-days .btn-outline-secondary {
+    --bs-btn-color: #62453b;
+    --bs-btn-border-color: #caa897;
+    --bs-btn-hover-color: #592926;
+    --bs-btn-hover-bg: #f4e3d7;
+    --bs-btn-hover-border-color: #caa897;
+}
+.df-reservation-statuses { margin-bottom: .85rem; }
+.df-reservation-statuses .btn { border-radius: 999px; padding-inline: .75rem; }
+.df-reservation-filter__fields {
+    display: grid;
+    grid-template-columns: minmax(12rem, 2fr) minmax(10rem, 1fr) auto;
+    align-items: end;
+    gap: .65rem;
+}
+.df-reservation-filter__actions .btn { border-radius: .4rem !important; }
+
+.df-reservation-list-title { font-size: 1.05rem; margin: 1rem 0 .5rem; font-weight: 600; }
+.df-reservation-empty { padding: 1rem; text-align: center; }
+.df-reservation-empty h3 { font-size: 1rem; font-weight: 600; margin: .2rem 0; }
+.df-reservation-empty p { color: var(--booking-muted); font-size: .88rem; margin: .25rem 0; }
+.df-reservation-results { overflow: hidden; background: #fffefa; }
+.df-reservation-results thead { --bs-table-bg: #f5eae0; }
+.df-reservation-results .table { --bs-table-border-color: #ead8cc; --bs-table-color: var(--booking-ink); }
+.df-reservation-results .table .p-3 { padding: .6rem .75rem !important; }
+.df-reservation-results .badge { font-weight: 500; }
+.df-reservation-badge { display: inline-block; padding: .24rem .55rem; margin: .12rem 0; border-radius: 999px; font-size: .8rem; white-space: nowrap; }
+.df-reservation-badge.is-pending { color: #6a4009; background: #f9ecd0; }
+.df-reservation-badge.is-confirmed { color: #56334f; background: #f0e5ef; }
+.df-reservation-badge.is-seated, .df-reservation-badge.is-completed { color: #23543b; background: #e3efe5; }
+.df-reservation-badge.is-muted { color: #594944; background: #eee8e4; }
+.df-reservation-badge.is-noshow { color: #7c2335; background: #f7e6e8; }
+
+@media (max-width: 720px) {
+    .df-reservation-filter__fields { grid-template-columns: minmax(0, 1fr); }
+}

@@ -42,18 +42,18 @@ public sealed partial class StaffController
                 .Select(order => (long?)order.Id).SingleOrDefaultAsync(cancellationToken);
 
             if (previous.HasValue)
-                return RedirectToRoute("DoraFoodStaffOrder", new { id = previous.Value });
+                return RedirectToRoute(TableOrderRoute, new { id = previous.Value });
 
             var now = DateTime.UtcNow;
+            var heldReservations = HeldReservationsForServiceDay(now);
             var table = await _db.Set<DiningTable>().AsNoTracking()
                 .Where(item => item.Id == tableId && item.IsActive && item.Area.IsActive)
                 .Select(item => new
                 {
                     item.Code,
                     item.Capacity,
-                    Reserved = item.Reservations.Any(reservation => reservation.Status == "SEATED"
-                        || (reservation.Status == "CONFIRMED"
-                            && reservation.StartsAtUtc <= now && reservation.EndsAtUtc > now)),
+                    Reserved = item.Reservations.Any(reservation => reservation.Status == "SEATED")
+                        || heldReservations.Any(reservation => reservation.Tables.Any(assigned => assigned.Id == item.Id)),
                     Occupied = _db.Set<OrderTable>().Any(link =>
                         link.TableId == item.Id && link.ReleasedAtUtc == null)
                 })
@@ -75,14 +75,13 @@ public sealed partial class StaffController
             await _db.SaveChangesAsync(cancellationToken);
 
             Audit(order.Id, "staff.order.walk-in", $"Mở bàn {table.Code} cho {partySize} khách.");
-            return RedirectToRoute("DoraFoodStaffOrder", new { id = order.Id });
+            return RedirectToRoute(TableOrderRoute, new { id = order.Id });
         }, cancellationToken);
     }
 
     [HttpPost("don/{id:long}/mon/{lineId:long}/huy", Name = "DoraFoodStaffCancelDish")]
-    public Task<IActionResult> CancelDish(
-    [FromRoute] long id, [FromRoute] long lineId,
-    CancellationToken cancellationToken)
+    public Task<IActionResult> CancelDish([FromRoute] long id, [FromRoute] long lineId,
+        CancellationToken cancellationToken)
     {
         if (!ModelState.IsValid || id <= 0 || lineId <= 0)
             return Task.FromResult(StaffError("Thông tin món cần hủy không hợp lệ.", id));
@@ -98,7 +97,7 @@ public sealed partial class StaffController
             if (line is null)
                 return StaffError("Đơn tại bàn đã đóng hoặc món không tồn tại.");
             if (line.Status == "CANCELLED")
-                return RedirectToRoute("DoraFoodStaffOrder", new { id });
+                return RedirectToRoute(TableOrderRoute, new { id });
             if (await _db.Set<Invoice>().AnyAsync(invoice => invoice.OrderId == id, cancellationToken)
                 || await _db.Set<Payment>().AnyAsync(payment => payment.OrderId == id
                     && payment.Purpose == "SETTLEMENT"
@@ -114,7 +113,7 @@ public sealed partial class StaffController
 
             Audit(id, "staff.order.cancel-item", $"Hủy {line.NameSnapshot} (dòng {lineId}).");
             TempData["StaffSuccess"] = $"Đã hủy {line.NameSnapshot}.";
-            return RedirectToRoute("DoraFoodStaffOrder", new { id });
+            return RedirectToRoute(TableOrderRoute, new { id });
         }, cancellationToken, id);
     }
 
@@ -174,7 +173,7 @@ public sealed partial class StaffController
             });
             Audit(id, "staff.order.close-empty", "Đã giải phóng bàn không còn món.");
             TempData["StaffSuccess"] = "Đã giải phóng bàn.";
-            return RedirectToRoute("DoraFoodStaffDesk");
+            return RedirectToRoute(TableBoardRoute);
         }, cancellationToken, id);
     }
 
@@ -320,7 +319,7 @@ public sealed partial class StaffController
     {
         TempData["StaffError"] = message;
         return orderId.HasValue
-            ? RedirectToRoute("DoraFoodStaffOrder", new { id = orderId.Value })
-            : RedirectToRoute("DoraFoodStaffDesk");
+            ? RedirectToRoute(TableOrderRoute, new { id = orderId.Value })
+            : RedirectToRoute(TableBoardRoute);
     }
 }

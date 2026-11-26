@@ -16,7 +16,7 @@ using System.Threading.Tasks;
 
 namespace DoraFood.Controllers;
 
-public partial class BookingManagementController
+public partial class TablePaymentsController
 {
     // Nội dung xác nhận được mã hóa, chống sửa từ trình duyệt.
     private sealed record TableCashConfirmation(
@@ -248,8 +248,8 @@ public partial class BookingManagementController
         }
 
         IActionResult AfterCheckout() => RedirectToRoute(
-            ViewData["CashierOnly"] is true ? "DoraFoodTableInvoice" : "DoraFoodTableOrderDetails",
-            new { orderId });
+    "DoraFoodTableInvoice",
+    new { orderId });
 
         var cancellationToken = HttpContext.RequestAborted;
 
@@ -618,11 +618,16 @@ public partial class BookingManagementController
                 {
                     order.Reservation.Status = "COMPLETED";
 
-                    AddBookingHistory(
-    order.Reservation,
-    "BOOKING_COMPLETED",
-    $"Hoàn tất sau thanh toán đơn {order.Code}.",
-    notifyCustomer: false);
+                    _context.Set<AuditLog>().Add(new AuditLog
+                    {
+                        ActorId = actorId,
+                        Action = "BOOKING_COMPLETED",
+                        EntityName = "Reservation",
+                        EntityKey = order.Reservation.Id.ToString(CultureInfo.InvariantCulture),
+                        CorrelationId = confirmation.OperationId,
+                        CreatedAtUtc = now,
+                        Summary = $"Hoàn tất sau thanh toán đơn {order.Code}."
+                    });
                 }
 
                 _context.Set<OrderStatusHistory>().Add(

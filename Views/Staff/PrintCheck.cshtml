@@ -4,11 +4,12 @@
 @{
     Layout = "_StaffLayout";
     ViewData["Title"] = "Phiếu kiểm đồ";
+    var boardRoute = ViewData["AdminTableBoard"] is true ? "DoraFoodAdminTableService" : "DoraFoodStaffDesk";
     var culture = CultureInfo.GetCultureInfo("vi-VN");
 }
 
 <div class="staff-actions staff-no-print">
-    <a class="staff-button staff-button--light" href="@Url.RouteUrl("DoraFoodStaffDesk")">Về bàn phục vụ</a>
+    <a class="staff-button staff-button--light" href="@Url.RouteUrl(boardRoute)">Về bàn phục vụ</a>
     <button class="staff-button" type="button" data-staff-print>In phiếu</button>
 </div>
 

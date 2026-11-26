@@ -91,9 +91,7 @@ namespace DoraFood.Controllers
 
             var allowed = action?.MethodInfo.Name switch
             {
-                nameof(TableCheckout) or nameof(ConfirmTableCash) => canCollect,
-                nameof(TableInvoice) => admin || canCollect,
-                nameof(OpenTableOrder) => admin || canCollect || waiter,
+                nameof(OpenTableOrder) or nameof(SeatPreorder) => admin || canCollect || waiter,
                 _ => admin || manager
             };
 
@@ -110,11 +108,14 @@ namespace DoraFood.Controllers
             await next();
         }
 
+        private static string BookingServiceDateValue(Reservation reservation) =>
+            reservation.StartsAtUtc.AddHours(7).ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
+
         [HttpGet("/Admin/BookingManagement", Name = "DoraFoodAdminBookings")]
         [HttpGet("/quan-ly/dat-ban", Name = "DoraFoodManageBookings")]
         [HttpGet("/BookingManagement")]
         public async Task<IActionResult> Index(
-            string? status = "PENDING",
+            string? status = "ALL",
             string? keyword = null,
             DateTime? serviceDate = null,
             long? areaId = null,
@@ -127,7 +128,7 @@ namespace DoraFood.Controllers
             }
 
             status = string.IsNullOrWhiteSpace(status)
-                ? "PENDING"
+                ? "ALL"
                 : status.Trim().ToUpperInvariant();
 
             if (!AllowedStatuses.Contains(status))
@@ -188,40 +189,24 @@ namespace DoraFood.Controllers
                     || r.GuestPhone.Contains(keyword));
             }
 
-            // 3. Lọc ngày bắt đầu phục vụ theo giờ Việt Nam.
-            if (serviceDate.HasValue)
+            // Mỗi trang chỉ hiển thị một ngày phục vụ theo giờ Việt Nam.
+            var localDate = DateTime.SpecifyKind(
+                (serviceDate ?? DateTime.UtcNow.AddHours(7)).Date,
+                DateTimeKind.Unspecified);
+            DateTime dayStartUtc;
+            DateTime dayEndUtc;
+            try
             {
-                var localDate = DateTime.SpecifyKind(
-                    serviceDate.Value.Date,
-                    DateTimeKind.Unspecified);
-
-                DateTime dayStartUtc;
-                DateTime dayEndUtc;
-
-                try
-                {
-                    var localDayStart = new DateTimeOffset(
-                        localDate,
-                        TimeSpan.FromHours(7));
-
-                    dayStartUtc = localDayStart.UtcDateTime;
-
-                    dayEndUtc = localDayStart
-                        .AddDays(1)
-                        .UtcDateTime;
-                }
-                catch (ArgumentOutOfRangeException)
-                {
-                    return BadRequest(
-                        "Ngày phục vụ nằm ngoài khoảng được hỗ trợ.");
-                }
-
-                query = query.Where(r =>
-                    r.StartsAtUtc >= dayStartUtc
-                    && r.StartsAtUtc < dayEndUtc);
-
-                serviceDate = localDate;
+                var localDayStart = new DateTimeOffset(localDate, TimeSpan.FromHours(7));
+                dayStartUtc = localDayStart.UtcDateTime;
+                dayEndUtc = localDayStart.AddDays(1).UtcDateTime;
             }
+            catch (ArgumentOutOfRangeException)
+            {
+                return BadRequest("Ngày phục vụ nằm ngoài khoảng được hỗ trợ.");
+            }
+
+            query = query.Where(r => r.StartsAtUtc >= dayStartUtc && r.StartsAtUtc < dayEndUtc);
 
             // 4. Lọc theo khu vực của ít nhất một bàn đã phân.
             if (areaId.HasValue)
@@ -249,8 +234,10 @@ namespace DoraFood.Controllers
         .ThenInclude(t => t.Area)
     .Include(r => r.Orders)
         .ThenInclude(order => order.Invoice)
+    .Include(r => r.Orders)
+        .ThenInclude(order => order.OrderItems.Where(line => line.Status != "CANCELLED"))
     .AsSplitQuery()
-                .OrderByDescending(r => r.CreatedAtUtc)
+                .OrderBy(r => r.StartsAtUtc)
                 .ThenByDescending(r => r.Id)
                 .Skip((page - 1) * pageSize)
                 .Take(pageSize)
@@ -263,7 +250,7 @@ namespace DoraFood.Controllers
                 Reservations = reservations,
                 Status = status,
                 Keyword = keyword,
-                ServiceDate = serviceDate,
+                ServiceDate = localDate,
                 AreaId = areaId,
                 Areas = areas,
                 CurrentPage = page,
@@ -677,7 +664,7 @@ namespace DoraFood.Controllers
 
                 return RedirectToRoute(
                     "DoraFoodManageBookings",
-                    new { status = "CONFIRMED" });
+                    new { status = "CONFIRMED", serviceDate = BookingServiceDateValue(reservation) });
             }, () => RedirectToAction(nameof(Confirm), new { id }), "BookingManagementError");
         }
 
@@ -1172,9 +1159,23 @@ namespace DoraFood.Controllers
             "/quan-ly/dat-ban/{id:long}/nhan-khach",
             Name = "DoraFoodSeatBooking")]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Seat(
-            [FromRoute] long id,
-            [FromForm] string? version)
+        public Task<IActionResult> Seat([FromRoute] long id, [FromForm] string? version) =>
+            SeatBookingAsync(id, version);
+
+        [HttpPost("/quan-ly/dat-ban/{id:long}/len-mon-ban-dat", Name = "DoraFoodSeatPreorder")]
+        [ValidateAntiForgeryToken]
+        public Task<IActionResult> SeatPreorder(
+            [FromRoute] long id, [FromForm] string? version, [FromForm] long tableId, [FromForm] bool adminBoard)
+        {
+            if (!ModelState.IsValid || tableId <= 0 || string.IsNullOrWhiteSpace(version))
+                return Task.FromResult<IActionResult>(BadRequest("Thông tin bàn đặt không hợp lệ."));
+
+            return SeatBookingAsync(id, version, tableId,
+                adminBoard && ViewData["CanCollectTablePayments"] is true);
+        }
+
+        private async Task<IActionResult> SeatBookingAsync(
+            long id, string? version, long? preorderTableId = null, bool adminBoard = false)
         {
             if (id <= 0)
             {
@@ -1182,6 +1183,21 @@ namespace DoraFood.Controllers
             }
 
             var cancellationToken = HttpContext.RequestAborted;
+
+            IActionResult Back(Reservation? booking = null)
+            {
+                if (preorderTableId.HasValue)
+                {
+                    return RedirectToRoute("DoraFoodStaffPreorderDetails",
+                        new { tableId = preorderTableId.Value, bookingId = id, adminBoard = adminBoard ? "true" : null });
+                }
+
+                return RedirectToRoute("DoraFoodManageBookings", new
+                {
+                    status = "CONFIRMED",
+                    serviceDate = booking is null ? null : BookingServiceDateValue(booking)
+                });
+            }
 
             return await RunBookingTransactionAsync(async () =>
             {
@@ -1200,26 +1216,25 @@ namespace DoraFood.Controllers
                     return NotFound("Không tìm thấy yêu cầu đặt bàn.");
                 }
 
+                if (preorderTableId.HasValue && !reservation.Tables.Any(table => table.Id == preorderTableId.Value))
+                    return NotFound("Lượt đặt này không thuộc bàn đã chọn.");
+
                 // Chỉ nhận khách đối với yêu cầu đã xác nhận.
                 if (reservation.Status != "CONFIRMED")
                 {
                     TempData["BookingManagementError"] =
                         "Chỉ có thể nhận khách đối với yêu cầu đã xác nhận.";
 
-                    return RedirectToRoute(
-                        "DoraFoodManageBookings",
-                        new { status = "CONFIRMED" });
+                    return Back(reservation);
                 }
 
                 // Chặn thao tác từ một trang đã hiển thị dữ liệu cũ.
                 if (!IsCurrentVersion(reservation, version))
                 {
                     TempData["BookingManagementError"] =
-                        "Yêu cầu đã được cập nhật. Anh tải lại trang rồi kiểm tra lại.";
+                        "Yêu cầu đã được cập nhật. Vui lòng tải lại trang rồi kiểm tra lại.";
 
-                    return RedirectToRoute(
-                        "DoraFoodManageBookings",
-                        new { status = "CONFIRMED" });
+                    return Back(reservation);
                 }
 
                 // Hạn khách đến = giờ hẹn + 30 phút.
@@ -1230,23 +1245,11 @@ namespace DoraFood.Controllers
                 if (DateTime.UtcNow >= arrivalDeadlineUtc)
                 {
                     if (!await CancelUnservedTableOrdersAsync(
-        reservation.Id,
-        "Hủy đơn món đặt trước do lượt đặt bàn bị hủy."))
-                    {
-                        return RedirectToRoute(
-                            "DoraFoodManageBookingDetails",
-                            new { id = reservation.Id });
-                    }
-
-                    var previousStatus = reservation.Status;
-
-                    if (!await CancelUnservedTableOrdersAsync(
                             reservation.Id,
                             "Hủy đơn món đặt trước do lượt đặt bàn bị hủy."))
                     {
-                        return RedirectToRoute(
-                            "DoraFoodManageBookingDetails",
-                            new { id = reservation.Id });
+                        return preorderTableId.HasValue ? Back(reservation)
+                            : RedirectToRoute("DoraFoodManageBookingDetails", new { id });
                     }
 
                     reservation.Status = "CANCELLED";
@@ -1263,9 +1266,8 @@ namespace DoraFood.Controllers
                         "Đã quá hạn giữ bàn 30 phút. "
                         + "Yêu cầu đã được hủy, không thể nhận khách.";
 
-                    return RedirectToRoute(
-                        "DoraFoodManageBookingDetails",
-                        new { id });
+                    return preorderTableId.HasValue ? Back(reservation)
+                        : RedirectToRoute("DoraFoodManageBookingDetails", new { id });
                 }
 
                 if (reservation.StartsAtUtc.AddHours(7).Date
@@ -1274,8 +1276,8 @@ namespace DoraFood.Controllers
                     TempData["BookingManagementError"] =
                         "Chỉ nhận khách vào đúng ngày đã đặt. "
                         + "Nếu khách đổi ngày, hãy điều chỉnh yêu cầu trước.";
-                    return RedirectToRoute(
-                        "DoraFoodManageBookingDetails", new { id });
+                    return preorderTableId.HasValue ? Back(reservation)
+                        : RedirectToRoute("DoraFoodManageBookingDetails", new { id });
                 }
 
                 // Kiểm tra các bàn đã phân.
@@ -1286,9 +1288,7 @@ namespace DoraFood.Controllers
                     TempData["BookingManagementError"] =
                         "Yêu cầu chưa có bàn hoặc có bàn/khu vực đã ngừng hoạt động.";
 
-                    return RedirectToRoute(
-                        "DoraFoodManageBookings",
-                        new { status = "CONFIRMED" });
+                    return Back(reservation);
                 }
 
                 var totalCapacity = reservation.Tables.Sum(
@@ -1299,9 +1299,7 @@ namespace DoraFood.Controllers
                     TempData["BookingManagementError"] =
                         "Các bàn đã phân không còn đủ chỗ cho số khách.";
 
-                    return RedirectToRoute(
-                        "DoraFoodManageBookings",
-                        new { status = "CONFIRMED" });
+                    return Back(reservation);
                 }
 
                 var tableIds = reservation.Tables
@@ -1323,9 +1321,7 @@ namespace DoraFood.Controllers
                         "Có bàn đang phục vụ khách khác. "
                         + "Cần kiểm tra và hoàn tất lượt khách trước khi nhận khách mới.";
 
-                    return RedirectToRoute(
-                        "DoraFoodManageBookings",
-                        new { status = "CONFIRMED" });
+                    return Back(reservation);
                 }
                 // Tìm đơn món đã được nhân viên lập trước khi khách đến.
                 var preorderOrders = await _context.Set<Order>()
@@ -1349,9 +1345,8 @@ namespace DoraFood.Controllers
                         "Lượt đặt bàn có nhiều đơn đang mở. " +
                         "Cần kiểm tra trước khi nhận khách.";
 
-                    return RedirectToRoute(
-                        "DoraFoodManageBookingDetails",
-                        new { id });
+                    return preorderTableId.HasValue ? Back(reservation)
+                        : RedirectToRoute("DoraFoodManageBookingDetails", new { id });
                 }
 
                 var preorderOrder = preorderOrders.SingleOrDefault();
@@ -1365,11 +1360,29 @@ namespace DoraFood.Controllers
                 {
                     TempData["BookingManagementError"] =
                         "Đơn đặt trước đã có hóa đơn, đã đóng " +
-                        "hoặc đã chiếm bàn. Anh kiểm tra lại dữ liệu.";
+                        "hoặc đã chiếm bàn. Vui lòng kiểm tra lại dữ liệu.";
 
-                    return RedirectToRoute(
-                        "DoraFoodManageBookingDetails",
-                        new { id });
+                    return preorderTableId.HasValue ? Back(reservation)
+                        : RedirectToRoute("DoraFoodManageBookingDetails", new { id });
+                }
+
+                var preorderOrderId = preorderOrder?.Id;
+                var preorderLines = _context.Set<OrderItem>()
+                    .Where(line => line.OrderId == preorderOrderId && line.Status != "CANCELLED");
+
+                if (preorderTableId.HasValue &&
+                    (preorderOrder == null || !await preorderLines.AnyAsync(cancellationToken)))
+                {
+                    TempData["BookingManagementError"] = "Lượt đặt này không còn món đặt trước.";
+                    return Back(reservation);
+                }
+
+                if (!preorderTableId.HasValue && preorderOrder != null
+                    && await preorderLines.AnyAsync(cancellationToken))
+                {
+                    TempData["BookingManagementError"] =
+                        "Lượt đặt có món đặt trước. Mở chi tiết bàn tại Phục vụ bàn để lên món và nhận bàn.";
+                    return Back(reservation);
                 }
 
                 // Kiểm tra cả các bàn đang gắn với đơn,
@@ -1387,9 +1400,8 @@ namespace DoraFood.Controllers
                     TempData["BookingManagementError"] =
                         "Có bàn đang phục vụ đơn khác chưa giải phóng.";
 
-                    return RedirectToRoute(
-                        "DoraFoodManageBookingDetails",
-                        new { id });
+                    return preorderTableId.HasValue ? Back(reservation)
+                        : RedirectToRoute("DoraFoodManageBookingDetails", new { id });
                 }
 
                 // Gắn bàn vào cùng đơn đặt trước.
@@ -1400,8 +1412,9 @@ namespace DoraFood.Controllers
 
                     foreach (var tableId in tableIds)
                     {
-                        preorderOrder.OrderTables.Add(new OrderTable
+                        _context.Set<OrderTable>().Add(new OrderTable
                         {
+                            OrderId = preorderOrder.Id,
                             TableId = tableId,
                             AssignedAtUtc = assignedAtUtc
                         });
@@ -1415,6 +1428,7 @@ namespace DoraFood.Controllers
 
                 // Giữ nguyên các bàn đã phân và thời gian đã đặt.
                 reservation.Status = "SEATED";
+                _context.Entry(reservation).Property(item => item.Status).IsModified = true;
 
                 // Ghi lịch sử nhận khách.
                 AddBookingHistory(
@@ -1424,15 +1438,42 @@ namespace DoraFood.Controllers
                         + reservation.PartySize
                         + " khách.");
 
+                if (preorderTableId.HasValue && preorderOrder != null)
+                {
+                    var servedCount = await preorderLines
+                        .Where(line => line.Status == "NEW" || line.Status == "PREPARING" || line.Status == "READY")
+                        .ExecuteUpdateAsync(update => update.SetProperty(line => line.Status, "SERVED"), cancellationToken);
+
+                    _context.Set<AuditLog>().Add(new AuditLog
+                    {
+                        ActorId = long.Parse(User.FindFirstValue(ClaimTypes.NameIdentifier)!,
+                            System.Globalization.CultureInfo.InvariantCulture),
+                        Action = "staff.order.serve-preorder",
+                        EntityName = "Orders",
+                        EntityKey = preorderOrder.Id.ToString(System.Globalization.CultureInfo.InvariantCulture),
+                        Summary = $"Đã nhận bàn {reservation.Code} và lên {servedCount} dòng món đặt trước.",
+                        CorrelationId = Guid.NewGuid(),
+                        CreatedAtUtc = DateTime.UtcNow
+                    });
+                }
+
                 await _context.SaveChangesAsync(cancellationToken);
+
+                if (preorderTableId.HasValue && preorderOrder != null)
+                {
+                    TempData["StaffSuccess"] = "Đã nhận bàn và lên toàn bộ món đặt trước.";
+                    return RedirectToRoute(
+       adminBoard ? "DoraFoodAdminTableOrder" : "DoraFoodStaffOrder",
+       new { id = preorderOrder.Id });
+                }
 
                 TempData["BookingManagementSuccess"] =
                     $"Đã nhận khách cho yêu cầu {reservation.Code}.";
 
                 return RedirectToRoute(
                     "DoraFoodManageBookings",
-                    new { status = "SEATED" });
-            }, () => RedirectToRoute("DoraFoodManageBookings", new { status = "CONFIRMED" }), "BookingManagementError");
+                    new { status = "SEATED", serviceDate = BookingServiceDateValue(reservation) });
+            }, () => Back(), "BookingManagementError");
         }
 
         [HttpPost(
@@ -1473,7 +1514,7 @@ namespace DoraFood.Controllers
 
                     return RedirectToRoute(
                         "DoraFoodManageBookings",
-                        new { status = "SEATED" });
+                        new { status = "SEATED", serviceDate = BookingServiceDateValue(reservation) });
                 }
 
                 // Kiểm tra dữ liệu có thay đổi từ lúc mở trang hay không.
@@ -1484,7 +1525,7 @@ namespace DoraFood.Controllers
 
                     return RedirectToRoute(
                         "DoraFoodManageBookings",
-                        new { status = "SEATED" });
+                        new { status = "SEATED", serviceDate = BookingServiceDateValue(reservation) });
                 }
 
                 var hasOpenOrders = await _context.Set<Order>().AnyAsync(
@@ -1518,7 +1559,7 @@ namespace DoraFood.Controllers
 
                 return RedirectToRoute(
                     "DoraFoodManageBookings",
-                    new { status = "COMPLETED" });
+                    new { status = "COMPLETED", serviceDate = BookingServiceDateValue(reservation) });
             }, () => RedirectToRoute("DoraFoodManageBookings", new { status = "SEATED" }), "BookingManagementError");
         }
 

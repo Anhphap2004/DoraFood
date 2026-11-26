@@ -7,7 +7,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace DoraFood.Controllers;
 
-public partial class BookingManagementController
+public partial class TablePaymentsController
 {
     // Kết quả kiểm tra voucher.
     private sealed record TableVoucherResult(

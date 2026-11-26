@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -106,18 +106,25 @@ namespace DoraFood.Controllers
             }
         }
 
-        // Lịch tương lai xét đúng ngày/buổi; khách đang ngồi chỉ chặn thêm
-        // buổi hiện tại. Khi thực nhận khách, Seat kiểm tra bàn đang dùng lần nữa.
-        private IQueryable<Reservation> BlockingReservations(
+        private IQueryable<long> OccupiedTableIds() =>
+            _context.Set<OrderTable>().AsNoTracking()
+                .Where(link => link.ReleasedAtUtc == null).Select(link => link.TableId)
+                .Union(_context.Set<Reservation>().AsNoTracking()
+                    .Where(booking => booking.Status == "SEATED")
+                    .SelectMany(booking => booking.Tables).Select(table => table.Id));
+
+        private IQueryable<long> BlockingTableIds(
             long excludedId, DateTime sessionStartUtc, DateTime sessionEndUtc)
         {
-            var now = DateTime.UtcNow;
-            var isCurrentSession = now >= sessionStartUtc && now < sessionEndUtc;
-            return _context.Set<Reservation>().AsNoTracking().Where(r =>
-                r.Id != excludedId
-                && (((r.Status == "PENDING" || r.Status == "CONFIRMED" || r.Status == "SEATED")
-                        && r.StartsAtUtc >= sessionStartUtc && r.StartsAtUtc < sessionEndUtc)
-                    || (r.Status == "SEATED" && isCurrentSession)));
+            var blocked = _context.Set<Reservation>().AsNoTracking()
+                .Where(booking => booking.Id != excludedId
+                    && (booking.Status == "PENDING" || booking.Status == "CONFIRMED" || booking.Status == "SEATED")
+                    && booking.StartsAtUtc >= sessionStartUtc && booking.StartsAtUtc < sessionEndUtc)
+                .SelectMany(booking => booking.Tables)
+                .Select(table => table.Id);
+
+            var isSameServiceDay = sessionStartUtc.AddHours(7).Date == DateTime.UtcNow.AddHours(7).Date;
+            return isSameServiceDay ? blocked.Union(OccupiedTableIds()) : blocked;
         }
 
         private async Task<List<DiningTable>?> ValidateTablesAsync(
@@ -142,8 +149,8 @@ namespace DoraFood.Controllers
                     error = "Có bàn không tồn tại hoặc bàn/khu vực đã ngừng hoạt động.";
                 else if (tables.Sum(t => (int)t.Capacity) < partySize)
                     error = "Tổng sức chứa của các bàn không đủ cho số khách.";
-                else if (await BlockingReservations(reservationId, sessionStartUtc, sessionEndUtc)
-                    .AnyAsync(r => r.Tables.Any(t => tableIds.Contains(t.Id)), cancellationToken))
+                else if (await BlockingTableIds(reservationId, sessionStartUtc, sessionEndUtc)
+                    .AnyAsync(tableId => tableIds.Contains(tableId), cancellationToken))
                     error = "Có bàn đã được giữ trong buổi này hoặc đang phục vụ khách. Vui lòng chọn lại.";
             }
 
@@ -153,10 +160,10 @@ namespace DoraFood.Controllers
         }
 
         private void AddBookingHistory(
-    Reservation reservation,
-    string action,
-    string summary,
-    bool notifyCustomer = true)
+            Reservation reservation,
+            string action,
+            string summary,
+            bool notifyCustomer = true)
         {
             var actorIdText = User.FindFirstValue(
                 ClaimTypes.NameIdentifier);
@@ -181,7 +188,6 @@ namespace DoraFood.Controllers
                 CreatedAtUtc = DateTime.UtcNow
             };
 
-           
             _context.Set<AuditLog>().Add(log);
 
             if (notifyCustomer)
@@ -199,8 +205,7 @@ namespace DoraFood.Controllers
             model.Id = reservation.Id;
             model.Reservation = reservation;
 
-            // Đây là danh sách bàn đang hoạt động.
-            // Lịch trùng sẽ được kiểm tra khi xử lý lưu thay đổi.
+            ViewData["OccupiedDiningTableIds"] = await OccupiedTableIds().ToListAsync(HttpContext.RequestAborted);
             model.Tables = await _context.Set<DiningTable>()
                 .AsNoTracking()
                 .Include(t => t.Area)
@@ -248,10 +253,7 @@ namespace DoraFood.Controllers
                 return model;
             }
 
-            var blockedTableIds = BlockingReservations(
-                    reservationId, sessionStartUtc, sessionEndUtc)
-                .SelectMany(item => item.Tables)
-                .Select(table => table.Id);
+            var blockedTableIds = BlockingTableIds(reservationId, sessionStartUtc, sessionEndUtc);
 
             model.Tables = await _context.Set<DiningTable>()
                 .AsNoTracking()
